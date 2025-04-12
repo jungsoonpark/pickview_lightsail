@@ -159,7 +159,7 @@ def get_and_summarize_reviews(product_id):
 
 def summarize_reviews(reviews):
     if not reviews:
-        return "리뷰가 없습니다."
+        return "리뷰가 없습니다.", ""
 
     reviews_text = "\n".join(reviews)
     try:
@@ -174,7 +174,7 @@ def summarize_reviews(reviews):
         summary = response['choices'][0]['message']['content']
         
         # review_content1: 요약에서 가장 중요한 부분을 핵심적으로 추출 (강렬한 문장)
-        review_content1 = summary.split('.')[0]  # 첫 문장에 핵심 포인트를 담음
+        review_content1 = summary.split('.')[0]  # 첫 문장이 아니라, 요약에서 핵심 포인트를 추출
 
         # review_content2: 나머지 부분을 간결하게 만들기 (1~2문장, 15~50자)
         review_content2 = summary if len(summary) <= 50 else summary[:50] + "..."  # 길이가 너무 길면 잘라서 요약
@@ -188,7 +188,6 @@ def summarize_reviews(reviews):
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
         return "요약 실패", "요약 실패"
-
 
 
 
