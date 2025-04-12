@@ -20,7 +20,7 @@ READ_SHEET_NAME = 'list'      # 구글 시트에서 날짜, 키워드가 있는 
 RESULT_SHEET_NAME = 'result'  # 결과 저장 시트; 열: [date, keyword, product_id, review_content1, review_content2]
 
 # OpenAI API 키 설정
-openai.api_key = 'YOUR_OPENAI_API_KEY'  # 여기에 OpenAI API 키를 입력하세요.
+openai.api_key = 'G2WluOQflH_EyapJj7GHTxTbmdW8pYD8oihMm87sY2vCub6l0w6nOqhy0WwE7uehVW3VHYYXlhT3BlbkFJ0VNeJltmx3RhoSKcikr635NtEyakm0Ce-GeLkY3rEy37sefaMAQw9vkMOjcKvFJsv2hJIg6SIA'  # 여기에 OpenAI API 키를 입력하세요.
 
 def connect_to_google_sheet(sheet_name):
     logging.info("Google Sheet 연결 시도...")
