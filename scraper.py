@@ -174,30 +174,34 @@ def summarize_reviews(reviews):
 
 def main():
     logging.info("[START] 프로그램 시작")
-    keywords = get_keywords_from_google_sheet()
+    keywords = get_keywords_from_google_sheet()  # Google Sheets에서 키워드 가져오기
     if not keywords:
         logging.error("키워드가 없습니다. 프로그램 종료합니다.")
         return
+
     results = []
     today = datetime.today().strftime('%Y-%m-%d')
+    
     for keyword in keywords:
         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
-        ids = scrape_product_ids(keyword)
+        ids = scrape_product_ids(keyword)  # 제품 ID 크롤링
         if ids:
             for pid in ids:
-                reviews = get_reviews(pid)  # 리뷰 크롤링
-                review_content1, review_content2 = summarize_reviews(reviews)  # 리뷰 요약
+                # 리뷰 크롤링 및 요약
+                summary, review_content1, review_content2 = get_and_summarize_reviews(pid)
                 results.append([today, keyword, pid, review_content1, review_content2])  # 결과에 요약 추가
         else:
             logging.warning(f"[{keyword}] 크롤링 결과 0개")
+        
         logging.info(f"[{keyword}] 작업 종료, 2초 대기")
-        time.sleep(2)
+        time.sleep(2)  # 2초 대기
+
     if results:
-        save_results_to_sheet(results)
+        save_results_to_sheet(results)  # 결과를 Google Sheets에 저장
     else:
         logging.warning("최종 결과가 없습니다.")
-    logging.info
 
+    logging.info("[END] 프로그램 종료")
 
 if __name__ == '__main__':
     main()  # main() 함수 호출
