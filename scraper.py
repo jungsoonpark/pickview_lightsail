@@ -132,7 +132,7 @@ def get_and_summarize_reviews(product_id):
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         logging.error(f"HTTP 요청 오류 (상품 ID {product_id}): {e}")
-        return "리뷰를 가져오는 데 실패했습니다.", "", ""
+        return "리뷰를 가져오는 데 실패했습니다.", ""
 
     try:
         data = response.json()
@@ -142,10 +142,11 @@ def get_and_summarize_reviews(product_id):
         # 리뷰 요약
         review_content1, review_content2 = summarize_reviews(extracted_reviews)
         
-        return review_content1, review_content2
+        return review_content1, review_content2  # 2개만 반환
     except (ValueError, KeyError) as e:
         logging.error(f"데이터 파싱 오류 (상품 ID {product_id}): {e}")
         return "리뷰를 가져오는 데 실패했습니다.", ""
+
 
 
 
@@ -201,7 +202,7 @@ def main():
         if ids:
             for pid in ids:
                 # 리뷰 크롤링 및 요약
-                summary, review_content1, review_content2 = get_and_summarize_reviews(pid)
+                review_content1, review_content2 = get_and_summarize_reviews(pid)  # 2개만 반환 받기
                 results.append([today, keyword, pid, review_content1, review_content2])  # 결과에 요약 추가
         else:
             logging.warning(f"[{keyword}] 크롤링 결과 0개")
@@ -215,6 +216,5 @@ def main():
         logging.warning("최종 결과가 없습니다.")
 
     logging.info("[END] 프로그램 종료")
-
 if __name__ == '__main__':
     main()  # main() 함수 호출
