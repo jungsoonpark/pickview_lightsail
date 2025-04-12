@@ -162,3 +162,6 @@ def main():
     else:
         logging.warning("최종 결과가 없습니다.")
     logging.info
+
+
+def main():
