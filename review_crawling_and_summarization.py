@@ -4,7 +4,6 @@ import requests
 from playwright.sync_api import sync_playwright
 import os
 
-
 def crawl_reviews(product_url):
     reviews = []
     with sync_playwright() as p:
