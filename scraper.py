@@ -10,7 +10,6 @@ import requests
 import openai
 from bs4 import BeautifulSoup
 import os
-import openai
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -54,7 +53,6 @@ def get_keywords_from_google_sheet():
 def save_results_to_sheet(results):
     try:
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
-
         # 기존 데이터 아래에 결과를 추가합니다.
         for row in results:
             sheet.append_row(row)  # 각 결과를 새로운 행에 추가
@@ -84,7 +82,6 @@ def dynamic_selector_search(page, keyword):
             logging.error(f"[{keyword}] 셀렉터 '{selector}' 오류: {e}")
     return []
 
-# scrape_product_ids 함수 아래에 추가
 def scrape_product_ids(keyword):
     product_ids = []
     try:
@@ -101,7 +98,7 @@ def scrape_product_ids(keyword):
             page.goto(url, timeout=60000, wait_until='domcontentloaded')
             logging.info(f"[{keyword}] 페이지 로딩 완료, 3초 대기")
             time.sleep(3)
-            elements = dynamic_selector_search(page, keyword)  # 이 부분에서 호출
+            elements = dynamic_selector_search(page, keyword)
             if not elements:
                 logging.error(f"[{keyword}] 유효한 셀렉터를 찾지 못했습니다.")
             else:
@@ -128,12 +125,11 @@ def get_and_summarize_reviews(product_id):
     
     try:
         response = requests.get(url, headers=headers, timeout=30)
-        response.raise_for_status()  # HTTP 오류 발생 시 예외 발생
+        response.raise_for_status()
     except requests.exceptions.RequestException as e:
         logging.error(f"HTTP 요청 오류 (상품 ID {product_id}): {e}")
         return "리뷰를 가져오는 데 실패했습니다.", "", ""
 
-    # JSON 데이터 파싱
     try:
         data = response.json()
         reviews = data['data']['evaViewList']
@@ -172,38 +168,6 @@ def summarize_reviews(reviews):
         traceback.print_exc()
         return "요약 실패"
 
-
-
 def main():
     logging.info("[START] 프로그램 시작")
-    keywords = get_keywords_from_google_sheet()  # Google Sheets에서 키워드 가져오기
-    if not keywords:
-        logging.error("키워드가 없습니다. 프로그램 종료합니다.")
-        return
-
-    results = []
-    today = datetime.today().strftime('%Y-%m-%d')
-    
-    for keyword in keywords:
-        logging.info(f"[PROCESS] '{keyword}' 작업 시작")
-        ids = scrape_product_ids(keyword)  # 제품 ID 크롤링
-        if ids:
-            for pid in ids:
-                # 리뷰 크롤링 및 요약
-                summary, review_content1, review_content2 = get_and_summarize_reviews(pid)
-                results.append([today, keyword, pid, review_content1, review_content2])  # 결과에 요약 추가
-        else:
-            logging.warning(f"[{keyword}] 크롤링 결과 0개")
-        
-        logging.info(f"[{keyword}] 작업 종료, 2초 대기")
-        time.sleep(2)  # 2초 대기
-
-    if results:
-        save_results_to_sheet(results)  # 결과를 Google Sheets에 저장
-    else:
-        logging.warning("최종 결과가 없습니다.")
-
-    logging.info("[END] 프로그램 종료")
-
-if __name__ == '__main__':
-    main()  # main() 함수 호출
+    keywords = get_keywords_from_google_sheet()  # Google Sheets에서 키워드 가져
