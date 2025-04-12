@@ -53,13 +53,17 @@ def get_keywords_from_google_sheet():
 def save_results_to_sheet(results):
     try:
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
-        # 기존 데이터 아래에 결과를 추가합니다.
+        
+        # 결과 추가
         for row in results:
-            sheet.append_row(row)  # 각 결과를 새로운 행에 추가
+            # 각 칼럼에 맞게 데이터를 추가
+            sheet.append_row([row[0], row[1], row[2], row[3], row[4]])  # date, keyword, product_id, review_content1, review_content2
         logging.info(f"구글 시트에 결과 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
     except Exception as e:
         logging.error(f"결과 저장 실패: {e}")
         traceback.print_exc()
+
+
 
 def dynamic_selector_search(page, keyword):
     # 다양한 셀렉터 후보를 리스트로 구성합니다.
@@ -143,30 +147,42 @@ def get_and_summarize_reviews(product_id):
         # review_content2: 나머지 요약 내용
         review_content2 = summary if summary else ""
         
+        logging.info(f"카피라이팅: {review_content1}")
+        logging.info(f"리뷰 요약: {review_content2}")
+        
         return summary, review_content1, review_content2
     except (ValueError, KeyError) as e:
         logging.error(f"데이터 파싱 오류 (상품 ID {product_id}): {e}")
         return "리뷰를 가져오는 데 실패했습니다.", "", ""
 
-def summarize_reviews(reviews):
-    if not reviews:
-        return "리뷰가 없습니다."
 
-    reviews_text = "\n".join(reviews)
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "user", "content": f"다음 리뷰들을 2-3줄로 간결하게 요약해 주세요:\n{reviews_text}"}
-            ],
-            timeout=30
-        )
-        summary = response['choices'][0]['message']['content']
-        return summary
-    except Exception as e:
-        logging.error(f"GPT 요약 중 오류 발생: {e}")
-        traceback.print_exc()
-        return "요약 실패"
+
+def summarize_reviews(review_content):
+    """
+    리뷰 내용을 기반으로 카피라이팅과 요약 내용을 생성합니다.
+    """
+    # 긍정적인 리뷰를 바탕으로 카피라이팅 생성
+    prompt_copy = f"긍정적인 리뷰를 바탕으로 이 상품을 나타낼 수 있는 10자 내외의 강력한 카피라이팅을 작성해 주세요. 리뷰 내용: {review_content}"
+    copy_response = openai.Completion.create(
+        engine="text-davinci-003",  # 사용할 모델 선택
+        prompt=prompt_copy,
+        max_tokens=60,  # 카피라이팅 길이를 10자 내외로 제한
+        temperature=0.7
+    )
+    copywriting = copy_response.choices[0].text.strip()
+
+    # 카피라이팅에 담지 못한 추가 요약 내용 생성
+    prompt_summary = f"위 리뷰 내용을 바탕으로 카피라이팅에 담지 못한 중요한 포인트를 1~2문장으로 요약해 주세요. 리뷰 내용: {review_content}"
+    summary_response = openai.Completion.create(
+        engine="text-davinci-003",  # 사용할 모델 선택
+        prompt=prompt_summary,
+        max_tokens=100,  # 요약 길이 제한
+        temperature=0.7
+    )
+    review_summary = summary_response.choices[0].text.strip()
+
+    return copywriting, review_summary
+
 
 def main():
     logging.info("[START] 프로그램 시작")
