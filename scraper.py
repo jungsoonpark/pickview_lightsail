@@ -164,4 +164,5 @@ def main():
     logging.info
 
 
-def main():
+if __name__ == '__main__':
+    main()  # main() 함수 호출
