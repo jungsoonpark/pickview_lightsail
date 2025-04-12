@@ -140,20 +140,13 @@ def get_and_summarize_reviews(product_id):
         extracted_reviews = [review['buyerFeedback'] for review in reviews]
 
         # 리뷰 요약
-        summary = summarize_reviews(extracted_reviews)
+        review_content1, review_content2 = summarize_reviews(extracted_reviews)
         
-        # review_content1: 가장 중요한 카피라이팅
-        review_content1 = summary.split('.')[0] if summary else ""  # 첫 문장을 카피라이팅으로 사용
-        # review_content2: 나머지 요약 내용
-        review_content2 = summary if summary else ""
-        
-        logging.info(f"카피라이팅: {review_content1}")
-        logging.info(f"리뷰 요약: {review_content2}")
-        
-        return summary, review_content1, review_content2
+        return review_content1, review_content2
     except (ValueError, KeyError) as e:
         logging.error(f"데이터 파싱 오류 (상품 ID {product_id}): {e}")
-        return "리뷰를 가져오는 데 실패했습니다.", "", ""
+        return "리뷰를 가져오는 데 실패했습니다.", ""
+
 
 
 
