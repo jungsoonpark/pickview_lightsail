@@ -186,6 +186,7 @@ def summarize_reviews(reviews):
 
 
 
+
 def main():
     logging.info("[START] 프로그램 시작")
     keywords = get_keywords_from_google_sheet()  # Google Sheets에서 키워드 가져오기
