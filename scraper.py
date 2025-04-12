@@ -161,27 +161,32 @@ def summarize_reviews(reviews):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",  # 최신 모델로 변경
             messages=[
-                {"role": "user", "content": f"다음 리뷰들을 1-2문장으로 간결하게 요약해 주세요. 각 문장은 15~50자 사이로 요약해 주세요. 요약할 때 가장 중요한 핵심적인 내용을 첫 번째 문장에 담고, 나머지 내용은 두 번째 문장으로 요약해 주세요:\n{reviews_text}"}
+                {"role": "user", "content": f"너는 이 상품의 판매자야. 이 상품을 10-15자 이내의 1문장으로 이 상품의 리뷰 기반하여 특징을 카피라이팅으로 작성해줘:\n{reviews_text}"}
             ],
             timeout=30
         )
-        summary = response['choices'][0]['message']['content']
         
-        # review_content1: 요약에서 가장 중요한 부분을 핵심적으로 추출 (강렬한 문장)
-        review_content1 = summary.split('.')[0]  # 첫 문장이 아니라, 요약에서 핵심 포인트를 추출
+        # review_content1: 상품의 특징을 10-15자로 카피라이팅
+        review_content1 = response['choices'][0]['message']['content'].strip()
 
-        # review_content2: 나머지 부분을 간결하게 만들기 (1~2문장, 15~50자)
-        review_content2 = summary if len(summary) <= 50 else summary[:50] + "..."  # 길이가 너무 길면 잘라서 요약
+        # review_content2: review_content1에서 언급하지 않았던 긍정적인 특징을 15-40자 이내로 설명
+        response2 = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # 최신 모델로 변경
+            messages=[
+                {"role": "user", "content": f"너는 이 상품의 판매자야. 이 상품을 15-40자 이내의 1-2문장으로 이 상품의 리뷰 기반하여 {review_content1}에서 작성하지 않았던 긍정적인 특징을 설명해줘:\n{reviews_text}"}
+            ],
+            timeout=30
+        )
         
-        # 중복 제거: review_content2에서 review_content1이 포함되지 않도록 처리
-        if review_content1 in review_content2:
-            review_content2 = review_content2.replace(review_content1, "").strip()
+        # review_content2: 긍정적인 특징을 15-40자 이내로 작성
+        review_content2 = response2['choices'][0]['message']['content'].strip()
 
         return review_content1, review_content2
     except Exception as e:
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
         return "요약 실패", "요약 실패"
+
 
 
 
