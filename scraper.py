@@ -118,46 +118,41 @@ def scrape_product_ids(keyword):
         traceback.print_exc()
     return product_ids
 
-def get_reviews(product_id):
-    url = f"https://ko.aliexpress.com/item/{product_id}.html?reviews#nav-review"
+def get_and_summarize_reviews(product_id):
+    url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
     }
+    
     try:
         response = requests.get(url, headers=headers, timeout=30)
-    except Exception as e:
+        response.raise_for_status()  # HTTP 오류 발생 시 예외 발생
+    except requests.exceptions.RequestException as e:
         logging.error(f"HTTP 요청 오류 (상품 ID {product_id}): {e}")
-        return []
+        return "리뷰를 가져오는 데 실패했습니다.", "", ""
 
-    if response.status_code != 200:
-        logging.error(f"상품 ID {product_id} 리뷰 가져오기 오류: HTTP {response.status_code}")
-        return []
-
-    reviews = []
+    # JSON 데이터 파싱
     try:
-        soup = BeautifulSoup(response.text, 'html.parser')
+        data = response.json()
+        reviews = data['data']['evaViewList']
+        extracted_reviews = [review['buyerFeedback'] for review in reviews]
+
+        # 리뷰 요약
+        summary = summarize_reviews(extracted_reviews)
         
-        # 리뷰 요소 찾기 – 필요 시 클래스 이름 업데이트
-        review_elements = soup.find_all('div', class_='feedback-item')
-        logging.info(f"[{product_id}] 리뷰 요소 발견: {len(review_elements)}개")
-
-        for review in review_elements:
-            p_tag = review.find('p', class_='feedback-text')
-            if p_tag:
-                review_text = p_tag.get_text(strip=True)
-                reviews.append(review_text)
-                logging.info(f"[{product_id}] 추출된 리뷰: {review_text}")
-            else:
-                logging.warning(f"[{product_id}] 'feedback-text' p 태그를 찾지 못했습니다.")
-    except Exception as e:
-        logging.error(f"[{product_id}] 리뷰 추출 중 오류: {e}")
-        traceback.print_exc()
-
-    return reviews
+        # review_content1: 가장 중요한 카피라이팅
+        review_content1 = summary.split('.')[0] if summary else ""  # 첫 문장을 카피라이팅으로 사용
+        # review_content2: 나머지 요약 내용
+        review_content2 = summary if summary else ""
+        
+        return summary, review_content1, review_content2
+    except (ValueError, KeyError) as e:
+        logging.error(f"데이터 파싱 오류 (상품 ID {product_id}): {e}")
+        return "리뷰를 가져오는 데 실패했습니다.", "", ""
 
 def summarize_reviews(reviews):
     if not reviews:
-        return "리뷰가 없습니다.", ""
+        return "리뷰가 없습니다."
 
     reviews_text = "\n".join(reviews)
     try:
@@ -169,13 +164,11 @@ def summarize_reviews(reviews):
             timeout=30
         )
         summary = response['choices'][0]['message']['content']
-        # 첫 문장은 예시로 추출 (원하는 경우 다른 처리)
-        first_review = reviews[0]
-        return summary, first_review
+        return summary
     except Exception as e:
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
-        return "요약 실패", reviews[0] if reviews else ""
+        return "요약 실패"
 
 
 
