@@ -9,6 +9,7 @@ from google.oauth2.service_account import Credentials
 import logging
 import traceback
 
+
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -16,6 +17,7 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(
 SHEET_ID = os.getenv("GOOGLE_SHEET_ID")  # GitHub Secrets에서 가져오기
 JSON_KEY = os.getenv("GOOGLE_JSON_KEY")  # GitHub Secrets에서 가져오기
 READ_SHEET_NAME = 'list'  # 키워드가 있는 시트; 열: [date, keyword]
+creds = Credentials.from_service_account_info(json.loads(os.getenv("GOOGLE_JSON_KEY")), scopes=scopes)
 
 def connect_to_google_sheet(sheet_name):
     logging.info("Google Sheet 연결 시도...")
