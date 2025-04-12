@@ -62,6 +62,28 @@ def save_results_to_sheet(results):
         logging.error(f"결과 저장 실패: {e}")
         traceback.print_exc()
 
+def dynamic_selector_search(page, keyword):
+    # 다양한 셀렉터 후보를 리스트로 구성합니다.
+    selectors = [
+        'a[data-product-id]',  # 과거 자주 사용된 방식
+        'div[data-spm="itemlist"] a[href*="/item/"]',  # 리스트 형태
+        'a[href*="/item/"]'  # 좀 더 일반적인 패턴
+    ]
+    for selector in selectors:
+        try:
+            logging.info(f"[{keyword}] 셀렉터 시도: {selector}")
+            page.wait_for_selector(selector, timeout=10000)
+            elements = page.query_selector_all(selector)
+            logging.info(f"[{keyword}] 셀렉터 '{selector}'로 {len(elements)}개 요소 발견")
+            if elements:
+                return elements
+        except PlaywrightTimeoutError as te:
+            logging.warning(f"[{keyword}] 셀렉터 '{selector}' 타임아웃: {te}")
+        except Exception as e:
+            logging.error(f"[{keyword}] 셀렉터 '{selector}' 오류: {e}")
+    return []
+
+# scrape_product_ids 함수 아래에 추가
 def scrape_product_ids(keyword):
     product_ids = []
     try:
@@ -78,7 +100,7 @@ def scrape_product_ids(keyword):
             page.goto(url, timeout=60000, wait_until='domcontentloaded')
             logging.info(f"[{keyword}] 페이지 로딩 완료, 3초 대기")
             time.sleep(3)
-            elements = dynamic_selector_search(page, keyword)
+            elements = dynamic_selector_search(page, keyword)  # 이 부분에서 호출
             if not elements:
                 logging.error(f"[{keyword}] 유효한 셀렉터를 찾지 못했습니다.")
             else:
