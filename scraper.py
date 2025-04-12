@@ -75,7 +75,7 @@ def dynamic_selector_search(page, keyword):
     for selector in selectors:
         try:
             logging.info(f"[{keyword}] 셀렉터 시도: {selector}")
-            page.wait_for_selector(selector, timeout=10000)
+            page.wait_for_selector(selector, timeout=30000)
             elements = page.query_selector_all(selector)
             logging.info(f"[{keyword}] 셀렉터 '{selector}'로 {len(elements)}개 요소 발견")
             if elements:
@@ -157,31 +157,27 @@ def get_and_summarize_reviews(product_id):
 
 
 
-def summarize_reviews(review_content):
-    """
-    리뷰 내용을 기반으로 카피라이팅과 요약 내용을 생성합니다.
-    """
-    # 긍정적인 리뷰를 바탕으로 카피라이팅 생성
-    prompt_copy = f"긍정적인 리뷰를 바탕으로 이 상품을 나타낼 수 있는 10자 내외의 강력한 카피라이팅을 작성해 주세요. 리뷰 내용: {review_content}"
-    copy_response = openai.Completion.create(
-        engine="text-davinci-003",  # 사용할 모델 선택
-        prompt=prompt_copy,
-        max_tokens=60,  # 카피라이팅 길이를 10자 내외로 제한
-        temperature=0.7
-    )
-    copywriting = copy_response.choices[0].text.strip()
+def summarize_reviews(reviews):
+    if not reviews:
+        return "리뷰가 없습니다."
 
-    # 카피라이팅에 담지 못한 추가 요약 내용 생성
-    prompt_summary = f"위 리뷰 내용을 바탕으로 카피라이팅에 담지 못한 중요한 포인트를 1~2문장으로 요약해 주세요. 리뷰 내용: {review_content}"
-    summary_response = openai.Completion.create(
-        engine="text-davinci-003",  # 사용할 모델 선택
-        prompt=prompt_summary,
-        max_tokens=100,  # 요약 길이 제한
-        temperature=0.7
-    )
-    review_summary = summary_response.choices[0].text.strip()
+    reviews_text = "\n".join(reviews)
+    try:
+        # 모델을 gpt-3.5-turbo로 변경
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # 최신 모델로 변경
+            messages=[
+                {"role": "user", "content": f"다음 리뷰들을 2-3줄로 간결하게 요약해 주세요:\n{reviews_text}"}
+            ],
+            timeout=30
+        )
+        summary = response['choices'][0]['message']['content']
+        return summary
+    except Exception as e:
+        logging.error(f"GPT 요약 중 오류 발생: {e}")
+        traceback.print_exc()
+        return "요약 실패"
 
-    return copywriting, review_summary
 
 
 def main():
