@@ -2,24 +2,19 @@
 
 import requests
 from playwright.sync_api import sync_playwright
+import os
+
 
 def crawl_reviews(product_url):
     reviews = []
-    
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page()
         page.goto(product_url)
-        
-        # 리뷰 요소 선택 (예시)
         review_elements = page.query_selector_all('.review-class')  # 실제 클래스명으로 변경
-        
         for element in review_elements:
-            review_text = element.inner_text()
-            reviews.append(review_text)
-        
+            reviews.append(element.inner_text())
         browser.close()
-    
     return reviews
 
 def summarize_reviews(reviews):
