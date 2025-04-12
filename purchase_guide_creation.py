@@ -1,14 +1,19 @@
 # purchase_guide_creation.py
 
 import requests
+import os
 
 def generate_purchase_guide(product_info, review_summary):
-    # OpenAI API 키 설정
-    api_key = "YOUR_OPENAI_API_KEY"  # 실제 API 키로 변경
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
+    api_key = os.getenv("OPENAI_API_KEY")  # 환경 변수에서 API 키 가져오기
+    headers = {"Authorization": f"Bearer {api_key}"}
+    prompt = f"Generate a purchase guide for {product_info['title']} based on the following reviews: {review_summary}"
+    
+    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json={"messages": [{"role": "user", "content": prompt}]})
+    if response.status_code == 200:
+        return response.json()['choices'][0]['message']['content']
+    else:
+        print(f"API 요청 중 오류 발생: {response.status_code}")
+        return None
     
     # 구매 가이드 요청
     prompt = (
