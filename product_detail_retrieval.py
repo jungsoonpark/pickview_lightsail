@@ -1,31 +1,18 @@
 # product_detail_retrieval.py
 
 import requests
+import os
 
 def fetch_product_details(product_id):
-    # API 엔드포인트 URL (예시)
-    api_url = f"https://api.example.com/products/{product_id}"
-    
-    try:
-        # API 요청
-        response = requests.get(api_url)
-        response.raise_for_status()  # 요청이 성공하지 않으면 예외 발생
-        
-        # JSON 응답 파싱
-        product_data = response.json()
-        
-        # 필요한 정보 추출
-        product_info = {
-            "title": product_data.get("title"),
-            "price": product_data.get("price"),
-            "affiliate_link": product_data.get("affiliate_link"),
-            # 추가 정보가 필요하면 여기에 추가
-        }
-        
-        return product_info
-    
-    except requests.exceptions.RequestException as e:
-        print(f"API 요청 중 오류 발생: {e}")
+    api_url = f"https://api.your_actual_service.com/products/{product_id}"  # 실제 API URL로 변경
+    token = os.getenv("REPO_TOKEN")  # 환경 변수에서 토큰 가져오기
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.get(api_url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"API 요청 중 오류 발생: {response.status_code}")
         return None
 
 # 사용 예시
