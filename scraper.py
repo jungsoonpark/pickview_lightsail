@@ -163,20 +163,20 @@ def summarize_reviews(reviews):
 
     reviews_text = "\n".join(reviews)
     try:
-        # 모델을 gpt-3.5-turbo로 변경
+        # 모델을 gpt-3.5-turbo로 변경하여 강렬한 문장과 간결한 요약을 요청
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",  # 최신 모델로 변경
             messages=[
-                {"role": "user", "content": f"다음 리뷰들을 1-2문장으로 간결하게 요약해 주세요. 각 문장은 15~50자 사이로 요약해 주세요:\n{reviews_text}"}
+                {"role": "user", "content": f"다음 리뷰들을 1-2문장으로 간결하게 요약해 주세요. 각 문장은 15~50자 사이로 요약해 주세요. 요약할 때 가장 중요한 핵심적인 내용을 첫 번째 문장에 담고, 나머지 내용은 두 번째 문장으로 요약해 주세요:\n{reviews_text}"}
             ],
             timeout=30
         )
         summary = response['choices'][0]['message']['content']
         
-        # review_content1: 첫 문장만 가져오고 10자 이내로 제한
-        review_content1 = summary.split('.')[0][:10]  # 첫 문장을 카피라이팅으로 사용
-        
-        # review_content2: 나머지 부분을 간결하게 만들기
+        # review_content1: 요약에서 가장 중요한 부분을 핵심적으로 추출 (강렬한 문장)
+        review_content1 = summary.split('.')[0]  # 첫 문장에 핵심 포인트를 담음
+
+        # review_content2: 나머지 부분을 간결하게 만들기 (1~2문장, 15~50자)
         review_content2 = summary if len(summary) <= 50 else summary[:50] + "..."  # 길이가 너무 길면 잘라서 요약
         
         # 중복 제거: review_content2에서 review_content1이 포함되지 않도록 처리
@@ -187,7 +187,8 @@ def summarize_reviews(reviews):
     except Exception as e:
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
-        return "요약 실패"
+        return "요약 실패", "요약 실패"
+
 
 
 
