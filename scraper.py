@@ -52,11 +52,10 @@ def get_keywords_from_google_sheet():
 def save_results_to_sheet(results):
     try:
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
-        sheet.clear()
-        # 헤더 추가
-        sheet.append_row(['date', 'keyword', 'product_id', 'review_content1', 'review_content2'])
+
+        # 기존 데이터 아래에 결과를 추가합니다.
         for row in results:
-            sheet.append_row(row)
+            sheet.append_row(row)  # 각 결과를 새로운 행에 추가
         logging.info(f"구글 시트에 결과 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
     except Exception as e:
         logging.error(f"결과 저장 실패: {e}")
