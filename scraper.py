@@ -167,16 +167,28 @@ def summarize_reviews(reviews):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",  # 최신 모델로 변경
             messages=[
-                {"role": "user", "content": f"다음 리뷰들을 2-3줄로 간결하게 요약해 주세요:\n{reviews_text}"}
+                {"role": "user", "content": f"다음 리뷰들을 1-2문장으로 간결하게 요약해 주세요. 각 문장은 15~50자 사이로 요약해 주세요:\n{reviews_text}"}
             ],
             timeout=30
         )
         summary = response['choices'][0]['message']['content']
-        return summary
+        
+        # review_content1: 첫 문장만 가져오고 10자 이내로 제한
+        review_content1 = summary.split('.')[0][:10]  # 첫 문장을 카피라이팅으로 사용
+        
+        # review_content2: 나머지 부분을 간결하게 만들기
+        review_content2 = summary if len(summary) <= 50 else summary[:50] + "..."  # 길이가 너무 길면 잘라서 요약
+        
+        # 중복 제거: review_content2에서 review_content1이 포함되지 않도록 처리
+        if review_content1 in review_content2:
+            review_content2 = review_content2.replace(review_content1, "").strip()
+
+        return review_content1, review_content2
     except Exception as e:
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
         return "요약 실패"
+
 
 
 
