@@ -13,9 +13,36 @@ import traceback
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 # 구글 시트 설정
-SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
-JSON_KEY = os.getenv("GOOGLE_JSON_KEY")
+SHEET_ID = os.getenv("GOOGLE_SHEET_ID")  # GitHub Secrets에서 가져오기
+JSON_KEY = os.getenv("GOOGLE_JSON_KEY")  # GitHub Secrets에서 가져오기
 READ_SHEET_NAME = 'list'  # 키워드가 있는 시트; 열: [date, keyword]
+
+def connect_to_google_sheet(sheet_name):
+    logging.info("Google Sheet 연결 시도...")
+    try:
+        scopes = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+        creds = Credentials.from_service_account_info(json.loads(JSON_KEY), scopes=scopes)
+        client = gspread.authorize(creds)
+        sheet = client.open_by_key(SHEET_ID).worksheet(sheet_name)
+        logging.info(f'Google Sheet "{sheet_name}" 연결 성공')
+        return sheet
+    except Exception as e:
+        logging.error(f"구글 시트 연결 실패: {e}")
+        traceback.print_exc()
+        raise
+
+def get_product_ids_from_google_sheet():
+    try:
+        sheet = connect_to_google_sheet(READ_SHEET_NAME)
+        data = sheet.get_all_records()
+        today = datetime.today().strftime('%Y-%m-%d')
+        product_ids = [row['product_id'] for row in data if str(row.get('date', '')) == today]
+        logging.info(f"오늘 날짜({today}) 상품 ID 수집 완료: {product_ids}")
+        return product_ids
+    except Exception as e:
+        logging.error(f"상품 ID 수집 실패: {e}")
+        traceback.print_exc()
+        return []
 
 # 서명 생성 함수
 def generate_signature(params, app_secret):
@@ -60,34 +87,7 @@ def fetch_product_details(keyword, limit=5):
         print(f"[에러] 상품 검색 중 오류 발생: {str(e)}")
         return []
 
-def connect_to_google_sheet(sheet_name):
-    logging.info("Google Sheet 연결 시도...")
-    try:
-        scopes = ['https://www.googleapis.com/auth/spreadsheets.readonly']
-        creds = Credentials.from_service_account_file(JSON_KEY, scopes=scopes)
-        client = gspread.authorize(creds)
-        sheet = client.open_by_key(SHEET_ID).worksheet(sheet_name)
-        logging.info(f'Google Sheet "{sheet_name}" 연결 성공')
-        return sheet
-    except Exception as e:
-        logging.error(f"구글 시트 연결 실패: {e}")
-        traceback.print_exc()
-        raise
-
-def get_product_ids_from_google_sheet():
-    try:
-        sheet = connect_to_google_sheet(READ_SHEET_NAME)
-        data = sheet.get_all_records()
-        today = datetime.today().strftime('%Y-%m-%d')
-        product_ids = [row['product_id'] for row in data if str(row.get('date', '')) == today]
-        logging.info(f"오늘 날짜({today}) 상품 ID 수집 완료: {product_ids}")
-        return product_ids
-    except Exception as e:
-        logging.error(f"상품 ID 수집 실패: {e}")
-        traceback.print_exc()
-        return []
-
 # 테스트
 if __name__ == "__main__":
-    keywords = get_product_ids_from_google_sheet()
-    print(keywords)
+    product_ids = get_product_ids_from_google_sheet()
+    print(product_ids)
