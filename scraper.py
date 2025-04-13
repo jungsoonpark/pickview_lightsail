@@ -175,6 +175,43 @@ def is_korean(text):
 
 
 
+def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
+    url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=30)
+        response.raise_for_status()  # HTTP 오류 발생 시 예외 발생
+    except requests.exceptions.RequestException as e:
+        logging.error(f"HTTP 요청 오류 (상품 ID {product_id}): {e}")
+        return None  # 리뷰가 없으면 None 반환
+
+    try:
+        data = response.json()
+        reviews = data.get('data', {}).get('evaViewList', [])
+        if not reviews:  # 5점 리뷰가 없으면 해당 상품 제외
+            return None
+
+        # 5점 리뷰만 추출 (리스트가 비어 있으면 None 반환)
+        extracted_reviews += [review.get('buyerFeedback', '') for review in reviews if review.get('buyerFeedback')]
+        
+        # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
+        if len(extracted_reviews) < reviews_needed:
+            return None  # 5개 미만인 경우, 다시 추가 상품을 가져오는 로직을 구현할 수 있음
+        
+        # 리뷰 요약
+        review_content1, review_content2 = summarize_reviews(extracted_reviews)
+        
+        # 만약 summarize_reviews가 None을 반환하면 상품 건너뛰기
+        if review_content1 == "요약 실패" or review_content2 == "요약 실패":
+            return None
+
+        return review_content1, review_content2
+    except (ValueError, KeyError) as e:
+        logging.error(f"데이터 파싱 오류 (상품 ID {product_id}): {e}")
+        return None
+
+
 def summarize_reviews(reviews):
     if not reviews:
         return "리뷰가 없습니다.", ""
@@ -215,7 +252,7 @@ def summarize_reviews(reviews):
 
         # 5개 리뷰가 안 채워지면 다음 상품을 가져오는 로직 추가
         if len(review_content1) == 0 or len(review_content2) == 0:
-            return None  # 리뷰 추출 또는 요약 실패시 None 반환
+            return "요약 실패", "요약 실패"  # 실패 처리
 
         return review_content1, review_content2
     except Exception as e:
@@ -223,37 +260,6 @@ def summarize_reviews(reviews):
         traceback.print_exc()
         return "요약 실패", "요약 실패"
 
-
-def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
-    url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    
-    try:
-        response = requests.get(url, headers=headers, timeout=30)
-        response.raise_for_status()  # HTTP 오류 발생 시 예외 발생
-    except requests.exceptions.RequestException as e:
-        logging.error(f"HTTP 요청 오류 (상품 ID {product_id}): {e}")
-        return None  # 리뷰가 없으면 None 반환
-
-    try:
-        data = response.json()
-        reviews = data.get('data', {}).get('evaViewList', [])
-        if not reviews:  # 5점 리뷰가 없으면 해당 상품 제외
-            return None
-
-        # 5점 리뷰만 추출 (리스트가 비어 있으면 None 반환)
-        extracted_reviews += [review.get('buyerFeedback', '') for review in reviews if review.get('buyerFeedback')]
-        
-        # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
-        if len(extracted_reviews) < reviews_needed:
-            return None  # 5개 미만인 경우, 다시 추가 상품을 가져오는 로직을 구현할 수 있음
-        
-        review_content1, review_content2 = summarize_reviews(extracted_reviews)
-        
-        return review_content1, review_content2
-    except (ValueError, KeyError) as e:
-        logging.error(f"데이터 파싱 오류 (상품 ID {product_id}): {e}")
-        return None
 
 
 
