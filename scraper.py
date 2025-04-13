@@ -143,37 +143,95 @@ def dynamic_selector_search(page, keyword):
     return []
 
 
-# def generate_review_content2(reviews_text):
+
+
+
+# def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
+#     url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
+#     headers = {"User-Agent": "Mozilla/5.0"}
+    
 #     try:
-#         # `reviews_text`를 바탕으로 간결한 리뷰 설명 생성
-#         response = openai.ChatCompletion.create(
+#         response = requests.get(url, headers=headers, timeout=30)
+#         response.raise_for_status()  # HTTP 오류 발생 시 예외 발생
+#     except requests.exceptions.RequestException as e:
+#         logging.error(f"HTTP 요청 오류 (상품 ID {product_id}): {e}")
+#         return None  # 리뷰가 없으면 None 반환
+
+#     try:
+#         data = response.json()
+#         reviews = data.get('data', {}).get('evaViewList', [])
+#         if not reviews:  # 5점 리뷰가 없으면 해당 상품 제외
+#             return None
+
+#         # 5점 리뷰만 추출 (리스트가 비어 있으면 None 반환)
+#         extracted_reviews += [review.get('buyerFeedback', '') for review in reviews if review.get('buyerFeedback')]
+        
+#         # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
+#         if len(extracted_reviews) < reviews_needed:
+#             return None  # 5개 미만인 경우, 다시 추가 상품을 가져오는 로직을 구현할 수 있음
+        
+#         # 리뷰 요약
+#         result = summarize_reviews(extracted_reviews)
+        
+#         # result가 None이면, 즉 요약 실패한 경우
+#         if result is None:
+#             return None
+        
+#         review_content1, review_content2 = result
+        
+#         return review_content1, review_content2
+#     except (ValueError, KeyError) as e:
+#         logging.error(f"데이터 파싱 오류 (상품 ID {product_id}): {e}")
+#         return None
+
+
+# def summarize_reviews(reviews):
+#     if not reviews:
+#         return "리뷰가 없습니다.", ""
+
+#     reviews_text = "\n".join(reviews)
+#     try:
+#         # review_content1: 10-15자 이내로 간결한 카피라이팅 문구 작성
+#         response1 = openai.ChatCompletion.create(
 #             model="gpt-3.5-turbo",
 #             messages=[
-#                 {"role": "user", "content": f"당신은 한국 최고의 마케터입니다. 다음 리뷰 내용을 바탕으로 긍정적인 특징을 1~2문구로 간단히 설명해 주세요. 각 문장은 15~30자 이내로 작성해 주세요:\n{reviews_text}"}
+#                 {
+#                     "role": "user", 
+#                     "content": f"다음 리뷰들을 참고하여 이 상품의 핵심적인 장점을 10-15자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
+#                 }
 #             ],
 #             timeout=30
 #         )
-#         return response['choices'][0]['message']['content'].strip()
+        
+#         review_content1 = response1['choices'][0]['message']['content'].strip()
+
+#         # review_content1 글자수 10-15자 이내로 자연스럽게 조정 (잘라내지 않음)
+#         if len(review_content1) < 10 or len(review_content1) > 15:
+#             logging.warning(f"review_content1의 길이가 10-15자 범위 밖입니다: {review_content1}")
+        
+#         # review_content2: 상품의 추가적인 긍정적인 특징을 15-40자 이내로 자연스럽게 작성
+#         response2 = openai.ChatCompletion.create(
+#             model="gpt-3.5-turbo",
+#             messages=[
+#                 {
+#                     "role": "user", 
+#                     "content": f"이 상품의 리뷰를 바탕으로, {review_content1}에서 다루지 않은 추가적인 긍정적인 특징을 15-40자 이내로 간결한 문장으로 작성해 주세요. 리뷰 내용은 한국어로만 작성되어야 합니다: {reviews_text}"
+#                 }
+#             ],
+#             timeout=30
+#         )
+        
+#         review_content2 = response2['choices'][0]['message']['content'].strip()
+
+#         # 5개 리뷰가 안 채워지면 다음 상품을 가져오는 로직 추가
+#         if len(review_content1) == 0 or len(review_content2) == 0:
+#             return None  # 리뷰 추출 또는 요약 실패시 None 반환
+
+#         return review_content1, review_content2
 #     except Exception as e:
-#         logging.error(f"generate_review_content2 함수에서 오류 발생: {e}")
+#         logging.error(f"GPT 요약 중 오류 발생: {e}")
 #         traceback.print_exc()
-#         return "요약 실패"
-
-
-
-
-# def filter_reviews_by_language(reviews):
-#     korean_reviews = []
-#     for review in reviews:
-#         if is_korean(review):  # is_korean 함수를 사용하여 한국어인지 확인
-#             korean_reviews.append(review)
-#     return korean_reviews
-
-# def is_korean(text):
-#     return any([ord(c) > 127 for c in text])  # 텍스트에서 한글이 포함되어 있는지 확인
-
-
-
+#         return None  # 오류 발생 시 None 반환
 
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
     url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
@@ -226,7 +284,7 @@ def summarize_reviews(reviews):
             messages=[
                 {
                     "role": "user", 
-                    "content": f"다음 리뷰들을 참고하여 이 상품의 핵심적인 장점을 10-15자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
+                    "content": f"이 상품의 리뷰를 바탕으로 상품의 핵심 장점을 10-15자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
                 }
             ],
             timeout=30
@@ -234,7 +292,7 @@ def summarize_reviews(reviews):
         
         review_content1 = response1['choices'][0]['message']['content'].strip()
 
-        # review_content1 글자수 10-15자 이내로 자연스럽게 조정 (잘라내지 않음)
+        # review_content1 글자수 10-15자 이내로 자연스럽게 조정
         if len(review_content1) < 10 or len(review_content1) > 15:
             logging.warning(f"review_content1의 길이가 10-15자 범위 밖입니다: {review_content1}")
         
@@ -261,8 +319,6 @@ def summarize_reviews(reviews):
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
         return None  # 오류 발생 시 None 반환
-
-
 
 
 
