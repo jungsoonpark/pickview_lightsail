@@ -200,12 +200,14 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
             return None  # 5개 미만인 경우, 다시 추가 상품을 가져오는 로직을 구현할 수 있음
         
         # 리뷰 요약
-        review_content1, review_content2 = summarize_reviews(extracted_reviews)
+        result = summarize_reviews(extracted_reviews)
         
-        # 만약 summarize_reviews가 None을 반환하면 상품 건너뛰기
-        if review_content1 == "요약 실패" or review_content2 == "요약 실패":
+        # result가 None이면, 즉 요약 실패한 경우
+        if result is None:
             return None
-
+        
+        review_content1, review_content2 = result
+        
         return review_content1, review_content2
     except (ValueError, KeyError) as e:
         logging.error(f"데이터 파싱 오류 (상품 ID {product_id}): {e}")
@@ -217,7 +219,6 @@ def summarize_reviews(reviews):
         return "리뷰가 없습니다.", ""
 
     reviews_text = "\n".join(reviews)
-    
     try:
         # review_content1: 10-15자 이내로 자연스럽고 강렬한 카피라이팅 문장 작성
         response1 = openai.ChatCompletion.create(
@@ -233,7 +234,7 @@ def summarize_reviews(reviews):
         
         review_content1 = response1['choices'][0]['message']['content'].strip()
 
-        # review_content1 글자수 10-15자 이내로 조정, 문장이 자연스럽게 잘리도록 조정
+        # review_content1 글자수 10-15자 이내로 조정
         if len(review_content1) > 15:
             review_content1 = review_content1[:15]  # 15자 이상이면 잘라서 처리
             # 자연스럽게 문장이 끝날 수 있도록 추가 처리
@@ -254,10 +255,6 @@ def summarize_reviews(reviews):
         
         review_content2 = response2['choices'][0]['message']['content'].strip()
 
-        # review_content2가 불완전할 경우 문장 완성
-        if not review_content2.endswith("."):
-            review_content2 += " 이 제품은 고유한 특징을 가지고 있으며, 다양한 기능을 자랑합니다."
-
         # 5개 리뷰가 안 채워지면 다음 상품을 가져오는 로직 추가
         if len(review_content1) == 0 or len(review_content2) == 0:
             return None  # 리뷰 추출 또는 요약 실패시 None 반환
@@ -266,7 +263,7 @@ def summarize_reviews(reviews):
     except Exception as e:
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
-        return "요약 실패", "요약 실패"
+        return None  # 오류 발생 시 None 반환
 
 
 
