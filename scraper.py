@@ -220,13 +220,13 @@ def summarize_reviews(reviews):
 
     reviews_text = "\n".join(reviews)
     try:
-        # review_content1: 10-15자 이내로 자연스럽고 강렬한 카피라이팅 문장 작성
+        # review_content1: 10-15자 이내로 간결한 카피라이팅 문구 작성
         response1 = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {
                     "role": "user", 
-                    "content": f"이 상품의 리뷰를 바탕으로 상품의 핵심 장점을 강조하는 간결하고 강렬한 카피라이팅 문구를 10-15자 이내로 작성해주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
+                    "content": f"다음 리뷰들을 참고하여 이 상품의 핵심적인 장점을 10-15자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
                 }
             ],
             timeout=30
@@ -234,18 +234,17 @@ def summarize_reviews(reviews):
         
         review_content1 = response1['choices'][0]['message']['content'].strip()
 
-        # 만약 5점 리뷰가 있지만, 내용이 부족한 경우, 가공된 카피라이팅을 작성
+        # review_content1 글자수 10-15자 이내로 자연스럽게 조정 (잘라내지 않음)
         if len(review_content1) < 10 or len(review_content1) > 15:
             logging.warning(f"review_content1의 길이가 10-15자 범위 밖입니다: {review_content1}")
-            review_content1 = "탁월한 품질의 제품!"  # 예시: 리뷰가 부족하면 가공된 카피라이팅 사용
-
-        # review_content2: 영어가 섞이지 않도록 한국어로만 처리하고, 긍정적인 특징을 자연스럽게 15-30자 이내로 작성
+        
+        # review_content2: 상품의 추가적인 긍정적인 특징을 15-40자 이내로 자연스럽게 작성
         response2 = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {
                     "role": "user", 
-                    "content": f"이 상품에 대한 리뷰에서 {review_content1}의 내용에서 다루지 않은 긍정적인 특징을 15-40자 이내로 간결한 문장으로 작성해주세요. 리뷰는 한국어로만 작성되어야 하며, 영어는 포함되지 않도록 해주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
+                    "content": f"이 상품의 리뷰를 바탕으로, {review_content1}에서 다루지 않은 추가적인 긍정적인 특징을 15-40자 이내로 간결한 문장으로 작성해 주세요. 리뷰 내용은 한국어로만 작성되어야 합니다: {reviews_text}"
                 }
             ],
             timeout=30
@@ -262,9 +261,6 @@ def summarize_reviews(reviews):
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
         return None  # 오류 발생 시 None 반환
-
-
-
 
 
 
