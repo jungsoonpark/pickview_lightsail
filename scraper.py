@@ -149,7 +149,7 @@ def generate_review_content2(reviews_text):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "user", "content": f"다음 리뷰 내용을 바탕으로 긍정적인 특징을 간단히 설명해 주세요. 문장은 15~40자 이내로 작성해 주세요:\n{reviews_text}"}
+                {"role": "user", "content": f"당신은 한국 최고의 마케터입니다. 다음 리뷰 내용을 바탕으로 긍정적인 특징을 1~2문장으로 간단히 설명해 주세요. 각 문장은 15~30자 이내로 작성해 주세요:\n{reviews_text}"}
             ],
             timeout=30
         )
@@ -222,7 +222,7 @@ def summarize_reviews(reviews):
             messages=[
                 {
                     "role": "user", 
-                    "content": f"너는 이 상품의 판매자야. 이 상품을 10-15자 이내로 간결하고 자연스러운 카피라이팅 문장으로 이 상품의 특징을 설명해줘. 상품의 핵심적인 장점을 강조해 주세요:\n{reviews_text}"
+                    "content": f"당신은 한국 최고의 마케터입니다. 이 상품을 10-15자 이내로 간결하고 자연스러운 카피라이팅 문장으로 이 상품의 특징을 설명해줘. 상품의 핵심적인 장점을 강조해서 카피라이팅을 작성해 주세요:\n{reviews_text}"
                 }
             ],
             timeout=30
@@ -240,7 +240,7 @@ def summarize_reviews(reviews):
             messages=[
                 {
                     "role": "user", 
-                    "content": f"너는 이 상품의 판매자야. 이 상품을 15-40자 이내로 1~2문장으로 review_content1에서 다루지 않은 긍정적인 특징을 자연스럽게 설명해줘. 상품의 긍정적인 피드백을 요약하고, 이 상품이 좋은 이유를 간결하게 설명해 주세요. 리뷰는 **영어를 제외하고 한국어로만 요약**해 주세요:\n{reviews_text}"
+                    "content": f"당신은 한국 최고의 마케터입니다. 이 상품을 각 문장이 15~30자 이내의 1~2개 문장으로 review_content1에서 다루지 않은 긍정적인 특징을 자연스럽게 설명해줘. 상품의 긍정적인 피드백을 요약하고, 이 상품이 좋은 이유를 간결하게 설명해 주세요. 단순한 리뷰 요약이 아니라 이 상품이 돋보이게 카피라이팅 형식으로 작성해주세요. 리뷰는 **영어를 제외하고 한국어로만 요약**해 주세요:\n{reviews_text}"
                 }
             ],
             timeout=30
