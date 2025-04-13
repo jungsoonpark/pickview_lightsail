@@ -59,20 +59,28 @@ def process_gpt_response(guide):
     checklist = ""
     faq = ""
     
+    # 응답 내용이 예상대로 나누어졌는지 확인
+    logging.info(f"GPT 응답 내용: {guide}")
+    
     # 1. 제품 선택 포인트 추출
     selection_points_match = re.search(r'1\.\s*제품 선택 포인트\s*[:\s]*(.*?)(?=\n\s*2\.|$)', guide, re.DOTALL)
     if selection_points_match:
         selection_points = selection_points_match.group(1).strip()
-
+    
     # 2. 구매 전 체크리스트 추출
     checklist_match = re.search(r'2\.\s*구매 전 체크리스트\s*[:\s]*(.*?)(?=\n\s*3\.|$)', guide, re.DOTALL)
     if checklist_match:
         checklist = checklist_match.group(1).strip()
-
+    
     # 3. 자주 묻는 질문 추출
     faq_match = re.search(r'3\.\s*자주 묻는 질문\s*[:\s]*(.*)', guide, re.DOTALL)
     if faq_match:
         faq = faq_match.group(1).strip()
+
+    # 디버깅 로그 추가
+    logging.info(f"선택 포인트: {selection_points}")
+    logging.info(f"구매 전 체크리스트: {checklist}")
+    logging.info(f"자주 묻는 질문: {faq}")
 
     # 기본값 처리 (만약 응답이 없다면)
     selection_points = selection_points if selection_points else "선택 포인트 정보를 확인하세요."
@@ -80,6 +88,7 @@ def process_gpt_response(guide):
     faq = faq if faq else "자주 묻는 질문을 확인하세요."
 
     return selection_points, checklist, faq
+
 
 # GPT 응답을 받아 HTML 템플릿 생성 함수
 def generate_buying_guide(keyword, guide):
