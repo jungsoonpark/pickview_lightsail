@@ -49,7 +49,7 @@ def generate_buying_guide(keyword):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "user", "content": f"다음 키워드에 대해 3개의 섹션으로 된 구매 가이드를 작성해주세요.\n\n1. 제품 선택 포인트\n2. 구매 전 체크리스트\n3. 자주 묻는 질문\n\n키워드: {keyword}"}
+                {"role": "user", "content": f"다음 키워드에 대해, 상품을 구매하는 데 중요한 정보를 바탕으로 3개의 주요 섹션을 작성해주세요.\n\n1. 제품 선택 포인트: 상품의 핵심 특징과 무엇을 고려해야 하는지 설명해 주세요. \n2. 구매 전 체크리스트: 구매 전 확인해야 할 항목들\n3. 자주 묻는 질문: 고객들이 자주 묻는 질문에 대해 답해주세요.\n\n키워드: {keyword}"}
             ],
             timeout=30
         )
@@ -62,11 +62,11 @@ def generate_buying_guide(keyword):
         faq = ""
 
         if len(guide) > 0:
-            selection_points = guide[0].split(':')[1].strip() if len(guide[0].split(':')) > 1 else "선택 포인트 정보 없음"
+            selection_points = guide[0].split(':')[1].strip() if len(guide[0].split(':')) > 1 else "이 상품의 핵심적인 장점을 고려하세요."
         if len(guide) > 1:
-            checklist = guide[1].split(':')[1].strip() if len(guide[1].split(':')) > 1 else "체크리스트 정보 없음"
+            checklist = guide[1].split(':')[1].strip() if len(guide[1].split(':')) > 1 else "구매 전 확인해야 할 항목들을 체크하세요."
         if len(guide) > 2:
-            faq = guide[2].split(':')[1].strip() if len(guide[2].split(':')) > 1 else "FAQ 정보 없음"
+            faq = guide[2].split(':')[1].strip() if len(guide[2].split(':')) > 1 else "자주 묻는 질문을 확인하세요."
         
         # 구매 가이드가 정상적으로 생성되었다면 딕셔너리 형태로 반환
         return {
@@ -78,6 +78,8 @@ def generate_buying_guide(keyword):
     except Exception as e:
         logging.error(f"GPT 요청 중 오류 발생: {e}")
         return None
+
+
 
 def save_results_to_sheet(results):
     try:
