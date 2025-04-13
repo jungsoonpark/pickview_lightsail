@@ -27,7 +27,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 def connect_to_google_sheet(sheet_name):
     try:
         scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        creds = Credentials.from_service_account_file('path/to/your/service_account_file.json', scopes=scopes)
+        creds = Credentials.from_service_account_file(JSON_KEY_PATH, scopes=scopes)
         client = gspread.authorize(creds)
         sheet = client.open_by_key('your-google-sheet-id').worksheet(sheet_name)
         logging.info(f'Google Sheet "{sheet_name}" 연결 성공')
