@@ -55,7 +55,7 @@ def generate_buying_guide(keyword):
     try:
         # GPT에게 구매 가이드를 요청
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=[
                 {
                     "role": "user", 
@@ -67,7 +67,7 @@ def generate_buying_guide(keyword):
                                f"키워드: {keyword}"
                 }
             ],
-            timeout=30
+            timeout=60
         )
 
         guide = response['choices'][0]['message']['content'].split("\n")  # 항목 구분을 위해 줄바꿈으로 나눔
