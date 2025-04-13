@@ -29,8 +29,8 @@ def connect_to_google_sheet(sheet_name):
         scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         creds = Credentials.from_service_account_file(JSON_KEY_PATH, scopes=scopes)
         client = gspread.authorize(creds)
-        sheet = client.open_by_key(SHEET_ID.worksheet(sheet_name)
-        logging.info(f'Google Sheet "{sheet_name}" 연결 성공')
+        sheet = client.open_by_key(SHEET_ID.worksheet(READ_SHEET_NAME))
+        logging.info(f'Google Sheet "{READ_SHEET_NAME}" 연결 성공')
         return sheet
     except Exception as e:
         logging.error(f"구글 시트 연결 실패: {e}")
