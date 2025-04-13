@@ -1,0 +1,31 @@
+name: Run Affiliate API Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 3 * * *'  # 매일 새벽 3시에 실행
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pandas requests gspread google-auth google-auth-oauthlib google-auth-httplib2
+
+      - name: Create JSON key file from secret
+        run: echo "${{ secrets.GOOGLE_JSON_KEY }}" > key.json
+
+      - name: Run affiliate_api
+        run: python3 affiliate_api.py
