@@ -76,21 +76,35 @@ def generate_buying_guide(keyword):
 
         logging.info(f"GPT 응답 내용: {guide}")  # 로그로 GPT 응답 확인
         
-        # 각 항목을 추출하는 로직
+        guide = response['choices'][0]['message']['content']  # 응답을 직접 문자열로 처리
+        
+        # 각 항목을 정확하게 추출하기 위한 방식
         selection_points = ""
         checklist = ""
         faq = ""
         
-        # 구체적으로 섹션을 처리
-        if len(guide) > 0:
-            selection_points = guide[0].strip()
-            logging.info(f"제품 선택 포인트: {selection_points}")
-        if len(guide) > 1:
-            checklist = guide[1].strip()
-            logging.info(f"구매 전 체크리스트: {checklist}")
-        if len(guide) > 2:
-            faq = guide[2].strip()
-            logging.info(f"자주 묻는 질문: {faq}")
+        # "1. 제품 선택 포인트", "2. 구매 전 체크리스트", "3. 자주 묻는 질문" 구분을 위해 정규 표현식 사용
+        import re
+        
+        # 1. 제품 선택 포인트 추출
+        selection_points_match = re.search(r'1\.\s*제품 선택 포인트\s*[:\s]*(.*?)(?=\n\s*2\.|$)', guide, re.DOTALL)
+        if selection_points_match:
+            selection_points = selection_points_match.group(1).strip()
+        
+        # 2. 구매 전 체크리스트 추출
+        checklist_match = re.search(r'2\.\s*구매 전 체크리스트\s*[:\s]*(.*?)(?=\n\s*3\.|$)', guide, re.DOTALL)
+        if checklist_match:
+            checklist = checklist_match.group(1).strip()
+        
+        # 3. 자주 묻는 질문 추출
+        faq_match = re.search(r'3\.\s*자주 묻는 질문\s*[:\s]*(.*)', guide, re.DOTALL)
+        if faq_match:
+            faq = faq_match.group(1).strip()
+        
+        # 각 값 출력
+        logging.info(f"제품 선택 포인트: {selection_points}")
+        logging.info(f"구매 전 체크리스트: {checklist}")
+        logging.info(f"자주 묻는 질문: {faq}")
         
         # 결과 HTML 템플릿 구성
         buying_guide = f"""
@@ -100,10 +114,8 @@ def generate_buying_guide(keyword):
             <p><strong>3. 자주 묻는 질문</strong>: {faq if faq else '정보 부족, 자주 묻는 질문을 확인하세요.'}</p>
         """
         
+        # 최종 결과 로그 출력
         logging.info(f"최종 구매 가이드: {buying_guide}")
-
-     
-        return buying_guide
 
     except Exception as e:
         logging.error(f"GPT 요청 중 오류 발생: {e}")
