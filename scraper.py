@@ -162,15 +162,15 @@ def dynamic_selector_search(page, keyword):
 
 
 
-def filter_reviews_by_language(reviews):
-    korean_reviews = []
-    for review in reviews:
-        if is_korean(review):  # is_korean 함수를 사용하여 한국어인지 확인
-            korean_reviews.append(review)
-    return korean_reviews
+# def filter_reviews_by_language(reviews):
+#     korean_reviews = []
+#     for review in reviews:
+#         if is_korean(review):  # is_korean 함수를 사용하여 한국어인지 확인
+#             korean_reviews.append(review)
+#     return korean_reviews
 
-def is_korean(text):
-    return any([ord(c) > 127 for c in text])  # 텍스트에서 한글이 포함되어 있는지 확인
+# def is_korean(text):
+#     return any([ord(c) > 127 for c in text])  # 텍스트에서 한글이 포함되어 있는지 확인
 
 
 
@@ -226,7 +226,7 @@ def summarize_reviews(reviews):
             messages=[
                 {
                     "role": "user", 
-                     "content": f"당신은 한국 최고의 마케터입니다. 이 상품의 리뷰를 바탕으로 상품의 핵심 장점을 강조하는 간결하고 강렬한 카피라이팅 문구를 10-15자 이내로 작성해주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
+                    "content": f"이 상품의 리뷰를 바탕으로 상품의 핵심 장점을 강조하는 간결하고 강렬한 카피라이팅 문구를 10-15자 이내로 작성해주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
                 }
             ],
             timeout=30
@@ -234,10 +234,10 @@ def summarize_reviews(reviews):
         
         review_content1 = response1['choices'][0]['message']['content'].strip()
 
-        # review_content1 글자수 10-15자 이내로 조정 (자르는 부분 제거)
+        # 만약 5점 리뷰가 있지만, 내용이 부족한 경우, 가공된 카피라이팅을 작성
         if len(review_content1) < 10 or len(review_content1) > 15:
-            # 글자 수가 10-15자 범위에 맞지 않으면 GPT에서 다시 수정하도록 유도하는 방법이 필요함
             logging.warning(f"review_content1의 길이가 10-15자 범위 밖입니다: {review_content1}")
+            review_content1 = "탁월한 품질의 제품!"  # 예시: 리뷰가 부족하면 가공된 카피라이팅 사용
 
         # review_content2: 영어가 섞이지 않도록 한국어로만 처리하고, 긍정적인 특징을 자연스럽게 15-30자 이내로 작성
         response2 = openai.ChatCompletion.create(
@@ -245,7 +245,7 @@ def summarize_reviews(reviews):
             messages=[
                 {
                     "role": "user", 
-                    "content": f"당신은 한국 최고의 마케터입니다. 이 상품에 대한 리뷰에서 {review_content1}의 내용에서 다루지 않은 긍정적인 특징을 15-40자 이내로 간결한 문장으로 작성해주세요. 리뷰는 한국어로만 작성되어야 하며, 영어는 포함되지 않도록 해주세요.:\n{reviews_text}"
+                    "content": f"이 상품에 대한 리뷰에서 {review_content1}의 내용에서 다루지 않은 긍정적인 특징을 15-40자 이내로 간결한 문장으로 작성해주세요. 리뷰는 한국어로만 작성되어야 하며, 영어는 포함되지 않도록 해주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
                 }
             ],
             timeout=30
@@ -261,7 +261,7 @@ def summarize_reviews(reviews):
     except Exception as e:
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
-        return "요약 실패", "요약 실패"
+        return None  # 오류 발생 시 None 반환
 
 
 
