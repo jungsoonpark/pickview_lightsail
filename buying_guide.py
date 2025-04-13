@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 import json
 import os
+import re
  
  # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -51,80 +52,50 @@ def get_keywords_from_google_sheet():
 
 # GPT를 통해 구매 가이드 생성
 
-def generate_buying_guide(keyword):
-    try:
-        # GPT에게 구매 가이드를 요청
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {
-                    "role": "user", 
-                    "content": f"당신은 매우 경험이 풍부한 블로거입니다. 아래와 같은 정보들을 바탕으로 {keyword}에 대한 구매 가이드를 작성해주세요.\n\n"
-                               "1. 제품 선택 포인트: 이 상품을 선택할 때 중요한 특징과 고려해야 할 사항을 300자 내외로 자세히 설명해 주세요.\n"
-                               "2. 구매 전 체크리스트: 구매 전 확인해야 할 중요한 항목을 200자 내외로 설명해 주세요. 주요 확인 사항과 주의할 점을 강조해주세요.\n"
-                               "3. 자주 묻는 질문: 이 상품을 구매하기 전에 자주 묻는 질문에 대해 300자 내외로 답변해 주세요. 가장 일반적인 궁금증을 포함시켜 주세요.\n"
-                               "글은 블로그 스타일로, **친근하고 쉽게 이해할 수 있는 말투**로 작성해 주세요. 마치 독자에게 직접 이야기하는 느낌으로 작성해주세요.\n"
-                               f"키워드: {keyword}"
-                }
-            ],
-            timeout=60
-        )
-        
-        
-     
-        guide = response['choices'][0]['message']['content']  # 전체 응답을 받음
+# GPT 응답 처리 함수
+def process_gpt_response(guide):
+    # 응답을 기준으로 각 항목을 추출
+    selection_points = ""
+    checklist = ""
+    faq = ""
+    
+    # 1. 제품 선택 포인트 추출
+    selection_points_match = re.search(r'1\.\s*제품 선택 포인트\s*[:\s]*(.*?)(?=\n\s*2\.|$)', guide, re.DOTALL)
+    if selection_points_match:
+        selection_points = selection_points_match.group(1).strip()
 
-        logging.info(f"GPT 응답 내용: {guide}")  # 로그로 GPT 응답 확인
-        
-        guide = response['choices'][0]['message']['content']  # 응답을 직접 문자열로 처리
-        
-        # 각 항목을 정확하게 추출하기 위한 방식
-        selection_points = ""
-        checklist = ""
-        faq = ""
-        
-        # "1. 제품 선택 포인트", "2. 구매 전 체크리스트", "3. 자주 묻는 질문" 구분을 위해 정규 표현식 사용
-        import re
-        
-        # 1. 제품 선택 포인트 추출
-        selection_points_match = re.search(r'1\.\s*제품 선택 포인트\s*[:\s]*(.*?)(?=\n\s*2\.|$)', guide, re.DOTALL)
-        if selection_points_match:
-            selection_points = selection_points_match.group(1).strip()
-        
-        # 2. 구매 전 체크리스트 추출
-        checklist_match = re.search(r'2\.\s*구매 전 체크리스트\s*[:\s]*(.*?)(?=\n\s*3\.|$)', guide, re.DOTALL)
-        if checklist_match:
-            checklist = checklist_match.group(1).strip()
-        
-        # 3. 자주 묻는 질문 추출
-        faq_match = re.search(r'3\.\s*자주 묻는 질문\s*[:\s]*(.*)', guide, re.DOTALL)
-        if faq_match:
-            faq = faq_match.group(1).strip()
-        
-        # 각 값 출력
-        logging.info(f"제품 선택 포인트: {selection_points}")
-        logging.info(f"구매 전 체크리스트: {checklist}")
-        logging.info(f"자주 묻는 질문: {faq}")
-        
-        # 결과 HTML 템플릿 구성
-        buying_guide = f"""
-            <h2>{keyword} 구매 가이드</h2>
-            <p><strong>1. 제품 선택 포인트</strong>: {selection_points if selection_points else '정보 부족, 선택 포인트를 확인하세요.'}</p>
-            <p><strong>2. 구매 전 체크리스트</strong>: {checklist if checklist else '정보 부족, 체크리스트를 확인하세요.'}</p>
-            <p><strong>3. 자주 묻는 질문</strong>: {faq if faq else '정보 부족, 자주 묻는 질문을 확인하세요.'}</p>
-        """
-        
-        # 최종 결과 로그 출력
-        logging.info(f"최종 구매 가이드: {buying_guide}")
+    # 2. 구매 전 체크리스트 추출
+    checklist_match = re.search(r'2\.\s*구매 전 체크리스트\s*[:\s]*(.*?)(?=\n\s*3\.|$)', guide, re.DOTALL)
+    if checklist_match:
+        checklist = checklist_match.group(1).strip()
 
-    except Exception as e:
-        logging.error(f"GPT 요청 중 오류 발생: {e}")
-        return None
+    # 3. 자주 묻는 질문 추출
+    faq_match = re.search(r'3\.\s*자주 묻는 질문\s*[:\s]*(.*)', guide, re.DOTALL)
+    if faq_match:
+        faq = faq_match.group(1).strip()
 
+    # 기본값 처리 (만약 응답이 없다면)
+    selection_points = selection_points if selection_points else "선택 포인트 정보를 확인하세요."
+    checklist = checklist if checklist else "체크리스트 정보를 확인하세요."
+    faq = faq if faq else "자주 묻는 질문을 확인하세요."
 
+    return selection_points, checklist, faq
 
+# GPT 응답을 받아 HTML 템플릿 생성 함수
+def generate_buying_guide(keyword, guide):
+    # 응답을 처리하여 각 항목을 추출
+    selection_points, checklist, faq = process_gpt_response(guide)
+    
+    # 결과 HTML 템플릿 구성
+    buying_guide = f"""
+        <h2>{keyword} 구매 가이드</h2>
+        <p><strong>1. 제품 선택 포인트</strong>: {selection_points}</p>
+        <p><strong>2. 구매 전 체크리스트</strong>: {checklist}</p>
+        <p><strong>3. 자주 묻는 질문</strong>: {faq}</p>
+    """
 
-
+    # 결과를 반환
+    return buying_guide
 
 # 구글 시트에 결과 저장하는 함수
 def save_results_to_sheet(results):
@@ -160,7 +131,7 @@ def main():
         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
         
         # 구매 가이드 생성
-        buying_guide_html = generate_buying_guide(keyword)
+        buying_guide_html = generate_buying_guide(keyword, "여기에 GPT 응답 문자열을 넣어주세요.")
         if buying_guide_html:
             results.append([today, keyword, buying_guide_html])  # 결과에 HTML 형식으로 저장
         else:
