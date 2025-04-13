@@ -72,20 +72,28 @@ def generate_buying_guide(keyword):
         
         
      
-        guide = response['choices'][0]['message']['content'].split("\n")  # 항목 구분을 위해 줄바꿈으로 나눔
+        guide = response['choices'][0]['message']['content']  # 전체 응답을 받음
 
         logging.info(f"GPT 응답 내용: {guide}")  # 로그로 GPT 응답 확인
-
-        # 각 섹션에 대해 기본값을 할당하거나 응답을 처리
-        selection_points = guide[1]
-        checklist = guide[2]
-        faq = guide[3]
-
+        
+        # 각 항목을 추출하는 로직
+        selection_points = ""
+        checklist = ""
+        faq = ""
+        
+        # "제품 선택 포인트", "구매 전 체크리스트", "자주 묻는 질문" 기준으로 내용을 추출
+        if "1. 제품 선택 포인트" in guide:
+            selection_points = guide.split("1. 제품 선택 포인트")[1].split("2. 구매 전 체크리스트")[0].strip()
+        if "2. 구매 전 체크리스트" in guide:
+            checklist = guide.split("2. 구매 전 체크리스트")[1].split("3. 자주 묻는 질문")[0].strip()
+        if "3. 자주 묻는 질문" in guide:
+            faq = guide.split("3. 자주 묻는 질문")[1].strip()
+        
         # 로그로 확인
         logging.info(f"제품 선택 포인트: {selection_points}")
         logging.info(f"구매 전 체크리스트: {checklist}")
         logging.info(f"자주 묻는 질문: {faq}")
-
+        
         # 결과 HTML 템플릿 구성
         buying_guide = f"""
             <h2>{keyword} 구매 가이드</h2>
@@ -93,7 +101,10 @@ def generate_buying_guide(keyword):
             <p><strong>2. 구매 전 체크리스트</strong>: {checklist}</p>
             <p><strong>3. 자주 묻는 질문</strong>: {faq}</p>
         """
+        
+        logging.info(f"최종 구매 가이드: {buying_guide}")
 
+     
         return buying_guide
 
     except Exception as e:
