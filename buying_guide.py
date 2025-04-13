@@ -54,13 +54,19 @@ def generate_buying_guide(keyword):
             timeout=30
         )
         
-        # 반환되는 텍스트를 구체적인 형식으로 파싱
         guide = response['choices'][0]['message']['content'].strip().split('\n')
         
         # '1. 제품 선택 포인트'와 같은 제목으로 구분하고, 적절한 데이터 분리
-        selection_points = guide[0].split(':')[1].strip() if len(guide) > 0 else ""
-        checklist = guide[1].split(':')[1].strip() if len(guide) > 1 else ""
-        faq = guide[2].split(':')[1].strip() if len(guide) > 2 else ""
+        selection_points = ""
+        checklist = ""
+        faq = ""
+        
+        if len(guide) > 0:
+            selection_points = guide[0].split(':')[1].strip() if len(guide[0].split(':')) > 1 else ""
+        if len(guide) > 1:
+            checklist = guide[1].split(':')[1].strip() if len(guide[1].split(':')) > 1 else ""
+        if len(guide) > 2:
+            faq = guide[2].split(':')[1].strip() if len(guide[2].split(':')) > 1 else ""
         
         # 구매 가이드가 정상적으로 생성되었다면 딕셔너리 형태로 반환
         return {
@@ -72,6 +78,7 @@ def generate_buying_guide(keyword):
     except Exception as e:
         logging.error(f"GPT 요청 중 오류 발생: {e}")
         return None
+
 
 
 
