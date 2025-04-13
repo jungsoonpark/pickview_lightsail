@@ -226,7 +226,7 @@ def summarize_reviews(reviews):
             messages=[
                 {
                     "role": "user", 
-                     "content": f"당신은 한국 최고의 마케터입니다. 상품의 핵심적인 특징을 10-15자 이내의 문구로 작성해 주세요. 리뷰 내용은 {reviews_text}입니다."
+                     "content": f"이 상품의 리뷰를 바탕으로 상품의 핵심 장점을 강조하는 간결하고 강렬한 카피라이팅 문구를 10-15자 이내로 작성해주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
                 }
             ],
             timeout=30
