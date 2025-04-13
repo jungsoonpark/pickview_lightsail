@@ -157,28 +157,30 @@ def summarize_reviews(reviews):
 
     reviews_text = "\n".join(reviews)
     try:
-        # 모델을 gpt-3.5-turbo로 변경하여 강렬한 문장과 간결한 요약을 요청
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # 최신 모델로 변경
+        # review_content1: 10-15자 내외로 핵심적인 카피라이팅 작성
+        response1 = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
             messages=[
-                {"role": "user", "content": f"너는 이 상품의 판매자야. 이 상품을 10-15자 이내의 1문장으로 이 상품의 리뷰 기반하여 특징을 카피라이팅으로 작성해줘:\n{reviews_text}"}
+                {
+                    "role": "user", 
+                    "content": f"너는 이 상품의 판매자야. 이 상품을 10-15자 이내로 간결하고 강렬한 카피라이팅 문장으로 이 상품의 특징을 설명해줘. 사용자가 이 상품을 좋아할 만한 핵심적인 장점을 강조해 주세요:\n{reviews_text}"
+                }
             ],
             timeout=30
         )
-        
-        # review_content1: 상품의 특징을 10-15자로 카피라이팅
-        review_content1 = response['choices'][0]['message']['content'].strip()
+        review_content1 = response1['choices'][0]['message']['content'].strip()
 
-        # review_content2: review_content1에서 언급하지 않았던 긍정적인 특징을 15-40자 이내로 설명
+        # review_content2: review_content1에서 다루지 않은 긍정적인 특징을 15-40자 이내로 작성
         response2 = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # 최신 모델로 변경
+            model="gpt-3.5-turbo",
             messages=[
-                {"role": "user", "content": f"너는 이 상품의 판매자야. 이 상품을 15-40자 이내의 1-2문장으로 이 상품의 리뷰 기반하여 {review_content1}에서 작성하지 않았던 긍정적인 특징을 설명해줘:\n{reviews_text}"}
+                {
+                    "role": "user", 
+                    "content": f"너는 이 상품의 판매자야. 이 상품을 15-40자 이내로 1~2문장으로 review_content1에서 다루지 않은 긍정적인 특징을 간결하게 설명해줘. 상품에 대한 긍정적인 피드백을 요약하고, 이 상품이 좋은 이유를 강조해주세요:\n{reviews_text}"
+                }
             ],
             timeout=30
         )
-        
-        # review_content2: 긍정적인 특징을 15-40자 이내로 작성
         review_content2 = response2['choices'][0]['message']['content'].strip()
 
         return review_content1, review_content2
@@ -186,6 +188,7 @@ def summarize_reviews(reviews):
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
         return "요약 실패", "요약 실패"
+
 
 
 
