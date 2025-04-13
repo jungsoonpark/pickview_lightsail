@@ -45,18 +45,27 @@ def get_keywords_from_google_sheet():
 
 def generate_buying_guide(keyword):
     try:
-        # GPT로 구매 가이드 생성
+        # GPT로 구매 가이드 생성 (블로거 역할과 말투 설정)
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "user", "content": f"다음 키워드에 대해, 상품을 구매하는 데 알아야 할 정보를 3개의 주요 섹션으로 작성해주세요.\n\n1. 제품 선택 포인트: 상품 구매시 핵심 특징과 무엇을 고려해야 하는지 300자 내외로 설명해 주세요. \n2. 구매 전 체크리스트: 구매 전 확인해야 할 항목들을 200자 내외로 설명해주세요\n3. 자주 묻는 질문: 제품을 구매할 때 자주 묻는 질문에 대해 300자 내외로 답해주세요.\n\n키워드: {keyword}"}
+                {"role": "user", "content": f"""
+                당신은 인기 있는 블로거입니다. 다음 키워드에 현명한 구매를 위한 블로그 글을 작성해주세요. 
+                1. 제품 선택 포인트: 제품 구매 시 핵심 특징과 무엇을 고려해야 하는지 300자 내외로 설명해 주세요. 
+                2. 구매 전 체크리스트: 구매 전 확인해야 할 항목들을 200자 내외로 설명해주세요.
+                3. 자주 묻는 질문: 제품을 구매할 때 자주 묻는 질문에 대해 300자 내외로 답해주세요.
+
+                글은 블로그 스타일로, **친근하고 쉽게 이해할 수 있는 말투**로 **전문적으로** 작성해 주세요. 마치 독자에게 직접 이야기하는 느낌으로 작성해주세요.
+                리뷰를 바탕으로, 고객들이 궁금해할만한 사항도 함께 작성해 주세요.
+                키워드: {keyword}
+                """}
             ],
             timeout=30
         )
         
         guide = response['choices'][0]['message']['content'].strip().split('\n')
 
-        # '1. 제품 선택 포인트'와 같은 제목으로 구분하고, 적절한 데이터 분리
+        # 구체적으로 내용 파싱
         selection_points = ""
         checklist = ""
         faq = ""
@@ -64,7 +73,7 @@ def generate_buying_guide(keyword):
         if len(guide) > 0:
             selection_points = guide[0].split(':')[1].strip() if len(guide[0].split(':')) > 1 else "이 상품의 핵심적인 장점을 고려하세요."
         if len(guide) > 1:
-            checklist = guide[1].split(':')[1].strip() if len(guide[1].split(':')) > 1 else "구매 전 확인해야 할 항목들을 체크하세요."
+            checklist = guide[1].split(':')[1].strip() if len(guide[1].split(':')) > 1 else "구매 전 체크리스트를 확인하세요."
         if len(guide) > 2:
             faq = guide[2].split(':')[1].strip() if len(guide[2].split(':')) > 1 else "자주 묻는 질문을 확인하세요."
         
@@ -78,6 +87,8 @@ def generate_buying_guide(keyword):
     except Exception as e:
         logging.error(f"GPT 요청 중 오류 발생: {e}")
         return None
+
+
 
 
 
