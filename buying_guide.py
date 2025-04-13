@@ -122,12 +122,34 @@ def save_results_to_sheet(results):
 
 
 
+def save_results_to_sheet(results):
+     try:
+         sheet = connect_to_google_sheet(READ_SHEET_NAME)  # 'list' 시트에 저장
+         for idx, row in enumerate(results, start=2):  # start=2로 첫 번째 데이터는 2번 행에 저장
+             keyword = row[1]  # 키워드
+             buying_guide = row[2]  # 구매 가이드
+             
+             # HTML 형식으로 변환
+             html_content = f"""
+            <p><strong>1. 제품 선택 포인트</strong>: {buying_guide['selection_points']}</p>
+             <p><strong>2. 구매 전 체크리스트</strong>: {buying_guide['checklist']}</p>
+             <p><strong>3. 자주 묻는 질문</strong>: {buying_guide['faq']}</p>
+             """
+             
+             # 'list' 시트의 C열에 HTML 저장
+             sheet.update_cell(idx, 3, html_content)  # idx는 행 번호를 자동으로 증가시키며 지정
+ 
+         logging.info(f"결과 저장 완료")
+     except Exception as e:
+         logging.error(f"결과 저장 실패: {e}")
+
 
 
 
              
 
-def main():
+
+ def main():
      logging.info("[START] 프로그램 시작")
      keywords = get_keywords_from_google_sheet()  # Google Sheets에서 키워드 가져오기
      if not keywords:
