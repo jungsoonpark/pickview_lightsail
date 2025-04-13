@@ -5,6 +5,7 @@ import logging
 import time
 from datetime import datetime
 import json
+import os
  
  # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
