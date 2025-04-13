@@ -81,25 +81,23 @@ def generate_buying_guide(keyword):
         checklist = ""
         faq = ""
         
-        # "제품 선택 포인트", "구매 전 체크리스트", "자주 묻는 질문" 기준으로 내용을 추출
-        if "1. 제품 선택 포인트" in guide:
-            selection_points = guide.split("1. 제품 선택 포인트")[1].split("2. 구매 전 체크리스트")[0].strip()
-        if "2. 구매 전 체크리스트" in guide:
-            checklist = guide.split("2. 구매 전 체크리스트")[1].split("3. 자주 묻는 질문")[0].strip()
-        if "3. 자주 묻는 질문" in guide:
-            faq = guide.split("3. 자주 묻는 질문")[1].strip()
-        
-        # 로그로 확인
-        logging.info(f"제품 선택 포인트: {selection_points}")
-        logging.info(f"구매 전 체크리스트: {checklist}")
-        logging.info(f"자주 묻는 질문: {faq}")
+        # 구체적으로 섹션을 처리
+        if len(guide) > 0:
+            selection_points = guide[0].strip()
+            logging.info(f"제품 선택 포인트: {selection_points}")
+        if len(guide) > 1:
+            checklist = guide[1].strip()
+            logging.info(f"구매 전 체크리스트: {checklist}")
+        if len(guide) > 2:
+            faq = guide[2].strip()
+            logging.info(f"자주 묻는 질문: {faq}")
         
         # 결과 HTML 템플릿 구성
         buying_guide = f"""
             <h2>{keyword} 구매 가이드</h2>
-            <p><strong>1. 제품 선택 포인트</strong>: {selection_points}</p>
-            <p><strong>2. 구매 전 체크리스트</strong>: {checklist}</p>
-            <p><strong>3. 자주 묻는 질문</strong>: {faq}</p>
+            <p><strong>1. 제품 선택 포인트</strong>: {selection_points if selection_points else '정보 부족, 선택 포인트를 확인하세요.'}</p>
+            <p><strong>2. 구매 전 체크리스트</strong>: {checklist if checklist else '정보 부족, 체크리스트를 확인하세요.'}</p>
+            <p><strong>3. 자주 묻는 질문</strong>: {faq if faq else '정보 부족, 자주 묻는 질문을 확인하세요.'}</p>
         """
         
         logging.info(f"최종 구매 가이드: {buying_guide}")
