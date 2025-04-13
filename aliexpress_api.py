@@ -11,17 +11,16 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 import openai
-openai.api_key = os.getenv("OPENAI_API_KEY")  # GitHub Secrets로부터 가져옴
+openai.api_key = os.getenv("OPENAI_API_KEY")  # GitHub Secrets에서 주입
 
-# GitHub Secrets로부터 환경 변수로 설정
+# GitHub Secrets로부터 환경 변수 설정
 ALIEXPRESS_ACCESS_TOKEN = os.getenv("ALIEXPRESS_ACCESS_TOKEN")
 ALIEXPRESS_API_KEY = os.getenv("ALIEXPRESS_API_KEY")
 ALIEXPRESS_API_SECRET = os.getenv("ALIEXPRESS_API_SECRET")
 SHEET_ID = os.getenv("SHEET_ID")
 READ_SHEET_NAME = os.getenv("READ_SHEET_NAME", "list")
 RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
-# JSON_KEY_PATH는 서버 내 파일 경로로 지정 (파일은 별도 배포 방식으로 관리)
-JSON_KEY_PATH = os.getenv("JSON_KEY_PATH", "/home/ubuntu/key.json")
+# GOOGLE_JSON_KEY에 서비스 계정 JSON 문자열을 직접 넣어두었음
 
 # 로깅 설정
 logging.basicConfig(
@@ -44,13 +43,26 @@ def generate_signature(params, app_secret):
     return sign
 
 # -----------------------------------------
-# Google Sheet 관련 함수
+# Google Sheet 관련 함수 (GOOGLE_JSON_KEY 직접 사용)
 # -----------------------------------------
+def get_google_creds():
+    try:
+        scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        google_key_content = os.getenv("GOOGLE_JSON_KEY")
+        if not google_key_content:
+            raise ValueError("GOOGLE_JSON_KEY 환경 변수가 설정되어 있지 않습니다.")
+        info = json.loads(google_key_content)
+        creds = Credentials.from_service_account_info(info, scopes=scopes)
+        return creds
+    except Exception as e:
+        logging.error(f"Google Credentials 생성 실패: {e}")
+        traceback.print_exc()
+        raise
+
 def connect_to_google_sheet(sheet_name):
     logging.info("Google Sheet 연결 시도...")
     try:
-        scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        creds = Credentials.from_service_account_file(JSON_KEY_PATH, scopes=scopes)
+        creds = get_google_creds()
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).worksheet(sheet_name)
         logging.info(f'Google Sheet "{sheet_name}" 연결 성공')
@@ -61,7 +73,7 @@ def connect_to_google_sheet(sheet_name):
         raise
 
 def get_product_rows_from_sheet():
-    """RESULT_SHEET_NAME에서 오늘 날짜의 모든 행(상품 ID 포함)을 가져옵니다."""
+    """RESULT 시트에서 오늘 날짜의 모든 행(상품 ID 포함)을 가져옵니다."""
     try:
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
         records = sheet.get_all_records()
@@ -78,6 +90,7 @@ def save_results_to_sheet(results):
     try:
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
         sheet.clear()
+        # 헤더 설정
         sheet.append_row(['date', 'keyword', 'product_id', 'product_info'])
         for row in results:
             sheet.append_row(row)
@@ -137,7 +150,6 @@ def generate_affiliate_link(product_id):
 # -----------------------------------------
 def main():
     logging.info("[START] 프로그램 시작")
-    # RESULT 시트에서 오늘 날짜의 행을 불러옵니다.
     rows = get_product_rows_from_sheet()
     if not rows:
         logging.error("오늘 날짜의 제품 데이터가 구글 시트에 없습니다. 프로그램 종료.")
