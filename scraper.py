@@ -210,7 +210,6 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
 
 
 
-
 def summarize_reviews(reviews):
     if not reviews:
         return "리뷰가 없습니다.", ""
@@ -263,7 +262,6 @@ def summarize_reviews(reviews):
 
 
 
-
 def main():
     logging.info("[START] 프로그램 시작")
     keywords = get_keywords_from_google_sheet()  # Google Sheets에서 키워드 가져오기
@@ -278,16 +276,18 @@ def main():
         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
         ids = scrape_product_ids(keyword)  # 제품 ID 크롤링
         extracted_reviews = []
+        product_count = 0
         
-        for pid in ids:
+        for pid in ids[:10]:  # 최대 10개 상품을 처리
+            if product_count >= 5:
+                break
             # 리뷰 크롤링 및 요약
-            review = get_and_summarize_reviews(pid, extracted_reviews)
+            result = get_and_summarize_reviews(pid, extracted_reviews)
             
-            if review:
-                review_content1, review_content2 = review
+            if result:
+                review_content1, review_content2 = result
                 results.append([today, keyword, pid, review_content1, review_content2])  # 결과에 요약 추가
-                if len(results) >= 5:  # 5개 리뷰가 다 채워지면 종료
-                    break
+                product_count += 1
             else:
                 logging.warning(f"[{keyword}] 리뷰가 없는 상품 제외: {pid}")
         
