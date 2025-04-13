@@ -55,18 +55,18 @@ def generate_buying_guide(keyword):
         )
         
         guide = response['choices'][0]['message']['content'].strip().split('\n')
-        
+
         # '1. 제품 선택 포인트'와 같은 제목으로 구분하고, 적절한 데이터 분리
         selection_points = ""
         checklist = ""
         faq = ""
-        
+
         if len(guide) > 0:
-            selection_points = guide[0].split(':')[1].strip() if len(guide[0].split(':')) > 1 else ""
+            selection_points = guide[0].split(':')[1].strip() if len(guide[0].split(':')) > 1 else "선택 포인트 정보 없음"
         if len(guide) > 1:
-            checklist = guide[1].split(':')[1].strip() if len(guide[1].split(':')) > 1 else ""
+            checklist = guide[1].split(':')[1].strip() if len(guide[1].split(':')) > 1 else "체크리스트 정보 없음"
         if len(guide) > 2:
-            faq = guide[2].split(':')[1].strip() if len(guide[2].split(':')) > 1 else ""
+            faq = guide[2].split(':')[1].strip() if len(guide[2].split(':')) > 1 else "FAQ 정보 없음"
         
         # 구매 가이드가 정상적으로 생성되었다면 딕셔너리 형태로 반환
         return {
@@ -79,13 +79,9 @@ def generate_buying_guide(keyword):
         logging.error(f"GPT 요청 중 오류 발생: {e}")
         return None
 
-
-
-
-
 def save_results_to_sheet(results):
     try:
-        sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
+        sheet = connect_to_google_sheet(READ_SHEET_NAME)  # 'list' 시트에 저장
         for row in results:
             keyword = row[1]  # 키워드
             buying_guide = row[2]  # 구매 가이드
@@ -98,12 +94,13 @@ def save_results_to_sheet(results):
             <p><strong>3. 자주 묻는 질문</strong>: {buying_guide['faq']}</p>
             """
             
-            # HTML을 C열에 저장
-            sheet.append_row([datetime.today().strftime('%Y-%m-%d'), keyword, html_content])
+            # 'list' 시트의 C열에 HTML 저장
+            sheet.update_cell(row_num, 3, html_content)  # row_num을 해당 행 번호로 설정
 
         logging.info(f"결과 저장 완료")
     except Exception as e:
         logging.error(f"결과 저장 실패: {e}")
+
 
 
 
