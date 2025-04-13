@@ -54,15 +54,31 @@ def generate_buying_guide(keyword):
             timeout=30
         )
         
-        guide = response['choices'][0]['message']['content'].strip()
-        return guide
+        # 반환되는 텍스트를 구체적인 형식으로 파싱
+        guide = response['choices'][0]['message']['content'].strip().split('\n')
+        
+        # '1. 제품 선택 포인트'와 같은 제목으로 구분하고, 적절한 데이터 분리
+        selection_points = guide[0].split(':')[1].strip() if len(guide) > 0 else ""
+        checklist = guide[1].split(':')[1].strip() if len(guide) > 1 else ""
+        faq = guide[2].split(':')[1].strip() if len(guide) > 2 else ""
+        
+        # 구매 가이드가 정상적으로 생성되었다면 딕셔너리 형태로 반환
+        return {
+            "selection_points": selection_points,
+            "checklist": checklist,
+            "faq": faq
+        }
+
     except Exception as e:
         logging.error(f"GPT 요청 중 오류 발생: {e}")
         return None
 
+
+
+
 def save_results_to_sheet(results):
     try:
-        sheet = connect_to_google_sheet(READ_SHEET_NAME)
+        sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
         for row in results:
             keyword = row[1]  # 키워드
             buying_guide = row[2]  # 구매 가이드
@@ -81,6 +97,7 @@ def save_results_to_sheet(results):
         logging.info(f"결과 저장 완료")
     except Exception as e:
         logging.error(f"결과 저장 실패: {e}")
+
 
 
 def main():
