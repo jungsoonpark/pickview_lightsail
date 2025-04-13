@@ -143,6 +143,23 @@ def dynamic_selector_search(page, keyword):
     return []
 
 
+def generate_review_content2(reviews_text):
+    try:
+        # `reviews_text`를 바탕으로 간결한 리뷰 설명 생성
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": f"다음 리뷰 내용을 바탕으로 긍정적인 특징을 간단히 설명해 주세요. 문장은 15~40자 이내로 작성해 주세요:\n{reviews_text}"}
+            ],
+            timeout=30
+        )
+        return response['choices'][0]['message']['content'].strip()
+    except Exception as e:
+        logging.error(f"generate_review_content2 함수에서 오류 발생: {e}")
+        traceback.print_exc()
+        return "요약 실패"
+
+
 
 
 def filter_reviews_by_language(reviews):
@@ -159,7 +176,7 @@ def is_korean(text):
 
 
 
-def get_and_summarize_reviews(product_id):
+def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
     url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
     headers = {"User-Agent": "Mozilla/5.0"}
     
@@ -172,13 +189,17 @@ def get_and_summarize_reviews(product_id):
 
     try:
         data = response.json()
-        reviews = data['data']['evaViewList']
+        reviews = data.get('data', {}).get('evaViewList', [])
         if not reviews:  # 5점 리뷰가 없으면 해당 상품 제외
             return None
 
-        extracted_reviews = [review['buyerFeedback'] for review in reviews]
-
-        # 리뷰 요약
+        # 5점 리뷰만 추출 (리스트가 비어 있으면 None 반환)
+        extracted_reviews += [review.get('buyerFeedback', '') for review in reviews if review.get('buyerFeedback')]
+        
+        # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
+        if len(extracted_reviews) < reviews_needed:
+            return None  # 5개 미만인 경우, 다시 추가 상품을 가져오는 로직을 구현할 수 있음
+        
         review_content1, review_content2 = summarize_reviews(extracted_reviews)
         
         return review_content1, review_content2
@@ -224,9 +245,6 @@ def summarize_reviews(reviews):
 
 
 
-
-
-
 def main():
     logging.info("[START] 프로그램 시작")
     keywords = get_keywords_from_google_sheet()  # Google Sheets에서 키워드 가져오기
@@ -240,13 +258,19 @@ def main():
     for keyword in keywords:
         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
         ids = scrape_product_ids(keyword)  # 제품 ID 크롤링
-        if ids:
-            for pid in ids:
-                # 리뷰 크롤링 및 요약
-                review_content1, review_content2 = get_and_summarize_reviews(pid)  # 2개만 반환 받기
+        extracted_reviews = []
+        
+        for pid in ids:
+            # 리뷰 크롤링 및 요약
+            review = get_and_summarize_reviews(pid, extracted_reviews)
+            
+            if review:
+                review_content1, review_content2 = review
                 results.append([today, keyword, pid, review_content1, review_content2])  # 결과에 요약 추가
-        else:
-            logging.warning(f"[{keyword}] 크롤링 결과 0개")
+                if len(results) >= 5:  # 5개 리뷰가 다 채워지면 종료
+                    break
+            else:
+                logging.warning(f"[{keyword}] 리뷰가 없는 상품 제외: {pid}")
         
         logging.info(f"[{keyword}] 작업 종료, 2초 대기")
         time.sleep(2)  # 2초 대기
@@ -257,5 +281,9 @@ def main():
         logging.warning("최종 결과가 없습니다.")
 
     logging.info("[END] 프로그램 종료")
+
+
+
+
 if __name__ == '__main__':
     main()  # main() 함수 호출
