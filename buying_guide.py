@@ -108,7 +108,11 @@ def save_results_to_sheet(results):
             keyword = row[1]
             buying_guide = row[2]
             cell = sheet.find(keyword)  # 키워드 위치 찾기
+
+            logging.info(f"Keyword '{keyword}' 찾기 시도") # 찾은 셀의 상태 로깅
             if cell:
+                logging.info(f"Found keyword '{keyword}' at row {cell.row}, col {cell.col}")
+                logging.info(f"Updating cell with buying guide: {buying_guide}")
                 sheet.update_cell(cell.row, cell.col + 1, buying_guide)  # C열에 구매 가이드 추가
         logging.info("구매 가이드 결과가 구글 시트에 성공적으로 저장되었습니다.")
     except Exception as e:
