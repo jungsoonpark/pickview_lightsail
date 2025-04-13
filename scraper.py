@@ -143,21 +143,21 @@ def dynamic_selector_search(page, keyword):
     return []
 
 
-def generate_review_content2(reviews_text):
-    try:
-        # `reviews_text`를 바탕으로 간결한 리뷰 설명 생성
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "user", "content": f"당신은 한국 최고의 마케터입니다. 다음 리뷰 내용을 바탕으로 긍정적인 특징을 1~2문장으로 간단히 설명해 주세요. 각 문장은 15~30자 이내로 작성해 주세요:\n{reviews_text}"}
-            ],
-            timeout=30
-        )
-        return response['choices'][0]['message']['content'].strip()
-    except Exception as e:
-        logging.error(f"generate_review_content2 함수에서 오류 발생: {e}")
-        traceback.print_exc()
-        return "요약 실패"
+# def generate_review_content2(reviews_text):
+#     try:
+#         # `reviews_text`를 바탕으로 간결한 리뷰 설명 생성
+#         response = openai.ChatCompletion.create(
+#             model="gpt-3.5-turbo",
+#             messages=[
+#                 {"role": "user", "content": f"당신은 한국 최고의 마케터입니다. 다음 리뷰 내용을 바탕으로 긍정적인 특징을 1~2문장으로 간단히 설명해 주세요. 각 문장은 15~30자 이내로 작성해 주세요:\n{reviews_text}"}
+#             ],
+#             timeout=30
+#         )
+#         return response['choices'][0]['message']['content'].strip()
+#     except Exception as e:
+#         logging.error(f"generate_review_content2 함수에서 오류 발생: {e}")
+#         traceback.print_exc()
+#         return "요약 실패"
 
 
 
@@ -226,7 +226,7 @@ def summarize_reviews(reviews):
             messages=[
                 {
                     "role": "user", 
-                    "content": f"당신은 한국 최고의 마케터입니다. 이 상품을 10-15자 이내로 간결하고 자연스러운 카피라이팅 문장으로 이 상품의 특징을 설명해줘. 상품의 핵심적인 장점을 강조해 주세요:\n{reviews_text}"
+                    "content": f"당신은 한국 최고의 마케터입니다. 이 상품을 10-15자 이내로 간결하고 자연스럽게 카피라이팅 문장으로 이 상품의 특징을 설명해줘. 상품의 핵심적인 장점을 강조해 주세요. 문장이 자연스럽게 끝나도록 작성해 주세요:\n{reviews_text}"
                 }
             ],
             timeout=30
@@ -234,12 +234,10 @@ def summarize_reviews(reviews):
         
         review_content1 = response1['choices'][0]['message']['content'].strip()
 
-        # review_content1 글자수 10-15자 이내로 조정
-        if len(review_content1) > 15:
-            review_content1 = review_content1[:15]  # 15자 이상이면 잘라서 처리
-            # 자연스럽게 문장이 끝날 수 있도록 추가 처리
-            if review_content1[-1] != ' ':
-                review_content1 = review_content1.rsplit(' ', 1)[0]
+        # review_content1 글자수 10-15자 이내로 조정 (자르는 부분 제거)
+        if len(review_content1) < 10 or len(review_content1) > 15:
+            # 글자 수가 10-15자 범위에 맞지 않으면 GPT에서 다시 수정하도록 유도하는 방법이 필요함
+            logging.warning(f"review_content1의 길이가 10-15자 범위 밖입니다: {review_content1}")
 
         # review_content2: 영어가 섞이지 않도록 한국어로만 처리하고, 긍정적인 특징을 자연스럽게 15-30자 이내로 작성
         response2 = openai.ChatCompletion.create(
@@ -263,7 +261,8 @@ def summarize_reviews(reviews):
     except Exception as e:
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
-        return None  # 오류 발생 시 None 반환
+        return "요약 실패", "요약 실패"
+
 
 
 
