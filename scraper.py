@@ -225,7 +225,7 @@ def summarize_reviews(reviews):
             model="gpt-3.5-turbo",
             messages=[
                 {
-                    "role": "marketer", 
+                    "role": "user", 
                      "content": f"당신은 한국 최고의 마케터입니다. 이 상품을 10-15자 이내로 간결하게, 핵심적인 특징을 키워드나 짧은 문구 형식으로 설명해 주세요. 문장보다는 상품의 핵심적인 장점들을 짧고 간결하게 강조해주세요:\n{reviews_text}"
                 }
             ],
@@ -244,7 +244,7 @@ def summarize_reviews(reviews):
             model="gpt-3.5-turbo",
             messages=[
                 {
-                    "role": "marketer", 
+                    "role": "user", 
                     "content": f"당신은 한국 최고의 마케터입니다. 이 상품을 15-30자 이내로 1~2개 문구로 review_content1에서 다루지 않은 긍정적인 특징을 자연스럽게 설명해줘. 상품의 긍정적인 피드백을 요약하고, 이 상품이 좋은 이유를 간결하게 설명해 주세요. 단순한 리뷰 요약이 아니라 이 상품이 돋보이게 카피라이팅 형식으로 작성해주세요. 리뷰는 **영어를 제외하고 한국어로만 요약**해 주세요:\n{reviews_text}"
                 }
             ],
