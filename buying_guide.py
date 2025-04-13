@@ -77,9 +77,9 @@ def generate_buying_guide(keyword):
         logging.info(f"GPT 응답 내용: {guide}")  # 로그로 GPT 응답 확인
 
         # 각 섹션에 대해 기본값을 할당하거나 응답을 처리
-        selection_points = guide[1] if len(guide) > 0 else ""
-        checklist = guide[2] if len(guide) > 1 else ""
-        faq = guide[3] if len(guide) > 2 else ""
+        selection_points = guide[1]
+        checklist = guide[2]
+        faq = guide[3]
 
         # 로그로 확인
         logging.info(f"제품 선택 포인트: {selection_points}")
