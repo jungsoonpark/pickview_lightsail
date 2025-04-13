@@ -70,26 +70,31 @@ def generate_buying_guide(keyword):
             timeout=60
         )
         
-        # 디버깅: 응답 상태 코드 및 내용 출력
-        logging.info(f"GPT 응답 상태: {response}")
-        logging.info(f"GPT 응답 내용: {response['choices'][0]['message']['content']}")
+        
      
         guide = response['choices'][0]['message']['content'].split("\n")  # 항목 구분을 위해 줄바꿈으로 나눔
 
-        # 각 항목을 개별적으로 추출하고, 없으면 빈 항목은 처리하지 않음
-        selection_points = guide[0].split(':')[1].strip() if len(guide) > 0 and ':' in guide[0] else "정보 부족, 선택 포인트를 확인하세요."
-        checklist = guide[1].split(':')[1].strip() if len(guide) > 1 and ':' in guide[1] else "정보 부족, 체크리스트를 확인하세요."
-        faq = guide[2].split(':')[1].strip() if len(guide) > 2 and ':' in guide[2] else "정보 부족, 자주 묻는 질문을 확인하세요."
+        logging.info(f"GPT 응답 내용: {guide}")  # 로그로 GPT 응답 확인
 
-        # HTML 형식으로 변환
-        buying_guide_html = f"""
+        # 각 섹션에 대해 기본값을 할당하거나 응답을 처리
+        selection_points = guide[0].split(":")[1].strip() if len(guide) > 0 and ":" in guide[0] else "선택 포인트 정보를 확인하세요."
+        checklist = guide[1].split(":")[1].strip() if len(guide) > 1 and ":" in guide[1] else "체크리스트 정보를 확인하세요."
+        faq = guide[2].split(":")[1].strip() if len(guide) > 2 and ":" in guide[2] else "자주 묻는 질문을 확인하세요."
+
+        # 로그로 확인
+        logging.info(f"제품 선택 포인트: {selection_points}")
+        logging.info(f"구매 전 체크리스트: {checklist}")
+        logging.info(f"자주 묻는 질문: {faq}")
+
+        # 결과 HTML 템플릿 구성
+        buying_guide = f"""
             <h2>{keyword} 구매 가이드</h2>
             <p><strong>1. 제품 선택 포인트</strong>: {selection_points}</p>
             <p><strong>2. 구매 전 체크리스트</strong>: {checklist}</p>
             <p><strong>3. 자주 묻는 질문</strong>: {faq}</p>
         """
 
-        return buying_guide_html
+        return buying_guide
 
     except Exception as e:
         logging.error(f"GPT 요청 중 오류 발생: {e}")
