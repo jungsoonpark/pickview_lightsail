@@ -196,8 +196,8 @@ def main():
     for keyword in keywords:
         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
         
-        # 구매 가이드 생성
-        buying_guide_html = generate_buying_guide(keyword, "여기에 GPT 응답 문자열을 넣어주세요.")
+        # 구매 가이드 생성 (두 번째 인자 제거)
+        buying_guide_html = generate_buying_guide(keyword)  # 두 번째 인자 제거
         if buying_guide_html:
             results.append([today, keyword, buying_guide_html])  # 결과에 HTML 형식으로 저장
         else:
@@ -209,6 +209,7 @@ def main():
         logging.warning("최종 결과가 없습니다.")
 
     logging.info("[END] 프로그램 종료")
+
 
 
 # 프로그램 실행
