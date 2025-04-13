@@ -69,7 +69,11 @@ def generate_buying_guide(keyword):
             ],
             timeout=60
         )
-
+        
+        # 디버깅: 응답 상태 코드 및 내용 출력
+        logging.info(f"GPT 응답 상태: {response}")
+        logging.info(f"GPT 응답 내용: {response['choices'][0]['message']['content']}")
+     
         guide = response['choices'][0]['message']['content'].split("\n")  # 항목 구분을 위해 줄바꿈으로 나눔
 
         # 각 항목을 개별적으로 추출하고, 없으면 빈 항목은 처리하지 않음
