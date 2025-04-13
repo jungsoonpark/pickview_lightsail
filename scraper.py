@@ -175,6 +175,55 @@ def is_korean(text):
 
 
 
+def summarize_reviews(reviews):
+    if not reviews:
+        return "리뷰가 없습니다.", ""
+
+    reviews_text = "\n".join(reviews)
+    try:
+        # review_content1: 10-15자 이내로 자연스럽고 강렬한 카피라이팅 문장 작성
+        response1 = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "user", 
+                    "content": f"당신은 한국 최고의 마케터입니다. 이 상품을 10-15자 이내로 간결하고 자연스러운 카피라이팅 문장으로 이 상품의 특징을 설명해줘. 상품의 핵심적인 장점을 강조해 주세요:\n{reviews_text}"
+                }
+            ],
+            timeout=30
+        )
+        
+        review_content1 = response1['choices'][0]['message']['content'].strip()
+
+        # review_content1 글자수 10-15자 이내로 조정
+        if len(review_content1) > 15:
+            review_content1 = review_content1[:15]  # 15자 이상이면 잘라서 처리
+
+        # review_content2: 영어가 섞이지 않도록 한국어로만 처리하고, 긍정적인 특징을 자연스럽게 15-30자 이내로 작성
+        response2 = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "user", 
+                    "content": f"당신은 한국 최고의 마케터입니다. 이 상품을 15-30자 이내로 1~2개 문장으로 review_content1에서 다루지 않은 긍정적인 특징을 자연스럽게 설명해줘. 상품의 긍정적인 피드백을 요약하고, 이 상품이 좋은 이유를 간결하게 설명해 주세요. 단순한 리뷰 요약이 아니라 이 상품이 돋보이게 카피라이팅 형식으로 작성해주세요. 리뷰는 **영어를 제외하고 한국어로만 요약**해 주세요:\n{reviews_text}"
+                }
+            ],
+            timeout=30
+        )
+        
+        review_content2 = response2['choices'][0]['message']['content'].strip()
+
+        # 5개 리뷰가 안 채워지면 다음 상품을 가져오는 로직 추가
+        if len(review_content1) == 0 or len(review_content2) == 0:
+            return None  # 리뷰 추출 또는 요약 실패시 None 반환
+
+        return review_content1, review_content2
+    except Exception as e:
+        logging.error(f"GPT 요약 중 오류 발생: {e}")
+        traceback.print_exc()
+        return "요약 실패", "요약 실패"
+
+
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
     url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -206,57 +255,6 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
         logging.error(f"데이터 파싱 오류 (상품 ID {product_id}): {e}")
         return None
 
-
-
-
-
-def summarize_reviews(reviews):
-    if not reviews:
-        return "리뷰가 없습니다.", ""
-
-    reviews_text = "\n".join(reviews)
-    try:
-        # review_content1: 10-15자 이내로 자연스럽고 강렬한 카피라이팅 문장 작성
-        response1 = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "user", 
-                    "content": f"당신은 한국 최고의 마케터입니다. 이 상품을 10-15자 이내로 간결하고 자연스러운 카피라이팅 문장으로 이 상품의 특징을 설명해줘. 상품의 핵심적인 장점을 강조해서 카피라이팅을 작성해 주세요:\n{reviews_text}"
-                }
-            ],
-            timeout=30
-        )
-        
-        review_content1 = response1['choices'][0]['message']['content'].strip()
-
-        # review_content1 글자수 10-15자 이내로 조정
-        if len(review_content1) > 15:
-            review_content1 = review_content1[:15]  # 15자 이상이면 잘라서 처리
-
-        # review_content2: 영어가 섞이지 않도록 한국어로만 처리하고, 긍정적인 특징을 자연스럽게 15-40자 이내로 작성
-        response2 = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "user", 
-                    "content": f"당신은 한국 최고의 마케터입니다. 이 상품을 각 문장이 15~30자 이내의 1~2개 문장으로 review_content1에서 다루지 않은 긍정적인 특징을 자연스럽게 설명해줘. 상품의 긍정적인 피드백을 요약하고, 이 상품이 좋은 이유를 간결하게 설명해 주세요. 단순한 리뷰 요약이 아니라 이 상품이 돋보이게 카피라이팅 형식으로 작성해주세요. 리뷰는 **영어를 제외하고 한국어로만 요약**해 주세요:\n{reviews_text}"
-                }
-            ],
-            timeout=30
-        )
-        
-        review_content2 = response2['choices'][0]['message']['content'].strip()
-
-        # 5개 리뷰가 안 채워지면 다음 상품을 가져오는 로직 추가
-        if len(review_content1) == 0 or len(review_content2) == 0:
-            return None  # 리뷰 추출 또는 요약 실패시 None 반환
-
-        return review_content1, review_content2
-    except Exception as e:
-        logging.error(f"GPT 요약 중 오류 발생: {e}")
-        traceback.print_exc()
-        return "요약 실패", "요약 실패"
 
 
 
