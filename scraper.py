@@ -194,11 +194,11 @@ def summarize_reviews(reviews):
     try:
         # review_content1: 10-15자 이내로 간결한 카피라이팅 문구 작성
         response1 = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=[
                 {
-                    "role": "user", 
-                    "content": f"이 상품의 리뷰를 바탕으로 상품의 핵심 장점을 10-15자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용은 다음과 같습니다: {reviews_text}"
+                    "role": "user",
+                    "content": f"다음 리뷰를 바탕으로 이 상품의 가장 핵심적인 장점을 10-15자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용: {reviews_text}"
                 }
             ],
             timeout=30
@@ -212,11 +212,11 @@ def summarize_reviews(reviews):
         
         # review_content2: 상품의 추가적인 긍정적인 특징을 15-40자 이내로 자연스럽게 작성
         response2 = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=[
                 {
                     "role": "user", 
-                    "content": f"이 상품의 리뷰를 바탕으로, {review_content1}에서 다루지 않은 추가적인 긍정적인 특징을 15-40자 이내로 간결한 문장으로 작성해 주세요. 리뷰 내용은 한국어로만 작성되어야 합니다: {reviews_text}"
+                    "content": f"다음 리뷰를 바탕으로, '{review_content1}'에서 다루지 않은 추가적인 긍정적인 특징을 문장당 15-40자 이내의 1~2개 문장으로 작성해 주세요. 리뷰 내용: {reviews_text}"
                 }
             ],
             timeout=30
