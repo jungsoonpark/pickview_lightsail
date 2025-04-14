@@ -207,8 +207,8 @@ def summarize_reviews(reviews):
         review_content1 = response1['choices'][0]['message']['content'].strip()
 
         # review_content1 글자수 10-15자 이내로 자연스럽게 조정
-        if len(review_content1) < 10 or len(review_content1) > 15:
-            logging.warning(f"review_content1의 길이가 10-15자 범위 밖입니다: {review_content1}")
+        logging.info(f"review_content1: {review_content1}")
+
         
         # review_content2: 상품의 추가적인 긍정적인 특징을 15-40자 이내로 자연스럽게 작성
         response2 = openai.ChatCompletion.create(
