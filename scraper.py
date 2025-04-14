@@ -103,27 +103,34 @@ def scrape_product_ids_and_titles(keyword):
             page.goto(url, timeout=60000, wait_until='domcontentloaded')
             logging.info(f"[{keyword}] 페이지 로딩 완료, 3초 대기")
             time.sleep(3)
-            
-            # 상품 ID와 제목을 동시에 가져오기 위해 요소들 추출
-            elements = page.query_selector_all("a[data-product-id]")  # 상품 ID가 있는 모든 링크 요소
+
+            # 동적 셀렉터를 통해 상품 요소 찾기
+            elements = dynamic_selector_search(page, keyword)
             if not elements:
                 logging.error(f"[{keyword}] 유효한 셀렉터를 찾지 못했습니다.")
             else:
-                for element in elements[:5]:  # 상위 5개 상품 추출
-                    product_id = element.get_attribute('data-product-id')
+                for element in elements[:5]:  # 상위 5개 상품을 처리
+                    href = element.get_attribute('href')
                     product_title_element = element.query_selector('span.product-title')  # 상품 제목을 추출할 셀렉터
                     
-                    if product_id and product_title_element:
-                        product_title = product_title_element.inner_text().strip()  # 상품 제목
-                        product_data.append((product_id, product_title))
+                    if href:
+                        if '/item/' in href:
+                            product_id = href.split('/item/')[1].split('.')[0]  # 상품 ID 추출
+                        else:
+                            product_id = href
+                        
+                        # 상품 제목 추출
+                        product_title = product_title_element.inner_text().strip() if product_title_element else "No title"
+                        
+                        product_data.append((product_id, product_title))  # (상품 ID, 상품 제목) 저장
                         logging.info(f"[{keyword}] 추출 상품 ID: {product_id}, 상품 제목: {product_title}")
             
             browser.close()
     except Exception as e:
         logging.error(f"[{keyword}] 크롤링 도중 예외 발생: {e}")
+        traceback.print_exc()
     
     return product_data
-
 
 
 
