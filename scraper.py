@@ -103,7 +103,7 @@ def dynamic_selector_search(page, keyword, type='id'):
 
 
 def scrape_product_ids_and_titles(keyword):
-    product_data = []  # (상품 ID, 상품 제목) 튜플을 저장할 리스트
+    product_data = []
     try:
         with sync_playwright() as p:
             logging.info(f"[{keyword}] Playwright 브라우저 실행")
@@ -159,6 +159,7 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
     
     return product_data
+
 
 
 
