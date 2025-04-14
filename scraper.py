@@ -113,17 +113,14 @@ def scrape_product_ids_and_titles(keyword):
                     href = element.get_attribute('href')
                     product_title_element = element.query_selector('span.product-title')  # 상품 제목을 추출할 셀렉터
                     
+                    # 상품 제목을 추출할 수 없으면 'No title' 반환
+                    product_title = product_title_element.inner_text().strip() if product_title_element else "No title"
+                    
                     if href:
                         if '/item/' in href:
                             product_id = href.split('/item/')[1].split('.')[0]  # 상품 ID 추출
                         else:
                             product_id = href
-                        
-                        # 상품 제목 추출
-                        if product_title_element:
-                            product_title = product_title_element.inner_text().strip()
-                        else:
-                            product_title = "No title"
                         
                         product_data.append((product_id, product_title))  # (상품 ID, 상품 제목) 저장
                         logging.info(f"[{keyword}] 추출 상품 ID: {product_id}, 상품 제목: {product_title}")
@@ -134,7 +131,6 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
     
     return product_data
-
 
 
 
