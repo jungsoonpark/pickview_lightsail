@@ -104,36 +104,45 @@ def scrape_product_ids_and_titles(keyword):
             logging.info(f"[{keyword}] 페이지 로딩 완료, 3초 대기")
             time.sleep(3)
 
-            # 동적 셀렉터를 통해 상품 ID 추출
-            product_elements = dynamic_selector_search(page, keyword, type='id')
-            if not product_elements:
-                logging.error(f"[{keyword}] 유효한 상품 ID 셀렉터를 찾지 못했습니다.")
+            # 동적 셀렉터를 통해 상품 요소 찾기
+            elements = dynamic_selector_search(page, keyword)
+            if not elements:
+                logging.error(f"[{keyword}] 유효한 셀렉터를 찾지 못했습니다.")
             else:
-                for element in product_elements[:5]:  # 상위 5개 상품을 처리
+                for element in elements[:5]:  # 상위 5개 상품을 처리
                     href = element.get_attribute('href')
+                    
+                    # 상품 제목 추출을 위한 셀렉터 수정
+                    product_title_element = element.query_selector('span.product-title')  # 기본 상품 제목 셀렉터
+                    
+                    if not product_title_element:
+                        # 상품 제목을 찾지 못했을 경우 다른 셀렉터로 시도
+                        product_title_element = element.query_selector('div.item-title')  # 대체 셀렉터 예시
+                        
+                    if not product_title_element:
+                        # 다른 셀렉터로도 찾지 못했을 경우
+                        logging.warning(f"[{keyword}] 상품 제목을 찾지 못했습니다: {href}")
+                        continue
+                    
+                    # 상품 제목 추출
+                    product_title = product_title_element.inner_text().strip()  # 상품 제목 추출
+                    
                     if href:
                         if '/item/' in href:
                             product_id = href.split('/item/')[1].split('.')[0]  # 상품 ID 추출
                         else:
                             product_id = href
                         
-                        logging.info(f"[{keyword}] 추출 상품 ID: {product_id}")
-            
-            # 동적 셀렉터를 통해 상품 제목 추출
-            title_elements = dynamic_selector_search(page, keyword, type='title')
-            if not title_elements:
-                logging.error(f"[{keyword}] 유효한 상품 제목 셀렉터를 찾지 못했습니다.")
-            else:
-                for element in title_elements[:5]:  # 상위 5개 제목 처리
-                    product_title = element.inner_text().strip()  # 상품 제목 추출
-                    logging.info(f"[{keyword}] 추출 상품 제목: {product_title}")
+                        product_data.append((product_id, product_title))  # (상품 ID, 상품 제목) 저장
+                        logging.info(f"[{keyword}] 추출 상품 ID: {product_id}, 상품 제목: {product_title}")
             
             browser.close()
     except Exception as e:
         logging.error(f"[{keyword}] 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
-
+    
     return product_data
+
 
 
 
