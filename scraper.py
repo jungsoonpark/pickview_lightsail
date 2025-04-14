@@ -85,7 +85,8 @@ def dynamic_selector_search(page, keyword, type='id'):
     for selector in selectors:
         try:
             logging.info(f"[{keyword}] 셀렉터 시도: {selector}")
-            page.wait_for_selector(selector, timeout=60000)  # 타임아웃을 60초로 늘림
+            page.wait_for_selector(selector, timeout=60000)  # 타임아웃을 60초로 설정
+
             elements = page.query_selector_all(selector)
             if elements:
                 return elements
@@ -120,10 +121,10 @@ def scrape_product_ids_and_titles(keyword):
             logging.info(f"[{keyword}] 페이지 로딩 완료, 3초 대기")
             time.sleep(3)
 
-            # 페이지가 완전히 로드될 때까지 기다림
+            # 페이지가 완전히 로드될 때까지 대기
             page.wait_for_load_state('load')  # 'load' 상태에서 기다림
 
-            # 동적 셀렉터를 통해 상품 요소 찾기 (상품 ID 추출)
+            # 동적 셀렉터를 통해 상품 ID 추출
             product_elements = dynamic_selector_search(page, keyword, type='id')
             if not product_elements:
                 logging.error(f"[{keyword}] 유효한 상품 ID 셀렉터를 찾지 못했습니다.")
