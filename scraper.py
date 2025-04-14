@@ -102,63 +102,57 @@ def dynamic_selector_search(page, keyword, type='id'):
 
 
 
+from playwright.sync_api import sync_playwright
+import time
+import logging
+
 def scrape_product_ids_and_titles(keyword):
-    product_data = []
+    product_data = []  # 상품 ID와 제목을 저장할 리스트
     try:
         with sync_playwright() as p:
             logging.info(f"[{keyword}] Playwright 브라우저 실행")
-            browser = p.chromium.launch(headless=True, timeout=60000)
-            context = browser.new_context(
-                locale='ko-KR',
-                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
-            )
+            browser = p.chromium.launch(headless=False)  # headless=False로 설정하여 실제 브라우저 환경에서 확인
+            context = browser.new_context(locale='ko-KR')
             page = context.new_page()
+
             url = f'https://www.aliexpress.com/wholesale?SearchText={keyword}&SortType=total_tranpro_desc'
-            logging.info(f"[{keyword}] 페이지 열기: {url}")
-            page.goto(url, timeout=60000, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
-            logging.info(f"[{keyword}] 페이지 로딩 완료, 3초 대기")
-            time.sleep(3)
+            page.goto(url, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
+            logging.info(f"[{keyword}] 페이지 로딩 완료")
+            time.sleep(3)  # 로딩 완료 후 잠시 대기
 
-            # 페이지가 완전히 로드될 때까지 대기
-            page.wait_for_load_state('load')  # 'load' 상태에서 기다림
+            # 페이지 완전히 로드 대기
+            page.wait_for_load_state('load')  # 페이지가 완전히 로드될 때까지 대기
 
-            # 동적 셀렉터를 통해 상품 ID 추출
-            product_elements = dynamic_selector_search(page, keyword, type='id')
-            if not product_elements:
-                logging.error(f"[{keyword}] 유효한 상품 ID 셀렉터를 찾지 못했습니다.")
-            else:
-                for element in product_elements[:5]:  # 상위 5개 상품을 처리
-                    href = element.get_attribute('href')
-                    if href:
-                        if '/item/' in href:
-                            product_id = href.split('/item/')[1].split('.')[0]  # 상품 ID 추출
-                        else:
-                            product_id = href
-                        logging.info(f"[{keyword}] 추출 상품 ID: {product_id}")
+            # 스크롤을 통해 더 많은 상품을 로딩
+            for _ in range(3):  # 페이지 3번 스크롤
+                page.evaluate('window.scrollBy(0, window.innerHeight);')
+                time.sleep(2)  # 스크롤 후 대기
 
-            # 동적 셀렉터를 통해 상품 제목 찾기
-            title_elements = dynamic_selector_search(page, keyword, type='title')
-            if not title_elements:
-                logging.error(f"[{keyword}] 유효한 상품 제목 셀렉터를 찾지 못했습니다.")
-            else:
-                for element in title_elements[:5]:  # 상위 5개 제목 처리
+            # 상품 ID 추출
+            product_elements = page.query_selector_all('a[href*="/item/"]')
+            for element in product_elements:
+                href = element.get_attribute('href')
+                if href:
+                    product_id = href.split('/item/')[1].split('.')[0]  # 상품 ID 추출
+                    logging.info(f"[{keyword}] 상품 ID 추출: {product_id}")
+
+                    # 상품 제목 추출
                     product_title = element.inner_text().strip()  # 상품 제목 추출
-                    logging.info(f"[{keyword}] 추출 상품 제목: {product_title}")
-
-                    # 상품 제목이 없으면 건너뛰고 다음 상품으로 진행
                     if not product_title:
-                        logging.warning(f"[{keyword}] 상품 제목을 찾지 못했습니다: {href}")
-                        continue
-                    
-                    product_data.append((product_id, product_title))  # (상품 ID, 상품 제목) 저장
-                    logging.info(f"[{keyword}] 추출 상품 ID: {product_id}, 상품 제목: {product_title}")
-            
+                        logging.warning(f"[{keyword}] 상품 제목을 찾을 수 없습니다: {href}")
+                        continue  # 상품 제목이 없는 경우 건너뛰기
+
+                    product_data.append((product_id, product_title))  # 상품 ID와 제목을 튜플로 저장
+                    logging.info(f"[{keyword}] 상품 ID: {product_id}, 제목: {product_title}")
+
             browser.close()
+
     except Exception as e:
         logging.error(f"[{keyword}] 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
-    
+
     return product_data
+
 
 
 
