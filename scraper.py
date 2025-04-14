@@ -161,13 +161,15 @@ def get_product_title(product_id):
     # 상품 페이지 파싱
     soup = BeautifulSoup(response.text, 'html.parser')
     
-    # 상품 제목 추출 (h1 태그, 클래스가 'product-title' 또는 'title--wrap'인 태그에서 추출)
-    title = soup.find('h1', class_='product-title')
-    if not title:
-        title = soup.find('h1', class_='title--wrap')
+    # 상품 제목 추출: 일반적으로 <h1> 태그 안에 제목이 들어있음
+    title = soup.find('h1')
     
-    # 제목이 없으면 'No title' 반환
-    return title.text.strip() if title else 'No title'
+    if title:
+        # 제목을 텍스트로 추출하고, 불필요한 공백 제거
+        return title.text.strip()
+    else:
+        logging.warning(f"상품 제목을 추출할 수 없습니다. (상품 ID: {product_id})")
+        return 'No title'  # 제목을 찾지 못한 경우 'No title' 반환
 
 
 
