@@ -128,8 +128,13 @@ def scrape_product_ids_and_titles(keyword):
                         else:
                             product_id = href
                         
-                        product_data.append((product_id, product_title))  # (상품 ID, 상품 제목) 저장
-                        logging.info(f"[{keyword}] 추출 상품 ID: {product_id}, 상품 제목: {product_title}")
+                        # 제목이나 ID를 제대로 추출하지 못하면 실패로 기록하고, 그 상품에 대해서는 건너뛰지 않고 로그 기록
+                        if product_title == "No title":
+                            logging.warning(f"[{keyword}] 상품 제목 추출 실패: 상품 ID {product_id}")
+                        # 상품 ID와 제목을 추출할 수 있는 경우에만 데이터 저장
+                        else:
+                            product_data.append((product_id, product_title))  # (상품 ID, 상품 제목) 저장
+                            logging.info(f"[{keyword}] 추출 상품 ID: {product_id}, 상품 제목: {product_title}")
             
             browser.close()
     except Exception as e:
