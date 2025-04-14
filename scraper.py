@@ -123,6 +123,9 @@ def scrape_product_ids(keyword):
 
 
 
+
+
+
 def dynamic_selector_search(page, keyword):
     selectors = [
         'a[data-product-id]',
@@ -145,11 +148,42 @@ def dynamic_selector_search(page, keyword):
 
 
 
+def get_product_title(product_id):
+    # 상품 상세페이지 URL
+    url = f"https://www.aliexpress.com/item/{product_id}"
+    
+    # 상품 페이지 요청
+    response = requests.get(url)
+    if response.status_code != 200:
+        logging.error(f"상품 상세 페이지를 불러오는 데 실패했습니다. (상품 ID: {product_id})")
+        return None
+    
+    # 상품 페이지 파싱
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    # 상품 제목 추출 (h1 태그, 클래스가 'product-title' 또는 'title--wrap'인 태그에서 추출)
+    title = soup.find('h1', class_='product-title')
+    if not title:
+        title = soup.find('h1', class_='title--wrap')
+    
+    # 제목이 없으면 'No title' 반환
+    return title.text.strip() if title else 'No title'
+
+
+
+
 
 
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
     url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
     headers = {"User-Agent": "Mozilla/5.0"}
+
+    # 상품 제목 추출
+    product_title = get_product_title(product_id)
+
+    if not product_title:
+        logging.warning(f"상품 제목을 가져오는 데 실패했습니다. (상품 ID: {product_id})")
+        return None
     
     try:
         response = requests.get(url, headers=headers, timeout=30)
@@ -167,12 +201,9 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
         # 5점 리뷰만 추출 (리스트가 비어 있으면 None 반환)
         extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
         
-        # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
-        if len(extracted_reviews) < reviews_needed:
-            return None  # 5개 미만인 경우, 다시 추가 상품을 가져오는 로직을 구현할 수 있음
         
         # 리뷰 요약
-        result = summarize_reviews(extracted_reviews)
+        result = summarize_reviews(extracted_reviews, product_title)
         
         # result가 None이면, 즉 요약 실패한 경우
         if result is None:
@@ -186,10 +217,8 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
         return None
 
 
-def summarize_reviews(reviews):
-    if not reviews:
-        return "리뷰가 없습니다.", ""
-
+def summarize_reviews(reviews, product_title):
+    
     reviews_text = "\n".join(reviews)
     try:
         # review_content1: 10-15자 이내로 간결한 카피라이팅 문구 작성
@@ -198,7 +227,7 @@ def summarize_reviews(reviews):
             messages=[
                 {
                     "role": "user",
-                    "content": f"다음 리뷰를 바탕으로 이 상품의 가장 핵심적인 장점을 10-15자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용: {reviews_text}"
+                    "content": f"다음 상품 제목과 리뷰를 바탕으로 이 상품의 가장 핵심적인 장점을 10-20자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용: {reviews_text}. 상품 제목: {product_title}"
                 }
             ],
             timeout=30
@@ -206,8 +235,8 @@ def summarize_reviews(reviews):
         
         review_content1 = response1['choices'][0]['message']['content'].strip()
 
-        # review_content1 글자수 10-15자 이내로 자연스럽게 조정
-        logging.info(f"review_content1: {review_content1}")
+        
+        logging.info(f"상품 제목: {product_title}, 카피라이팅 문구: {review_content1}")
 
         
         # review_content2: 상품의 추가적인 긍정적인 특징을 15-40자 이내로 자연스럽게 작성
@@ -216,7 +245,7 @@ def summarize_reviews(reviews):
             messages=[
                 {
                     "role": "user", 
-                    "content": f"다음 리뷰를 바탕으로, '{review_content1}'에서 다루지 않은 추가적인 긍정적인 특징을 문장당 15-40자 이내의 1~2개 문장으로 작성해 주세요. 리뷰 내용: {reviews_text}"
+                    "content": f"다음 상품 제목과 리뷰를 바탕으로, '{review_content1}'에서 다루지 않은 추가적인 장점을 문장당 15-40자 이내의 1~2개 문장으로 작성해 주세요. 리뷰 내용: {reviews_text}. 상품 제목: {product_title}"
                 }
             ],
             timeout=30
