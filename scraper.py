@@ -161,73 +161,75 @@ def dynamic_selector_search(page, keyword):
 
 
 
-def get_product_title(product_id):
-    url = f"https://www.aliexpress.com/item/{product_id}"
+# def get_product_title(product_id):
+#     url = f"https://www.aliexpress.com/item/{product_id}"
     
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-    }
+#     headers = {
+#         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
+#         'Accept-Language': 'en-US,en;q=0.9',
+#     }
     
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        logging.error(f"상품 상세 페이지를 불러오는 데 실패했습니다. (상품 ID: {product_id})")
-        return 'No title'
+#     response = requests.get(url, headers=headers)
+#     if response.status_code != 200:
+#         logging.error(f"상품 상세 페이지를 불러오는 데 실패했습니다. (상품 ID: {product_id})")
+#         return 'No title'
 
-    soup = BeautifulSoup(response.text, 'html.parser')
+#     soup = BeautifulSoup(response.text, 'html.parser')
 
-    # 상품 제목 추출 (헤더에 따라 다른 선택자 사용)
-    title = soup.find('h1', class_='product-title-text')
-    if title:
-        return title.text.strip()
+#     # 상품 제목 추출 (헤더에 따라 다른 선택자 사용)
+#     title = soup.find('h1', class_='product-title-text')
+#     if title:
+#         return title.text.strip()
     
-    return 'No title'
+#     return 'No title'
 
 
 
 
 
-def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
-    url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
-    headers = {"User-Agent": "Mozilla/5.0"}
-
-    # 상품 제목 추출
-    product_title = get_product_title(product_id)
-
-    if not product_title:
-        logging.warning(f"상품 제목을 가져오는 데 실패했습니다. (상품 ID: {product_id})")
-        return None
-    
+def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
+        # 상품 제목 추출
+        product_data = scrape_product_ids_and_titles(keyword)
+        
+        # 상품 ID와 제목을 추출 (첫 번째 튜플의 두 번째 요소는 제목)
+        product_title = next((title for pid, title in product_data if pid == product_id), 'No title')
+
+        logging.info(f"[{product_id}] 상품 제목: {product_title}")
+
+        # 리뷰 크롤링 및 요약 처리
+        url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
+        headers = {"User-Agent": "Mozilla/5.0"}
+
         response = requests.get(url, headers=headers, timeout=30)
         response.raise_for_status()  # HTTP 오류 발생 시 예외 발생
-    except requests.exceptions.RequestException as e:
-        logging.error(f"HTTP 요청 오류 (상품 ID {product_id}): {e}")
-        return None  # 리뷰가 없으면 None 반환
-
-    try:
+        
         data = response.json()
         reviews = data.get('data', {}).get('evaViewList', [])
-        if not reviews:  # 5점 리뷰가 없으면 해당 상품 제외
-            return None
+        if not reviews:
+            return None  # 5점 리뷰가 없으면 해당 상품 제외
 
         # 5점 리뷰만 추출 (리스트가 비어 있으면 None 반환)
         extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
-        
+
+        # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
+        if len(extracted_reviews) < reviews_needed:
+            return None
         
         # 리뷰 요약
         result = summarize_reviews(extracted_reviews, product_title)
-        
-        # result가 None이면, 즉 요약 실패한 경우
+
         if result is None:
             return None
         
         review_content1, review_content2 = result
         
         return review_content1, review_content2
-    except (ValueError, KeyError) as e:
-        logging.error(f"데이터 파싱 오류 (상품 ID {product_id}): {e}")
+    except Exception as e:
+        logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
+        traceback.print_exc()
         return None
+
 
 
 def summarize_reviews(reviews, product_title):
