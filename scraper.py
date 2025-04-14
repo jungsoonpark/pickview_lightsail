@@ -97,7 +97,7 @@ def dynamic_selector_search(page, keyword, type='id'):
 
 
 
-def scrape_top_5_product_ids_and_titles(keyword):
+def scrape_product_ids_and_titles(keyword):
     product_data = []  # 상품 ID와 제목을 저장할 리스트
     try:
         with sync_playwright() as p:
