@@ -68,9 +68,10 @@ def save_results_to_sheet(results):
 def dynamic_selector_search(page, keyword):
     # 다양한 셀렉터 후보를 리스트로 구성합니다.
     selectors = [
+        'a[href*="/item/"]',  # 좀 더 일반적인 패턴
         'a[data-product-id]',  # 과거 자주 사용된 방식
-        'div[data-spm="itemlist"] a[href*="/item/"]',  # 리스트 형태
-        'a[href*="/item/"]'  # 좀 더 일반적인 패턴
+        'div[data-spm="itemlist"] a[href*="/item/"]'  # 리스트 형태
+        
     ]
     for selector in selectors:
         try:
@@ -149,20 +150,24 @@ def dynamic_selector_search(page, keyword):
 
 
 def get_product_title(product_id):
-    url = f"https://www.aliexpress.com/item/{product_id}"
-    response = requests.get(url)
-    if response.status_code != 200:
-        logging.error(f"상품 상세 페이지를 불러오는 데 실패했습니다. (상품 ID: {product_id})")
-        return 'No title'
-    
-    soup = BeautifulSoup(response.text, 'html.parser')
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)  # headless 모드로 브라우저 실행
+        page = browser.new_page()
+        url = f"https://www.aliexpress.com/item/{product_id}"
 
-    # 좀 더 강력한 CSS 선택자로 상품 제목 추출
-    title = soup.select_one('h1.product-title-text')
-    if title:
-        return title.text.strip()
-    
-    return 'No title'
+        page.goto(url)  # 페이지로 이동
+        page.wait_for_load_state('networkidle')  # 네트워크 요청이 모두 완료될 때까지 기다림
+        page.wait_for_selector('h1')  # 상품 제목이 포함된 h1 태그 로딩 대기
+
+        # 상품 제목 추출
+        title = page.query_selector('h1.product-title-text')
+        if title:
+            product_title = title.inner_text().strip()  # 텍스트를 추출하여 공백 제거
+        else:
+            product_title = 'No title'
+
+        browser.close()
+        return product_title
 
 
 
