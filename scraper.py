@@ -98,6 +98,11 @@ def dynamic_selector_search(page, keyword, type='id'):
 
 
 
+
+
+
+
+
 def scrape_product_ids_and_titles(keyword):
     product_data = []  # (상품 ID, 상품 제목) 튜플을 저장할 리스트
     try:
@@ -114,7 +119,7 @@ def scrape_product_ids_and_titles(keyword):
             page.goto(url, timeout=60000, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
             logging.info(f"[{keyword}] 페이지 로딩 완료, 3초 대기")
             time.sleep(3)
-            
+
             # 페이지가 완전히 로드될 때까지 기다림
             page.wait_for_load_state('load')  # 'load' 상태에서 기다림
 
@@ -155,9 +160,6 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
     
     return product_data
-
-
-
 
 
 
