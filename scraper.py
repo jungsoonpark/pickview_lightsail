@@ -100,7 +100,7 @@ def scrape_product_ids_and_titles(keyword):
             page = context.new_page()
             url = f'https://www.aliexpress.com/wholesale?SearchText={keyword}&SortType=total_tranpro_desc'
             logging.info(f"[{keyword}] 페이지 열기: {url}")
-            page.goto(url, timeout=60000, wait_until='domcontentloaded')
+            page.goto(url, timeout=60000, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
             logging.info(f"[{keyword}] 페이지 로딩 완료, 3초 대기")
             time.sleep(3)
 
@@ -111,8 +111,14 @@ def scrape_product_ids_and_titles(keyword):
             else:
                 for element in elements[:5]:  # 상위 5개 상품을 처리
                     href = element.get_attribute('href')
-                    product_title_element = element.query_selector('span.product-title')  # 상품 제목을 추출할 셀렉터
                     
+                    # 여러 가지 방법으로 상품 제목을 추출
+                    product_title_element = element.query_selector('span.product-title')  # 기본 상품 제목 셀렉터
+                    
+                    if not product_title_element:
+                        # 상품 제목을 찾지 못했을 경우 다른 셀렉터로 시도
+                        product_title_element = element.query_selector('div.item-title')  # 대체 셀렉터 예시
+                        
                     # 상품 제목을 추출할 수 없으면 'No title' 반환
                     product_title = product_title_element.inner_text().strip() if product_title_element else "No title"
                     
@@ -131,6 +137,8 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
     
     return product_data
+
+
 
 
 
