@@ -87,8 +87,8 @@ def dynamic_selector_search(page, keyword):
             logging.error(f"[{keyword}] 셀렉터 '{selector}' 오류: {e}")
     return []
 
-def scrape_product_ids(keyword):
-    product_ids = []
+def scrape_product_ids_and_titles(keyword):
+    product_data = []  # (상품 ID, 상품 제목) 튜플을 저장할 리스트
     try:
         with sync_playwright() as p:
             logging.info(f"[{keyword}] Playwright 브라우저 실행")
@@ -103,24 +103,36 @@ def scrape_product_ids(keyword):
             page.goto(url, timeout=60000, wait_until='domcontentloaded')
             logging.info(f"[{keyword}] 페이지 로딩 완료, 3초 대기")
             time.sleep(3)
+            
             elements = dynamic_selector_search(page, keyword)
             if not elements:
                 logging.error(f"[{keyword}] 유효한 셀렉터를 찾지 못했습니다.")
             else:
                 for element in elements[:5]:
                     href = element.get_attribute('href')
+                    product_title_element = element.query_selector('span.product-title')  # 상품 제목을 추출할 셀렉터
+                    
                     if href:
                         if '/item/' in href:
                             product_id = href.split('/item/')[1].split('.')[0]
                         else:
                             product_id = href
-                        product_ids.append(product_id)
-                        logging.info(f"[{keyword}] 추출 상품 ID: {product_id}")
+                        
+                        # 상품 제목 추출
+                        product_title = product_title_element.inner_text().strip() if product_title_element else "No title"
+                        
+                        product_data.append((product_id, product_title))
+                        logging.info(f"[{keyword}] 추출 상품 ID: {product_id}, 상품 제목: {product_title}")
+            
             browser.close()
     except Exception as e:
         logging.error(f"[{keyword}] 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
-    return product_ids
+    
+    return product_data
+
+
+
 
 
 
@@ -278,7 +290,7 @@ def main():
     
     for keyword in keywords:
         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
-        ids = scrape_product_ids(keyword)  # 제품 ID 크롤링
+        ids = scrape_product_ids_and_titles(keyword)  # 제품 ID 크롤링
         extracted_reviews = []
         product_count = 0
         
