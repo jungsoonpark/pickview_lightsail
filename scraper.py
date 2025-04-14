@@ -120,7 +120,10 @@ def scrape_product_ids_and_titles(keyword):
                             product_id = href
                         
                         # 상품 제목 추출
-                        product_title = product_title_element.inner_text().strip() if product_title_element else "No title"
+                        if product_title_element:
+                            product_title = product_title_element.inner_text().strip()
+                        else:
+                            product_title = "No title"
                         
                         product_data.append((product_id, product_title))  # (상품 ID, 상품 제목) 저장
                         logging.info(f"[{keyword}] 추출 상품 ID: {product_id}, 상품 제목: {product_title}")
@@ -131,8 +134,6 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
     
     return product_data
-
-
 
 
 
