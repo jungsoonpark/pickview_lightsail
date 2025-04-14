@@ -87,7 +87,7 @@ def dynamic_selector_search(page, keyword, type='id'):
     for selector in selectors:
         try:
             logging.info(f"[{keyword}] 셀렉터 시도: {selector}")
-            page.wait_for_selector(selector, timeout=30000)  # 셀렉터를 찾을 때까지 최대 30초 대기
+            page.wait_for_selector(selector, timeout=60000)  # 셀렉터를 찾을 때까지 최대 30초 대기
             elements = page.query_selector_all(selector)
             if elements:
                 logging.info(f"[{keyword}] 셀렉터 '{selector}'로 {len(elements)}개 요소 발견")
