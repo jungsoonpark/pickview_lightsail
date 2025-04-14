@@ -97,7 +97,7 @@ def dynamic_selector_search(page, keyword, type='id'):
 
 
 
-def scrape_product_ids_and_titles(keyword):
+def scrape_top_5_product_ids_and_titles(keyword):
     product_data = []  # 상품 ID와 제목을 저장할 리스트
     try:
         with sync_playwright() as p:
@@ -111,11 +111,18 @@ def scrape_product_ids_and_titles(keyword):
             logging.info(f"[{keyword}] 페이지 로딩 완료")
             time.sleep(3)  # 로딩 완료 후 잠시 대기
 
-            # 상품 ID 추출
-            product_elements = page.query_selector_all('a[href*="/item/"]')
+            # 페이지 완전히 로드 대기
+            page.wait_for_load_state('load')  # 페이지가 완전히 로드될 때까지 대기
 
-            # 상위 5개만 처리하도록 수정
-            for element in product_elements[:5]:  # 상위 5개 상품만 처리
+            # 스크롤을 통해 더 많은 상품을 로딩
+            for _ in range(2):  # 페이지 2번 스크롤하여 추가 로드
+                page.evaluate('window.scrollBy(0, window.innerHeight);')
+                time.sleep(2)  # 스크롤 후 대기
+
+            # 상위 5개 상품만 처리
+            product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
+
+            for element in product_elements:
                 href = element.get_attribute('href')
                 if href:
                     product_id = href.split('/item/')[1].split('.')[0]  # 상품 ID 추출
