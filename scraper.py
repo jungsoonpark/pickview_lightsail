@@ -150,24 +150,26 @@ def dynamic_selector_search(page, keyword):
 
 
 def get_product_title(product_id):
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)  # headless 모드로 브라우저 실행
-        page = browser.new_page()
-        url = f"https://www.aliexpress.com/item/{product_id}"
+    url = f"https://www.aliexpress.com/item/{product_id}"
+    
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+    }
+    
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        logging.error(f"상품 상세 페이지를 불러오는 데 실패했습니다. (상품 ID: {product_id})")
+        return 'No title'
 
-        page.goto(url)  # 페이지로 이동
-        page.wait_for_load_state('networkidle')  # 네트워크 요청이 모두 완료될 때까지 기다림
-        page.wait_for_selector('h1')  # 상품 제목이 포함된 h1 태그 로딩 대기
+    soup = BeautifulSoup(response.text, 'html.parser')
 
-        # 상품 제목 추출
-        title = page.query_selector('h1.product-title-text')
-        if title:
-            product_title = title.inner_text().strip()  # 텍스트를 추출하여 공백 제거
-        else:
-            product_title = 'No title'
-
-        browser.close()
-        return product_title
+    # 상품 제목 추출 (헤더에 따라 다른 선택자 사용)
+    title = soup.find('h1', class_='product-title-text')
+    if title:
+        return title.text.strip()
+    
+    return 'No title'
 
 
 
