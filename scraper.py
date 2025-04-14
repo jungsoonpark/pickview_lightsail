@@ -149,23 +149,37 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
-def dynamic_selector_search(page, keyword):
-    selectors = [
-        'a[data-product-id]',
-        'div[data-spm="itemlist"] a[href*="/item/"]',
-        'a[href*="/item/"]'
-    ]
+def dynamic_selector_search(page, keyword, type='id'):
+    # 상품 ID와 상품 제목을 위한 셀렉터를 분리
+    if type == 'id':
+        # 상품 ID를 추출할 셀렉터 리스트
+        selectors = [
+            'a[data-product-id]',  # 상품 링크에서 추출
+            'div[data-spm="itemlist"] a[href*="/item/"]',  # 다른 형식의 상품 링크
+            'a[href*="/item/"]'  # 일반적인 링크 패턴
+        ]
+    elif type == 'title':
+        # 상품 제목을 추출할 셀렉터 리스트
+        selectors = [
+            'span.product-title',  # 기본 상품 제목
+            'div.item-title',  # 대체 셀렉터 예시
+            'h1.product-title'  # 다른 대체 셀렉터
+        ]
+    
+    # 셀렉터 검색 시도
     for selector in selectors:
         try:
             logging.info(f"[{keyword}] 셀렉터 시도: {selector}")
-            page.wait_for_selector(selector, timeout=60000)  # 타임아웃을 60초로 늘림
+            page.wait_for_selector(selector, timeout=30000)  # 셀렉터를 찾을 때까지 최대 30초 대기
             elements = page.query_selector_all(selector)
             if elements:
+                logging.info(f"[{keyword}] 셀렉터 '{selector}'로 {len(elements)}개 요소 발견")
                 return elements
         except PlaywrightTimeoutError as te:
             logging.warning(f"[{keyword}] 셀렉터 '{selector}' 타임아웃: {te}")
         except Exception as e:
             logging.error(f"[{keyword}] 셀렉터 '{selector}' 오류: {e}")
+    
     return []
 
 
