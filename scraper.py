@@ -84,17 +84,15 @@ def dynamic_selector_search(page, keyword, type='id'):
     # 셀렉터 검색 시도
     for selector in selectors:
         try:
-            logging.info(f"[{keyword}] 셀렉터 시도: {selector}")
-            page.wait_for_selector(selector, timeout=60000)  # 타임아웃을 60초로 설정
-
-            elements = page.query_selector_all(selector)
-            if elements:
-                return elements
-        except PlaywrightTimeoutError as te:
-            logging.warning(f"[{keyword}] 셀렉터 '{selector}' 타임아웃: {te}")
-        except Exception as e:
-            logging.error(f"[{keyword}] 셀렉터 '{selector}' 오류: {e}")
-    return []
+            logging.info(f"셀렉터 시도: {selector}")
+            page.wait_for_selector(selector, timeout=60000)
+            title_element = page.query_selector(selector)
+            if title_element:
+                product_title = title_element.inner_text().strip()
+                logging.info(f"상품 제목: {product_title}")
+                break
+        except PlaywrightTimeoutError as e:
+            logging.warning(f"셀렉터 '{selector}' 타임아웃: {e}")
 
 
 
