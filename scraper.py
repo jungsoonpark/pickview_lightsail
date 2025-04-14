@@ -164,7 +164,7 @@ def dynamic_selector_search(page, keyword):
 #             return None
 
 #         # 5점 리뷰만 추출 (리스트가 비어 있으면 None 반환)
-#         extracted_reviews += [review.get('buyerFeedback', '') for review in reviews if review.get('buyerFeedback')]
+#         extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
         
 #         # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
 #         if len(extracted_reviews) < reviews_needed:
@@ -251,7 +251,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
             return None
 
         # 5점 리뷰만 추출 (리스트가 비어 있으면 None 반환)
-        extracted_reviews += [review.get('buyerFeedback', '') for review in reviews if review.get('buyerFeedback')]
+        extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
         
         # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
         if len(extracted_reviews) < reviews_needed:
