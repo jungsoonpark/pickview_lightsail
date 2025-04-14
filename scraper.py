@@ -98,20 +98,12 @@ def dynamic_selector_search(page, keyword, type='id'):
 
 
 
-
-
-
-
-from playwright.sync_api import sync_playwright
-import time
-import logging
-
 def scrape_product_ids_and_titles(keyword):
     product_data = []  # 상품 ID와 제목을 저장할 리스트
     try:
         with sync_playwright() as p:
             logging.info(f"[{keyword}] Playwright 브라우저 실행")
-            browser = p.chromium.launch(headless=False)  # headless=False로 설정하여 실제 브라우저 환경에서 확인
+            browser = p.chromium.launch(headless=True)  # headless=True로 설정
             context = browser.new_context(locale='ko-KR')
             page = context.new_page()
 
@@ -119,14 +111,6 @@ def scrape_product_ids_and_titles(keyword):
             page.goto(url, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
             logging.info(f"[{keyword}] 페이지 로딩 완료")
             time.sleep(3)  # 로딩 완료 후 잠시 대기
-
-            # 페이지 완전히 로드 대기
-            page.wait_for_load_state('load')  # 페이지가 완전히 로드될 때까지 대기
-
-            # 스크롤을 통해 더 많은 상품을 로딩
-            for _ in range(3):  # 페이지 3번 스크롤
-                page.evaluate('window.scrollBy(0, window.innerHeight);')
-                time.sleep(2)  # 스크롤 후 대기
 
             # 상품 ID 추출
             product_elements = page.query_selector_all('a[href*="/item/"]')
@@ -138,20 +122,21 @@ def scrape_product_ids_and_titles(keyword):
 
                     # 상품 제목 추출
                     product_title = element.inner_text().strip()  # 상품 제목 추출
+                    
                     if not product_title:
                         logging.warning(f"[{keyword}] 상품 제목을 찾을 수 없습니다: {href}")
                         continue  # 상품 제목이 없는 경우 건너뛰기
-
+                    
                     product_data.append((product_id, product_title))  # 상품 ID와 제목을 튜플로 저장
                     logging.info(f"[{keyword}] 상품 ID: {product_id}, 제목: {product_title}")
 
             browser.close()
-
     except Exception as e:
         logging.error(f"[{keyword}] 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
 
     return product_data
+
 
 
 
