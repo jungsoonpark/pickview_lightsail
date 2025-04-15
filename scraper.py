@@ -155,6 +155,10 @@ def scrape_product_ids_and_titles(keyword):
             # 상위 5개 상품만 처리
             product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
 
+            if not product_elements:
+                logging.warning(f"[{keyword}] 상품 요소가 없습니다. 건너뜁니다.")
+                return product_data  # 상품 요소가 없다면 바로 반환
+
             for element in product_elements:
                 href = element.get_attribute('href')
                 if href:
@@ -181,12 +185,12 @@ def scrape_product_ids_and_titles(keyword):
                     logging.info(f"[{keyword}] 상품 ID: {product_id}, 제목: {product_title}")
 
             browser.close()
-
     except Exception as e:
         logging.error(f"[{keyword}] 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
 
     return product_data
+
 
 
 
