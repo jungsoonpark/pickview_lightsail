@@ -208,6 +208,10 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
+import requests
+import logging
+import traceback
+
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
         # 상품 제목 추출
@@ -219,6 +223,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
         headers = {"User-Agent": "Mozilla/5.0"}
 
+        # 요청 보내기
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
             logging.error(f"[{product_id}] 리뷰 페이지 요청 실패, 상태 코드: {response.status_code}")
@@ -226,7 +231,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
 
         # 페이지 파싱
         try:
-            data = response.json()
+            data = response.json()  # JSON 파싱
         except ValueError:
             logging.error(f"[{product_id}] JSON 파싱 오류, 응답: {response.text}")
             return None
@@ -234,6 +239,8 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         # 리뷰 추출
         reviews = []
         review_elements = data.get('data', {}).get('evaViewList', [])
+        
+        # 리뷰가 있는 경우만 추출
         for review_element in review_elements:
             review_text = review_element.get('buyerTranslationFeedback', '')  # 리뷰 추출
             if review_text:
@@ -248,6 +255,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
 
         if len(extracted_reviews) < reviews_needed:
+            logging.info(f"[{product_id}] 리뷰가 부족합니다. 더 많은 리뷰를 수집합니다.")
             return None
         
         # 리뷰 요약
