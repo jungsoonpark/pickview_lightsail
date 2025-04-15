@@ -56,16 +56,26 @@ def save_reviews_to_sheet(results):
             return
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
         
+        # 열 이름 기준으로 열 번호를 매핑
+        headers = sheet.row_values(1)  # 첫 번째 행에 열 이름이 있기 때문에 이를 기준으로 열 번호를 추출
+        title_index = headers.index('title') + 1
+        review_content1_index = headers.index('review_content1') + 1
+        review_content2_index = headers.index('review_content2') + 1
+
         for row in results:
             row_number = int(row[5])  # row[5]는 row_number (정수로 변환)
-            # 리뷰 업데이트 (4번째 열: review_content1, 5번째 열: review_content2)
-            sheet.update_cell(row_number, 4, row[3])  # review_content1 열 업데이트
-            sheet.update_cell(row_number, 5, row[4])  # review_content2 열 업데이트
+            # 리뷰 내용이 있으면 review_content1, review_content2 열에 각각 넣기
+            sheet.update_cell(row_number, review_content1_index, row[3])  # review_content1 업데이트
+            sheet.update_cell(row_number, review_content2_index, row[4])  # review_content2 업데이트
         
         logging.info(f"구글 시트에 리뷰 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
     except Exception as e:
         logging.error(f"결과 저장 실패: {e}")
         traceback.print_exc()
+
+
+
+
 
 def get_and_summarize_reviews(product_id, keyword):
     try:
