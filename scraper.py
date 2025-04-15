@@ -211,6 +211,8 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
+from playwright.sync_api import sync_playwright
+
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
         # 상품 제목 추출
@@ -226,22 +228,23 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
             page = context.new_page()
             page.goto(url)
 
-            # 페이지 로드 후, 리뷰 데이터가 포함된 HTML 부분을 가져오기
-            page.wait_for_selector("script")  # 필요할 경우, 데이터가 로딩될 때까지 대기
-            response_text = page.content()
+            # 페이지 로드 후, 특정 JSON 데이터를 포함하는 script 태그 대기
+            page.wait_for_selector("script[type='application/json']")  # JSON 데이터가 포함된 script 태그를 기다림
 
-            # 리뷰 데이터를 HTML에서 추출하는 부분
-            # 이 부분은 실제 페이지 구조에 맞게 조정해야 합니다
-            review_elements = page.query_selector_all('script[type="application/json"]')  # 예시로 JSON을 포함한 script를 찾기
-
-            for review_element in review_elements:
-                review_json = review_element.inner_text()  # 실제 JSON 텍스트를 추출
+            # 리뷰 데이터를 포함하는 JSON을 추출
+            script_elements = page.query_selector_all("script[type='application/json']")
+            
+            # 각 script 태그에서 리뷰 데이터를 추출
+            for script in script_elements:
+                script_content = script.inner_text()
                 try:
-                    reviews_data = json.loads(review_json)
+                    # JSON 파싱
+                    reviews_data = json.loads(script_content)
                     reviews = reviews_data.get('data', {}).get('evaViewList', [])
                     if not reviews:
                         logging.warning(f"[{product_id}] 리뷰가 없습니다.")
                         return None
+                    
                     extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews]
                 except json.JSONDecodeError as e:
                     logging.error(f"[{product_id}] JSON 파싱 오류: {e}")
@@ -264,6 +267,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
         return None
+
 
 
 
