@@ -68,7 +68,13 @@ def save_results_to_sheet(results):
 
 
 
+
+
 # def scrape_product_ids_and_titles(keyword):
+#     if not keyword:  # 키워드가 None 이거나 빈 값일 경우 건너뛰기
+#         logging.warning(f"[{keyword}] 검색어가 비어있습니다. 건너뜁니다.")
+#         return []
+
 #     product_data = []  # 상품 ID와 제목을 저장할 리스트
 #     try:
 #         with sync_playwright() as p:
@@ -80,18 +86,21 @@ def save_results_to_sheet(results):
 #             url = f'https://www.aliexpress.com/wholesale?SearchText={keyword}&SortType=total_tranpro_desc'
 #             page.goto(url, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
 #             logging.info(f"[{keyword}] 페이지 로딩 완료")
-#             time.sleep(3)  # 로딩 완료 후 잠시 대기
 
-#             # 페이지 완전히 로드 대기
-#             page.wait_for_load_state('load')  # 페이지가 완전히 로드될 때까지 대기
+#             # 페이지가 완전히 로드될 때까지 대기 (60초로 타임아웃 시간 늘림)
+#             page.wait_for_load_state('load', timeout=60000)  # 60초 대기
+#             time.sleep(3)  # 로딩 후 잠시 대기
 
-#             # 스크롤을 통해 더 많은 상품을 로딩
-#             for _ in range(2):  # 페이지 2번 스크롤하여 추가 로드
-#                 page.evaluate('window.scrollBy(0, window.innerHeight);')
-#                 time.sleep(2)  # 스크롤 후 대기
+#             # 스크롤을 통해 더 많은 상품을 로딩 (한 번만 스크롤)
+#             page.evaluate('window.scrollBy(0, window.innerHeight);')
+#             time.sleep(2)  # 스크롤 후 대기
 
 #             # 상위 5개 상품만 처리
 #             product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
+
+#             if not product_elements:
+#                 logging.warning(f"[{keyword}] 상품이 없습니다. 스크롤 후에도 상품이 로드되지 않았습니다.")
+#                 return product_data
 
 #             for element in product_elements:
 #                 href = element.get_attribute('href')
@@ -118,12 +127,11 @@ def save_results_to_sheet(results):
 #     return product_data
 
 
-def scrape_product_ids_and_titles(keyword):
-    if not keyword:  # 키워드가 None 이거나 빈 값일 경우 건너뛰기
-        logging.warning(f"[{keyword}] 검색어가 비어있습니다. 건너뜁니다.")
-        return []
 
+def scrape_product_ids_and_titles(keyword):
     product_data = []  # 상품 ID와 제목을 저장할 리스트
+    tried_products = set()  # 이미 시도한 상품을 기록할 set (중복 방지)
+
     try:
         with sync_playwright() as p:
             logging.info(f"[{keyword}] Playwright 브라우저 실행")
@@ -134,31 +142,36 @@ def scrape_product_ids_and_titles(keyword):
             url = f'https://www.aliexpress.com/wholesale?SearchText={keyword}&SortType=total_tranpro_desc'
             page.goto(url, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
             logging.info(f"[{keyword}] 페이지 로딩 완료")
+            time.sleep(3)  # 로딩 완료 후 잠시 대기
 
-            # 페이지가 완전히 로드될 때까지 대기 (60초로 타임아웃 시간 늘림)
-            page.wait_for_load_state('load', timeout=60000)  # 60초 대기
-            time.sleep(3)  # 로딩 후 잠시 대기
+            # 페이지 완전히 로드 대기
+            page.wait_for_load_state('load')  # 페이지가 완전히 로드될 때까지 대기
 
-            # 스크롤을 통해 더 많은 상품을 로딩 (한 번만 스크롤)
-            page.evaluate('window.scrollBy(0, window.innerHeight);')
-            time.sleep(2)  # 스크롤 후 대기
+            # 스크롤을 통해 더 많은 상품을 로딩
+            for _ in range(2):  # 페이지 2번 스크롤하여 추가 로드
+                page.evaluate('window.scrollBy(0, window.innerHeight);')
+                time.sleep(2)  # 스크롤 후 대기
 
             # 상위 5개 상품만 처리
             product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
-
-            if not product_elements:
-                logging.warning(f"[{keyword}] 상품이 없습니다. 스크롤 후에도 상품이 로드되지 않았습니다.")
-                return product_data
 
             for element in product_elements:
                 href = element.get_attribute('href')
                 if href:
                     product_id = href.split('/item/')[1].split('.')[0]  # 상품 ID 추출
+
+                    # 이미 시도한 상품 ID는 건너뜁니다.
+                    if product_id in tried_products:
+                        logging.warning(f"[{keyword}] 이미 처리한 상품 ID: {product_id}, 건너뜁니다.")
+                        continue
+                    tried_products.add(product_id)  # 상품 ID를 시도 목록에 추가
+
                     logging.info(f"[{keyword}] 상품 ID 추출: {product_id}")
 
                     # 상품 제목 추출
                     product_title = element.inner_text().strip().split('\n')[0]  # 상품 제목만 추출 (가격 등 정보는 제외)
 
+                    # 제목이 없는 경우 건너뛰기
                     if not product_title:
                         logging.warning(f"[{keyword}] 상품 제목을 찾을 수 없습니다: {href}")
                         continue  # 상품 제목이 없는 경우 건너뛰기
@@ -168,14 +181,12 @@ def scrape_product_ids_and_titles(keyword):
                     logging.info(f"[{keyword}] 상품 ID: {product_id}, 제목: {product_title}")
 
             browser.close()
+
     except Exception as e:
         logging.error(f"[{keyword}] 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
 
     return product_data
-
-
-
 
 
 
