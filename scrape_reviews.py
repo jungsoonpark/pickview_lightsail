@@ -55,10 +55,13 @@ def save_reviews_to_sheet(results):
             logging.warning("저장할 리뷰가 없습니다.")
             return
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
+        
         for row in results:
-            # 'row_number'와 'product_id'를 사용하여 해당 행을 찾아 리뷰를 업데이트합니다.
-            sheet.update_cell(row[4], 4, row[3])  # review_content1 열 업데이트
-            sheet.update_cell(row[4], 5, row[4])  # review_content2 열 업데이트
+            row_number = int(row[5])  # row[5]는 row_number (정수로 변환)
+            # 리뷰 업데이트 (4번째 열: review_content1, 5번째 열: review_content2)
+            sheet.update_cell(row_number, 4, row[3])  # review_content1 열 업데이트
+            sheet.update_cell(row_number, 5, row[4])  # review_content2 열 업데이트
+        
         logging.info(f"구글 시트에 리뷰 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
     except Exception as e:
         logging.error(f"결과 저장 실패: {e}")
