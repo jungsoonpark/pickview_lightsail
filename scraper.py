@@ -78,7 +78,8 @@ def dynamic_selector_search(page, keyword, type='id'):
             'h1[data-pl="product-title"]',
             'meta[property="og:title"]',
             'span.product-title',
-            'div.item-title'
+            'div.item-title',
+            'span.title-text',  # 새로운 셀렉터 추가
         ]
     
     # 셀렉터 검색 시도
@@ -89,13 +90,11 @@ def dynamic_selector_search(page, keyword, type='id'):
             title_element = page.query_selector(selector)
             if title_element:
                 product_title = title_element.inner_text().strip()
-                logging.info(f"상품 제목: {product_title}")
-                break
+                if product_title:  # 빈 제목이 아니면
+                    logging.info(f"상품 제목: {product_title}")
+                    break
         except PlaywrightTimeoutError as e:
             logging.warning(f"셀렉터 '{selector}' 타임아웃: {e}")
-
-
-
 
 def scrape_product_ids_and_titles(keyword):
     product_data = []  # 상품 ID와 제목을 저장할 리스트
@@ -130,7 +129,10 @@ def scrape_product_ids_and_titles(keyword):
                     # 상품 제목 추출
                     product_title = element.inner_text().strip()  # 상품 제목 추출
                     
-                    if not product_title:
+                    if not product_title:  # 제목이 없으면 동적으로 다른 셀렉터 시도
+                        dynamic_selector_search(page, keyword, type='title')
+                    
+                    if not product_title:  # 여전히 제목이 비어 있으면 건너뜀
                         logging.warning(f"[{keyword}] 상품 제목을 찾을 수 없습니다: {href}")
                         continue  # 상품 제목이 없는 경우 건너뛰기
                     
@@ -144,6 +146,7 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
 
     return product_data
+
 
 
 
