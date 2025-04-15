@@ -118,8 +118,13 @@ def scrape_product_ids_and_titles(keyword):
             # 페이지 완전히 로드 대기
             page.wait_for_load_state('load')  # 페이지가 완전히 로드될 때까지 대기
 
-            # 상품 요소가 로드될 때까지 대기
-            page.wait_for_selector('a[href*="/item/"]')  # 상품 링크가 로드될 때까지 대기
+            # 스크롤을 통해 더 많은 상품을 로딩 (최소 2번 이상)
+            for _ in range(2):  # 스크롤을 2번 더 함
+                page.evaluate('window.scrollBy(0, window.innerHeight);')  # 한 번만 스크롤
+                time.sleep(2)  # 스크롤 후 대기
+
+            # 상품 요소가 로드될 때까지 대기 (타임아웃을 늘림)
+            page.wait_for_selector('a[href*="/item/"]', timeout=60000)  # 60초 대기
             logging.info(f"[{keyword}] 상품 요소 로드 완료")
 
             # 상품 요소 추출
