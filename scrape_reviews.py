@@ -1,16 +1,69 @@
 import logging
-import requests
+import time
+from datetime import datetime
 import traceback
+import gspread
+from google.oauth2.service_account import Credentials
+import requests
 import openai
+import os
 
 # 로깅 설정
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(
+    level=logging.INFO, 
+    format='[%(levelname)s] %(asctime)s - %(message)s', 
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+# 구글 시트 설정
+SHEET_ID = "1Ew7u6N72VP3nVvgNiLKZDyIpHg4xXz-prkyV4SW7EkI"
+JSON_KEY_PATH = '/home/ubuntu/pickview-be786ad8e194.json'  # JSON 파일 경로
+READ_SHEET_NAME = 'list'      # 키워드가 있는 시트
+RESULT_SHEET_NAME = 'result'  # 결과 저장 시트 (날짜, 키워드, product_id, review_content1, review_content2)
 
 # OpenAI API 키 설정
-openai.api_key = "YOUR_OPENAI_API_KEY"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# 리뷰를 크롤링하고 요약하는 함수
-def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
+def connect_to_google_sheet(sheet_name):
+    logging.info("Google Sheet 연결 시도...")
+    try:
+        scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        creds = Credentials.from_service_account_file(JSON_KEY_PATH, scopes=scopes)
+        client = gspread.authorize(creds)
+        sheet = client.open_by_key(SHEET_ID).worksheet(sheet_name)
+        logging.info(f'Google Sheet "{sheet_name}" 연결 성공')
+        return sheet
+    except Exception as e:
+        logging.error(f"구글 시트 연결 실패: {e}")
+        traceback.print_exc()
+        raise
+
+def get_product_ids_from_google_sheet():
+    try:
+        sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
+        data = sheet.get_all_records()
+        product_ids = [(row['product_id'], row['keyword']) for row in data if not row['review_content1']]
+        logging.info(f"리뷰 추출할 상품 ID 리스트 수집 완료: {product_ids}")
+        return product_ids
+    except Exception as e:
+        logging.error(f"상품 ID 수집 실패: {e}")
+        traceback.print_exc()
+        return []
+
+def save_reviews_to_sheet(results):
+    try:
+        if not results:
+            logging.warning("저장할 리뷰가 없습니다.")
+            return
+        sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
+        for row in results:
+            sheet.append_row(row)  # 날짜, keyword, product_id, review_content1, review_content2
+        logging.info(f"구글 시트에 리뷰 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
+    except Exception as e:
+        logging.error(f"결과 저장 실패: {e}")
+        traceback.print_exc()
+
+def get_and_summarize_reviews(product_id, keyword):
     try:
         url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
         headers = {
@@ -32,32 +85,30 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5):
 
         reviews = data.get('data', {}).get('evaViewList', [])
         if not reviews:
+            logging.warning(f"[{product_id}] 리뷰가 없습니다.")
             return None
 
-        # 'buyerTranslationFeedback' 추출
-        extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
-
-        # 중간 로깅: 리뷰 수집 완료 후 출력
+        # buyerTranslationFeedback 추출
+        extracted_reviews = [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
         logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
 
-        if len(extracted_reviews) < reviews_needed:
-            logging.warning(f"[{product_id}] 필요한 리뷰 수({reviews_needed})에 미치지 못했습니다.")
+        if len(extracted_reviews) < 1:
+            logging.warning(f"[{product_id}] 필요한 리뷰가 부족합니다.")
             return None
         
         # 리뷰 요약
-        result = summarize_reviews(extracted_reviews, product_id)
+        result = summarize_reviews(extracted_reviews, keyword)
         if result is None:
             return None
         
         review_content1, review_content2 = result
         return review_content1, review_content2
+
     except Exception as e:
         logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
         return None
 
-
-# 리뷰를 요약하는 함수
 def summarize_reviews(reviews, product_title):
     reviews_text = "\n".join(reviews)
     try:
@@ -74,9 +125,7 @@ def summarize_reviews(reviews, product_title):
         )
         
         review_content1 = response1['choices'][0]['message']['content'].strip()
-
-        logging.info(f"상품 제목: {product_title}, 카피라이팅 문구: {review_content1}")
-
+        
         # review_content2: 상품의 추가적인 긍정적인 특징을 15-40자 이내로 자연스럽게 작성
         response2 = openai.ChatCompletion.create(
             model="gpt-4",
@@ -91,12 +140,42 @@ def summarize_reviews(reviews, product_title):
         
         review_content2 = response2['choices'][0]['message']['content'].strip()
 
-        # 5개 리뷰가 안 채워지면 다음 상품을 가져오는 로직 추가
-        if len(review_content1) == 0 or len(review_content2) == 0:
-            return None  # 리뷰 추출 또는 요약 실패시 None 반환
-
         return review_content1, review_content2
     except Exception as e:
         logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
-        return None  # 오류 발생 시 None 반환
+        return None
+
+def main():
+    product_ids = get_product_ids_from_google_sheet()
+    if not product_ids:
+        logging.error("리뷰를 추출할 상품이 없습니다. 프로그램 종료합니다.")
+        return
+
+    results = []
+    today = datetime.today().strftime('%Y-%m-%d')
+
+    for product_id, keyword in product_ids:
+        logging.info(f"[{keyword}] '{product_id}' 작업 시작")
+        
+        # 리뷰 크롤링 및 요약
+        result = get_and_summarize_reviews(product_id, keyword)
+        
+        if result:
+            review_content1, review_content2 = result
+            results.append([today, keyword, product_id, review_content1, review_content2])
+        else:
+            logging.warning(f"[{keyword}] 리뷰가 없는 상품 제외: {product_id}")
+        
+        logging.info(f"[{keyword}] 작업 종료, 2초 대기")
+        time.sleep(2)
+
+    if results:
+        save_reviews_to_sheet(results)
+    else:
+        logging.warning("최종 결과가 없습니다.")
+    
+    logging.info("[END] 프로그램 종료")
+
+if __name__ == "__main__":
+    main()
