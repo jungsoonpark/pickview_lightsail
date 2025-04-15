@@ -101,7 +101,7 @@ def dynamic_selector_search(page, keyword, type='id'):
 
 
 
-def scrape_product_ids_and_titles(keyword):
+ def scrape_product_ids_and_titles(keyword):
     product_data = []  # 상품 ID와 제목을 저장할 리스트
     try:
         with sync_playwright() as p:
@@ -113,27 +113,18 @@ def scrape_product_ids_and_titles(keyword):
             url = f'https://www.aliexpress.com/wholesale?SearchText={keyword}&SortType=total_tranpro_desc'
             page.goto(url, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
             logging.info(f"[{keyword}] 페이지 로딩 완료")
-            
+            time.sleep(3)  # 로딩 완료 후 잠시 대기
+
             # 페이지 완전히 로드 대기
             page.wait_for_load_state('load')  # 페이지가 완전히 로드될 때까지 대기
-            
-            # 스크롤을 통해 더 많은 상품을 로딩 (스크롤 5번 시도)
-            for _ in range(5):  # 페이지를 5번 스크롤하여 추가 로드
+
+            # 스크롤을 통해 더 많은 상품을 로딩
+            for _ in range(2):  # 페이지 2번 스크롤하여 추가 로드
                 page.evaluate('window.scrollBy(0, window.innerHeight);')
                 time.sleep(2)  # 스크롤 후 대기
 
-            # 상품 링크가 로드될 때까지 기다리기
-            try:
-                # 기다리도록 시도, 실패하면 페이지를 새로고침 후 다시 시도
-                page.wait_for_selector('a[href*="/item/"]', timeout=60000)  # 상품 요소가 로드될 때까지 대기
-            except TimeoutError:
-                logging.error(f"[{keyword}] 상품 링크 로드 타임아웃 발생, 페이지 새로고침 시도")
-                page.reload(wait_until='domcontentloaded')  # 페이지 새로고침 후 다시 로딩 대기
-                page.wait_for_selector('a[href*="/item/"]', timeout=60000)  # 다시 기다리기
-
-            # 상위 5개 상품만 처리
+            # 상품 ID와 제목을 상위 5개만 추출
             product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
-
             for element in product_elements:
                 href = element.get_attribute('href')
                 if href:
@@ -141,9 +132,12 @@ def scrape_product_ids_and_titles(keyword):
                     logging.info(f"[{keyword}] 상품 ID 추출: {product_id}")
 
                     # 상품 제목 추출
-                    product_title = element.inner_text().strip().split('\n')[0]  # 상품 제목만 추출 (가격 등 정보는 제외)
-
-                    if not product_title:
+                    product_title = element.inner_text().strip()  # 상품 제목 추출
+                    
+                    if not product_title:  # 제목이 없으면 동적으로 다른 셀렉터 시도
+                        dynamic_selector_search(page, keyword, type='title')
+                    
+                    if not product_title:  # 여전히 제목이 비어 있으면 건너뜀
                         logging.warning(f"[{keyword}] 상품 제목을 찾을 수 없습니다: {href}")
                         continue  # 상품 제목이 없는 경우 건너뛰기
                     
