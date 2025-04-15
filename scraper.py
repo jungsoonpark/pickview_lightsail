@@ -129,11 +129,11 @@ def scrape_product_ids_and_titles(keyword):
                     logging.info(f"[{keyword}] 상품 ID 추출: {product_id}")
 
                     # 상품 제목 추출
-                    product_title = element.inner_text().strip()  # 상품 제목 추출
-                    
+                    product_title = element.inner_text().strip().split('\n')[0]  # 상품 제목만 추출 (가격 등 정보는 제외)
+
                     if not product_title:
-                        product_title = "No title"  # 제목이 없는 경우 기본값 할당
                         logging.warning(f"[{keyword}] 상품 제목을 찾을 수 없습니다: {href}")
+                        continue  # 상품 제목이 없는 경우 건너뛰기
                     
                     # 추출된 상품 ID와 제목을 튜플로 저장
                     product_data.append((product_id, product_title))
