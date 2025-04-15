@@ -62,7 +62,7 @@ def save_reviews_to_sheet(results):
             return
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
         for row in results:
-            sheet.append_row(row)  # 날짜, keyword, product_id, review_content1, review_content2
+            sheet.append_row(row)  # 날짜, keyword, product_id, title, review_content1, review_content2
         logging.info(f"구글 시트에 리뷰 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
     except Exception as e:
         logging.error(f"결과 저장 실패: {e}")
@@ -168,7 +168,8 @@ def main():
         
         if result:
             review_content1, review_content2 = result
-            results.append([today, keyword, product_id, title, review_content1, review_content2])
+            # 결과를 date, keyword, product_id, title, review_content1, review_content2 형태로 저장
+            results.append([today, keyword, product_id, "", review_content1, review_content2])  # 제목은 빈 문자열로 두기
         else:
             logging.warning(f"[{keyword}] 리뷰가 없는 상품 제외: {product_id}")
         
