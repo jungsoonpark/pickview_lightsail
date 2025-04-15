@@ -44,8 +44,8 @@ def get_product_ids_from_google_sheet():
         data = sheet.get_all_records()
         today = datetime.today().strftime('%Y-%m-%d')  # 오늘 날짜 가져오기
         product_ids = [
-            (row['product_id'], row['keyword'], row['review_content1'], row['review_content2'], row['row_number'])
-            for row in data 
+            (row['product_id'], row['keyword'], row['review_content1'], row['review_content2'], index+2)  # 행 인덱스를 직접 사용
+            for index, row in enumerate(data) 
             if str(row.get('date', '')) == today  # 오늘 날짜의 상품들만 필터링
         ]
         logging.info(f"오늘 날짜({today}) 리뷰 추출할 상품 ID 리스트 수집 완료: {product_ids}")
