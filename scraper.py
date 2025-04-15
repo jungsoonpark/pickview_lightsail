@@ -115,30 +115,16 @@ def scrape_product_ids_and_titles(keyword):
             logging.info(f"[{keyword}] 페이지 로딩 완료")
             time.sleep(3)  # 로딩 완료 후 잠시 대기
 
-            # 페이지가 완전히 로드될 때까지 대기
+            # 페이지 완전히 로드 대기
             page.wait_for_load_state('load')  # 페이지가 완전히 로드될 때까지 대기
 
-            # 스크롤을 통해 더 많은 상품을 로딩 (최소 3번 이상)
-            for _ in range(3):  # 스크롤을 3번 더 함
-                page.evaluate('window.scrollBy(0, window.innerHeight);')  # 한 번만 스크롤
-                time.sleep(3)  # 스크롤 후 대기
+            # 스크롤을 통해 더 많은 상품을 로딩
+            for _ in range(2):  # 페이지 2번 스크롤하여 추가 로드
+                page.evaluate('window.scrollBy(0, window.innerHeight);')
+                time.sleep(2)  # 스크롤 후 대기
 
-            # 상품 요소가 로드될 때까지 대기 (타임아웃을 늘림)
-            try:
-                page.wait_for_selector('a[href*="/item/"]', timeout=60000)  # 60초 대기
-                logging.info(f"[{keyword}] 상품 요소 로드 완료")
-            except TimeoutError:
-                logging.error(f"[{keyword}] 상품 요소가 로드되지 않아 타임아웃 발생")
-                page.reload()  # 페이지를 새로 고침
-                time.sleep(3)  # 새로 고침 후 잠시 대기
-                page.wait_for_selector('a[href*="/item/"]', timeout=60000)  # 다시 시도
-
-            # 상품 요소 추출
+            # 상위 5개 상품만 처리
             product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
-
-            if not product_elements:  # 상품이 없으면
-                logging.warning(f"[{keyword}] 상품 결과가 없습니다.")
-                return product_data  # 결과가 없으면 빈 리스트 반환
 
             for element in product_elements:
                 href = element.get_attribute('href')
@@ -163,6 +149,7 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
 
     return product_data
+
 
 
 
