@@ -208,9 +208,7 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
-import requests
-import logging
-import traceback
+
 
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
@@ -225,52 +223,71 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
         }
 
+        # 요청 보내기 전에 로깅
+        logging.info(f"[{product_id}] 리뷰 페이지 요청 시작: {url}")
+        
         # requests로 API 요청
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
             logging.error(f"[{product_id}] 리뷰 페이지 요청 실패, 상태 코드: {response.status_code}")
             return None
 
+        # 응답 상태 로깅
+        logging.info(f"[{product_id}] 리뷰 페이지 요청 성공, 상태 코드: {response.status_code}")
+
         # 페이지 파싱
         try:
             data = response.json()  # JSON 형식으로 응답을 파싱
+            logging.info(f"[{product_id}] 응답 데이터 파싱 성공.")
         except ValueError:
             logging.error(f"[{product_id}] JSON 파싱 오류, 응답 내용: {response.text}")
             return None
 
+        # 데이터 확인
+        logging.debug(f"[{product_id}] 응답 데이터 구조 확인: {data.keys()}")  # 데이터 구조 확인
+
         # 리뷰 추출
         reviews = []
         review_elements = data.get('data', {}).get('evaViewList', [])
+        
+        # 리뷰 추출 과정 로깅
+        logging.info(f"[{product_id}] 리뷰 요소 갯수: {len(review_elements)}")
+        
         for review_element in review_elements:
             review_text = review_element.get('buyerTranslationFeedback', '')  # 'buyerTranslationFeedback' 리뷰 내용 추출
             if review_text:
                 reviews.append(review_text)
-
+            else:
+                logging.warning(f"[{product_id}] 빈 리뷰가 발견되었습니다.")
+        
+        # 리뷰 확인 로깅
         if len(reviews) == 0:
             logging.warning(f"[{product_id}] 리뷰가 없습니다.")
             return None
+        else:
+            logging.info(f"[{product_id}] 총 {len(reviews)}개의 리뷰 수집됨.")
 
         # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
         extracted_reviews += reviews
-        logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
+        logging.info(f"[{product_id}] 현재까지 수집된 총 리뷰 수: {len(extracted_reviews)}개")
 
         if len(extracted_reviews) < reviews_needed:
+            logging.info(f"[{product_id}] 리뷰가 {reviews_needed}개에 미치지 못합니다. 추가 리뷰 수집 필요.")
             return None
 
         # 리뷰 요약
         result = summarize_reviews(extracted_reviews, product_title)
         if result is None:
+            logging.error(f"[{product_id}] 리뷰 요약 실패.")
             return None
 
         review_content1, review_content2 = result
+        logging.info(f"[{product_id}] 리뷰 요약 완료.")
         return review_content1, review_content2
     except Exception as e:
         logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
         return None
-
-
-
 
 
 
