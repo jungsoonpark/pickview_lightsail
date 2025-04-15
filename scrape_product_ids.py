@@ -69,3 +69,17 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
 
     return product_data
+
+# 실행 코드 추가
+if __name__ == "__main__":
+    keyword = input("검색할 키워드를 입력하세요: ")  # 사용자 입력으로 키워드 받기
+    if not keyword:
+        logging.error("키워드가 비어 있습니다. 프로그램을 종료합니다.")
+    else:
+        products = scrape_product_ids_and_titles(keyword)
+        if products:
+            logging.info(f"크롤링 완료. 총 {len(products)}개의 상품 정보가 추출되었습니다.")
+            for product in products:
+                logging.info(f"상품 ID: {product[0]}, 제목: {product[1]}")
+        else:
+            logging.warning("상품 정보가 없습니다.")
