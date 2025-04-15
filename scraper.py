@@ -170,7 +170,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
 
         response = requests.get(url, headers=headers, timeout=30)
         if response.status_code != 200:
-            logging.error(f"[{product_id}] 리뷰 API 응답 실패")
+            logging.error(f"[{product_id}] 리뷰 API 요청 실패, 상태 코드: {response.status_code}, 내용: {response.text}")
             return None
         
         try:
