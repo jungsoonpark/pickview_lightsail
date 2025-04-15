@@ -17,7 +17,7 @@ def get_reviews_with_playwright(product_id):
         # 리뷰 데이터 추출
         reviews = page.query_selector_all('selector-for-reviews')  # 적절한 셀렉터로 변경
         extracted_reviews = [review.inner_text() for review in reviews]
-
+        print(extracted_reviews)
         browser.close()
         return extracted_reviews
 
