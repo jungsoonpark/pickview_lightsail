@@ -119,6 +119,10 @@ def save_results_to_sheet(results):
 
 
 def scrape_product_ids_and_titles(keyword):
+    if not keyword:  # 키워드가 None 이거나 빈 값일 경우 건너뛰기
+        logging.warning(f"[{keyword}] 검색어가 비어있습니다. 건너뜁니다.")
+        return []
+
     product_data = []  # 상품 ID와 제목을 저장할 리스트
     try:
         with sync_playwright() as p:
@@ -169,6 +173,7 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
 
     return product_data
+
 
 
 
