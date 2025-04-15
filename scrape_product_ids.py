@@ -2,9 +2,46 @@ import logging
 import time
 from playwright.sync_api import sync_playwright
 import traceback
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
+
+# 구글 시트 연결 설정
+SHEET_ID = "1Ew7u6N72VP3nVvgNiLKZDyIpHg4xXz-prkyV4SW7EkI"
+JSON_KEY_PATH = '/home/ubuntu/pickview-be786ad8e194.json'  # JSON 파일 경로 설정
+READ_SHEET_NAME = 'list'  # 구글 시트에서 날짜, 키워드가 있는 시트
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+# 구글 시트 연결 함수
+def connect_to_google_sheet(sheet_name):
+    logging.info("Google Sheet 연결 시도...")
+    try:
+        scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        creds = Credentials.from_service_account_file(JSON_KEY_PATH, scopes=scopes)
+        client = gspread.authorize(creds)
+        sheet = client.open_by_key(SHEET_ID).worksheet(sheet_name)
+        logging.info(f'Google Sheet "{sheet_name}" 연결 성공')
+        return sheet
+    except Exception as e:
+        logging.error(f"구글 시트 연결 실패: {e}")
+        traceback.print_exc()
+        raise
+
+# 구글 시트에서 키워드 가져오기
+def get_keywords_from_google_sheet():
+    try:
+        sheet = connect_to_google_sheet(READ_SHEET_NAME)
+        data = sheet.get_all_records()
+        today = datetime.today().strftime('%Y-%m-%d')
+        keywords = [row['keyword'] for row in data if str(row.get('date', '')) == today]
+        logging.info(f"오늘 날짜({today}) 키워드 수집 완료: {keywords}")
+        return keywords
+    except Exception as e:
+        logging.error(f"키워드 수집 실패: {e}")
+        traceback.print_exc()
+        return []
 
 # 상품 ID와 제목을 크롤링하는 함수
 def scrape_product_ids_and_titles(keyword):
@@ -70,16 +107,28 @@ def scrape_product_ids_and_titles(keyword):
 
     return product_data
 
-# 실행 코드 추가
-if __name__ == "__main__":
-    keyword = input("검색할 키워드를 입력하세요: ")  # 사용자 입력으로 키워드 받기
-    if not keyword:
-        logging.error("키워드가 비어 있습니다. 프로그램을 종료합니다.")
-    else:
-        products = scrape_product_ids_and_titles(keyword)
-        if products:
-            logging.info(f"크롤링 완료. 총 {len(products)}개의 상품 정보가 추출되었습니다.")
-            for product in products:
-                logging.info(f"상품 ID: {product[0]}, 제목: {product[1]}")
+# main 함수
+def main():
+    keywords = get_keywords_from_google_sheet()  # Google Sheets에서 키워드 가져오기
+    if not keywords:
+        logging.error("키워드가 없습니다. 프로그램 종료합니다.")
+        return
+
+    all_product_data = []
+
+    for keyword in keywords:
+        logging.info(f"[PROCESS] '{keyword}' 작업 시작")
+        product_data = scrape_product_ids_and_titles(keyword)  # 제품 ID 크롤링
+
+        if product_data:
+            all_product_data.extend(product_data)
         else:
-            logging.warning("상품 정보가 없습니다.")
+            logging.warning(f"[{keyword}] 상품 ID가 없습니다.")
+
+    logging.info(f"총 {len(all_product_data)}개의 상품 정보가 추출되었습니다.")
+    for product in all_product_data:
+        logging.info(f"상품 ID: {product[0]}, 제목: {product[1]}")
+
+# 실행 코드
+if __name__ == "__main__":
+    main()
