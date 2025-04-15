@@ -5,6 +5,9 @@ import logging
 import traceback
 import time
 import requests
+import openai
+
+
 
 # 구글 시트 설정
 SHEET_ID = "1Ew7u6N72VP3nVvgNiLKZDyIpHg4xXz-prkyV4SW7EkI"
