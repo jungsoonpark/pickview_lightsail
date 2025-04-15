@@ -208,7 +208,7 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
-import requests
+from playwright.sync_api import sync_playwright
 import logging
 import traceback
 
@@ -219,52 +219,47 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         product_title = next((title for pid, title in product_data if pid == product_id), 'No title')
         logging.info(f"[{product_id}] 상품 제목: {product_title}")
 
-        # 리뷰 크롤링 처리
-        url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
-        headers = {"User-Agent": "Mozilla/5.0"}
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)  # headless=True로 설정
+            context = browser.new_context(locale='ko-KR')
+            page = context.new_page()
 
-        # 요청 보내기
-        response = requests.get(url, headers=headers)
-        if response.status_code != 200:
-            logging.error(f"[{product_id}] 리뷰 페이지 요청 실패, 상태 코드: {response.status_code}")
-            return None
+            # URL
+            url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
+            page.goto(url, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
+            logging.info(f"[{product_id}] 페이지 로딩 완료")
 
-        # 페이지 파싱
-        try:
-            data = response.json()  # JSON 파싱
-        except ValueError:
-            logging.error(f"[{product_id}] JSON 파싱 오류, 응답: {response.text}")
-            return None
+            # JSON 데이터 추출
+            response = page.wait_for_response(lambda response: response.url == url and response.status == 200)
+            data = response.json()
 
-        # 리뷰 추출
-        reviews = []
-        review_elements = data.get('data', {}).get('evaViewList', [])
-        
-        # 리뷰가 있는 경우만 추출
-        for review_element in review_elements:
-            review_text = review_element.get('buyerTranslationFeedback', '')  # 리뷰 추출
-            if review_text:
-                reviews.append(review_text)
+            # 리뷰 추출
+            reviews = []
+            review_elements = data.get('data', {}).get('evaViewList', [])
+            for review_element in review_elements:
+                review_text = review_element.get('buyerTranslationFeedback', '')  # 리뷰 추출
+                if review_text:
+                    reviews.append(review_text)
 
-        if len(reviews) == 0:
-            logging.warning(f"[{product_id}] 리뷰가 없습니다.")
-            return None
-        
-        # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
-        extracted_reviews += reviews
-        logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
+            if len(reviews) == 0:
+                logging.warning(f"[{product_id}] 리뷰가 없습니다.")
+                return None
 
-        if len(extracted_reviews) < reviews_needed:
-            logging.info(f"[{product_id}] 리뷰가 부족합니다. 더 많은 리뷰를 수집합니다.")
-            return None
-        
-        # 리뷰 요약
-        result = summarize_reviews(extracted_reviews, product_title)
-        if result is None:
-            return None
-        
-        review_content1, review_content2 = result
-        return review_content1, review_content2
+            extracted_reviews += reviews
+            logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
+
+            if len(extracted_reviews) < reviews_needed:
+                logging.info(f"[{product_id}] 리뷰가 부족합니다. 더 많은 리뷰를 수집합니다.")
+                return None
+
+            # 리뷰 요약
+            result = summarize_reviews(extracted_reviews, product_title)
+            if result is None:
+                return None
+
+            review_content1, review_content2 = result
+            return review_content1, review_content2
+
     except Exception as e:
         logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
