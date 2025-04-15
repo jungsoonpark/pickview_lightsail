@@ -230,6 +230,10 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
             logging.error(f"[{product_id}] JSON 파싱 오류, 응답 내용: {response.text}")
             return None
         
+        # 응답 데이터 구조 확인: 실제로 어떤 키가 있는지 로깅
+        logging.info(f"[{product_id}] 응답 데이터: {data}")
+
+        # 'evaViewList' 대신 다른 키가 있을 수 있음
         reviews = data.get('data', {}).get('evaViewList', [])
         if not reviews:
             logging.warning(f"[{product_id}] 리뷰 데이터가 없습니다.")
@@ -237,7 +241,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
 
         # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
         extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
-        
+
         # 중간 로깅: 리뷰 수집 완료 후 출력
         logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
 
