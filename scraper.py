@@ -78,8 +78,7 @@ def dynamic_selector_search(page, keyword, type='id'):
             'h1[data-pl="product-title"]',
             'meta[property="og:title"]',
             'span.product-title',
-            'div.item-title',
-            'span.title-text',  # 새로운 셀렉터 추가
+            'div.item-title'
         ]
     
     # 셀렉터 검색 시도
@@ -90,11 +89,13 @@ def dynamic_selector_search(page, keyword, type='id'):
             title_element = page.query_selector(selector)
             if title_element:
                 product_title = title_element.inner_text().strip()
-                if product_title:  # 빈 제목이 아니면
-                    logging.info(f"상품 제목: {product_title}")
-                    break
+                logging.info(f"상품 제목: {product_title}")
+                break
         except PlaywrightTimeoutError as e:
             logging.warning(f"셀렉터 '{selector}' 타임아웃: {e}")
+
+
+
 
 def scrape_product_ids_and_titles(keyword):
     product_data = []  # 상품 ID와 제목을 저장할 리스트
@@ -118,8 +119,9 @@ def scrape_product_ids_and_titles(keyword):
                 page.evaluate('window.scrollBy(0, window.innerHeight);')
                 time.sleep(2)  # 스크롤 후 대기
 
-            # 상품 ID와 제목을 상위 5개만 추출
+            # 상위 5개 상품만 처리
             product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
+
             for element in product_elements:
                 href = element.get_attribute('href')
                 if href:
@@ -129,10 +131,7 @@ def scrape_product_ids_and_titles(keyword):
                     # 상품 제목 추출
                     product_title = element.inner_text().strip()  # 상품 제목 추출
                     
-                    if not product_title:  # 제목이 없으면 동적으로 다른 셀렉터 시도
-                        dynamic_selector_search(page, keyword, type='title')
-                    
-                    if not product_title:  # 여전히 제목이 비어 있으면 건너뜀
+                    if not product_title:
                         logging.warning(f"[{keyword}] 상품 제목을 찾을 수 없습니다: {href}")
                         continue  # 상품 제목이 없는 경우 건너뛰기
                     
@@ -146,9 +145,6 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
 
     return product_data
-
-
-
 
 
 
@@ -260,43 +256,26 @@ def main():
 
     results = []
     today = datetime.today().strftime('%Y-%m-%d')
-
+    
     for keyword in keywords:
-        if not keyword:  # 키워드가 None이나 빈 값일 경우 건너뛰기
-            logging.warning("빈 키워드 발견, 건너뜁니다.")
-            continue
-        
         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
-        
-        try:
-            ids = scrape_product_ids_and_titles(keyword)  # 제품 ID 크롤링
-            if not ids:  # ids가 빈 리스트라면 크롤링된 상품이 없는 것
-                logging.warning(f"[{keyword}] 상품 데이터가 없습니다.")
-                continue
-        except Exception as e:
-            logging.error(f"[{keyword}] 크롤링 도중 예외 발생: {e}")
-            continue
-        
+        ids = scrape_product_ids_and_titles(keyword)  # 제품 ID 크롤링
         extracted_reviews = []
         product_count = 0
         
         for pid in ids[:10]:  # 최대 10개 상품을 처리
             if product_count >= 5:
                 break
+            # 리뷰 크롤링 및 요약
+            result = get_and_summarize_reviews(pid, extracted_reviews)
             
-            try:
-                # 리뷰 크롤링 및 요약
-                result = get_and_summarize_reviews(pid, extracted_reviews)
-                if not result:  # 리뷰가 없으면 건너뛰기
-                    logging.warning(f"[{keyword}] 리뷰가 없는 상품 제외: {pid}")
-                    continue
-                
+            if result:
                 review_content1, review_content2 = result
                 results.append([today, keyword, pid, review_content1, review_content2])  # 결과에 요약 추가
                 product_count += 1
-            except Exception as e:
-                logging.error(f"[{keyword}] 리뷰 크롤링 실패: {pid}, 에러: {e}")
-
+            else:
+                logging.warning(f"[{keyword}] 리뷰가 없는 상품 제외: {pid}")
+        
         logging.info(f"[{keyword}] 작업 종료, 2초 대기")
         time.sleep(2)  # 2초 대기
 
@@ -306,8 +285,6 @@ def main():
         logging.warning("최종 결과가 없습니다.")
 
     logging.info("[END] 프로그램 종료")
-
-
 
 
 
