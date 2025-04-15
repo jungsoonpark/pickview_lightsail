@@ -118,8 +118,9 @@ def scrape_product_ids_and_titles(keyword):
                 page.evaluate('window.scrollBy(0, window.innerHeight);')
                 time.sleep(2)  # 스크롤 후 대기
 
-            # 상품 ID와 제목을 상위 5개만 추출
+            # 상위 5개 상품만 처리
             product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
+
             for element in product_elements:
                 href = element.get_attribute('href')
                 if href:
@@ -127,12 +128,9 @@ def scrape_product_ids_and_titles(keyword):
                     logging.info(f"[{keyword}] 상품 ID 추출: {product_id}")
 
                     # 상품 제목 추출
-                    product_title = element.inner_text().strip()  # 상품 제목 추출
-                    
-                    if not product_title:  # 제목이 없으면 동적으로 다른 셀렉터 시도
-                        dynamic_selector_search(page, keyword, type='title')
-                    
-                    if not product_title:  # 여전히 제목이 비어 있으면 건너뜀
+                    product_title = element.inner_text().strip().split('\n')[0]  # 상품 제목만 추출 (가격 등 정보는 제외)
+
+                    if not product_title:
                         logging.warning(f"[{keyword}] 상품 제목을 찾을 수 없습니다: {href}")
                         continue  # 상품 제목이 없는 경우 건너뛰기
                     
@@ -146,7 +144,6 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
 
     return product_data
-
 
 
 
