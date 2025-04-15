@@ -235,7 +235,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         reviews = []
         review_elements = data.get('data', {}).get('evaViewList', [])
         for review_element in review_elements:
-            review_text = review_element.get('buyerTranslationFeedback', '')
+            review_text = review_element.get('buyerTranslationFeedback', '')  # 리뷰 추출
             if review_text:
                 reviews.append(review_text)
 
@@ -262,6 +262,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
         return None
+
 
 
 
