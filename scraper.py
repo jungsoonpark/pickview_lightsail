@@ -212,9 +212,11 @@ def scrape_product_ids_and_titles(keyword):
 
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
-        # 리뷰 크롤링 및 요약 처리 (1페이지만)
         url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
-        headers = { "User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+            "Accept": "application/json"
+        }
 
         response = requests.get(url, headers=headers, timeout=30)
         if response.status_code != 200:
@@ -227,11 +229,9 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         else:
             logging.error(f"[{product_id}] JSON 형식이 아닙니다: {response.text}")
             return None
+
+
         
-        reviews = data.get('data', {}).get('evaViewList', [])
-        if not reviews:
-            logging.warning(f"[{product_id}] 리뷰가 없습니다.")
-            return None
 
         # 'buyerTranslationFeedback' 추출
         extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
