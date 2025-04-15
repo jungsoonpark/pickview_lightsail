@@ -210,6 +210,10 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
+import requests
+import logging
+import traceback
+
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
         # 상품 제목 추출
@@ -240,7 +244,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
             data = response.json()  # JSON 형식으로 응답을 파싱
             logging.info(f"[{product_id}] 응답 데이터 파싱 성공.")
         except ValueError:
-            logging.error(f"[{product_id}] JSON 파싱 오류, 응답 내용: {response.text}")
+            logging.error(f"[{product_id}] JSON 파싱 오류")
             return None
 
         # 데이터 확인
@@ -288,8 +292,6 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
         return None
-
-
 
 
 
