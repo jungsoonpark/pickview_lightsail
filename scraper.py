@@ -258,6 +258,10 @@ def main():
     today = datetime.today().strftime('%Y-%m-%d')
     
     for keyword in keywords:
+        if not keyword:  # 키워드가 None이나 빈 값일 경우 건너뛰기
+            logging.warning("빈 키워드 발견, 건너뜁니다.")
+            continue
+        
         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
         ids = scrape_product_ids_and_titles(keyword)  # 제품 ID 크롤링
         extracted_reviews = []
@@ -285,6 +289,7 @@ def main():
         logging.warning("최종 결과가 없습니다.")
 
     logging.info("[END] 프로그램 종료")
+
 
 
 
