@@ -168,7 +168,7 @@ def main():
         
         if result:
             review_content1, review_content2 = result
-            results.append([today, keyword, product_id, review_content1, review_content2])
+            results.append([today, keyword, product_id, title, review_content1, review_content2])
         else:
             logging.warning(f"[{keyword}] 리뷰가 없는 상품 제외: {product_id}")
         
