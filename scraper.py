@@ -215,34 +215,37 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         product_title = next((title for pid, title in product_data if pid == product_id), 'No title')
         logging.info(f"[{product_id}] 상품 제목: {product_title}")
 
-        # 리뷰 크롤링 및 요약 처리
+        # 리뷰 크롤링 처리: 알리익스프레스 페이지에서 리뷰를 파싱
         url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
         headers = {"User-Agent": "Mozilla/5.0"}
 
-        response = requests.get(url, headers=headers, timeout=30)
+        response = requests.get(url, headers=headers)
         if response.status_code != 200:
-            logging.error(f"[{product_id}] 리뷰 API 요청 실패, 상태 코드: {response.status_code}, 내용: {response.text}")
+            logging.error(f"[{product_id}] 리뷰 페이지 요청 실패, 상태 코드: {response.status_code}")
             return None
 
+        # 페이지 파싱 (JSON 데이터를 바로 받아오기)
         try:
             data = response.json()
         except ValueError:
-            logging.error(f"[{product_id}] JSON 파싱 오류, 응답 내용: {response.text}")
+            logging.error(f"[{product_id}] JSON 파싱 오류")
+            return None
+
+        # 리뷰 추출 (buyerTranslatedFeedback에서 실제 리뷰 추출)
+        reviews = []
+        review_elements = data.get('data', {}).get('evaViewList', [])
+        for review_element in review_elements:
+            review_text = review_element.get('buyerTranslatedFeedback', '')
+            if review_text:
+                reviews.append(review_text)
+
+        if len(reviews) == 0:
+            logging.warning(f"[{product_id}] 리뷰가 없습니다.")
             return None
         
-        # 응답 데이터 구조 확인: 실제로 어떤 키가 있는지 로깅
-        logging.info(f"[{product_id}] 응답 데이터: {data}")
-
-        # 'evaViewList' 대신 다른 키가 있을 수 있음
-        reviews = data.get('data', {}).get('evaViewList', [])
-        if not reviews:
-            logging.warning(f"[{product_id}] 리뷰 데이터가 없습니다.")
-            return None
-
         # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
-        extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
+        extracted_reviews += reviews
 
-        # 중간 로깅: 리뷰 수집 완료 후 출력
         logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
 
         if len(extracted_reviews) < reviews_needed:
