@@ -130,15 +130,14 @@ def scrape_product_ids_and_titles(keyword):
             url = f'https://www.aliexpress.com/wholesale?SearchText={keyword}&SortType=total_tranpro_desc'
             page.goto(url, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
             logging.info(f"[{keyword}] 페이지 로딩 완료")
-            time.sleep(3)  # 로딩 완료 후 잠시 대기
 
-            # 페이지 완전히 로드 대기
-            page.wait_for_load_state('load')  # 페이지가 완전히 로드될 때까지 대기
+            # 페이지가 완전히 로드될 때까지 대기 (60초로 타임아웃 시간 늘림)
+            page.wait_for_load_state('load', timeout=60000)  # 60초 대기
+            time.sleep(3)  # 로딩 후 잠시 대기
 
-            # 스크롤을 통해 더 많은 상품을 로딩
-            for _ in range(2):  # 페이지 2번 스크롤하여 추가 로드
-                page.evaluate('window.scrollBy(0, window.innerHeight);')
-                time.sleep(2)  # 스크롤 후 대기
+            # 스크롤을 통해 더 많은 상품을 로딩 (한 번만 스크롤)
+            page.evaluate('window.scrollBy(0, window.innerHeight);')
+            time.sleep(2)  # 스크롤 후 대기
 
             # 상위 5개 상품만 처리
             product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
@@ -170,6 +169,7 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
 
     return product_data
+
 
 
 
