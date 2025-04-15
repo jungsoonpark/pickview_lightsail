@@ -208,9 +208,7 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
-from playwright.sync_api import sync_playwright
-import logging
-import traceback
+
 
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
@@ -229,13 +227,25 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
             page.goto(url, wait_until='domcontentloaded')  # 페이지가 로드될 때까지 대기
             logging.info(f"[{product_id}] 페이지 로딩 완료")
 
-            # JSON 데이터 추출
-            response = page.wait_for_response(lambda response: response.url == url and response.status == 200)
-            data = response.json()
+            # 응답 대기
+            response_data = None
+            def handle_response(response):
+                nonlocal response_data
+                if response.url == url and response.status == 200:
+                    response_data = response.json()
+
+            page.on('response', handle_response)
+
+            # 대기 시간 설정: 일정 시간 내에 응답을 기다리기
+            page.wait_for_timeout(5000)  # 5초 대기
+
+            if not response_data:
+                logging.error(f"[{product_id}] 리뷰 응답 데이터가 없습니다.")
+                return None
 
             # 리뷰 추출
             reviews = []
-            review_elements = data.get('data', {}).get('evaViewList', [])
+            review_elements = response_data.get('data', {}).get('evaViewList', [])
             for review_element in review_elements:
                 review_text = review_element.get('buyerTranslationFeedback', '')  # 리뷰 추출
                 if review_text:
@@ -264,7 +274,6 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
         return None
-
 
 
 
