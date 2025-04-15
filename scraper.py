@@ -278,6 +278,46 @@ def summarize_reviews(reviews, product_title):
 
 
 
+# def main():
+#     logging.info("[START] 프로그램 시작")
+#     keywords = get_keywords_from_google_sheet()  # Google Sheets에서 키워드 가져오기
+#     if not keywords:
+#         logging.error("키워드가 없습니다. 프로그램 종료합니다.")
+#         return
+
+#     results = []
+#     today = datetime.today().strftime('%Y-%m-%d')
+    
+#     for keyword in keywords:
+#         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
+#         ids = scrape_product_ids_and_titles(keyword)  # 제품 ID 크롤링
+#         extracted_reviews = []
+#         product_count = 0
+        
+#         for pid in ids[:10]:  # 최대 10개 상품을 처리
+#             if product_count >= 5:
+#                 break
+#             # 리뷰 크롤링 및 요약
+#             result = get_and_summarize_reviews(pid, extracted_reviews)
+            
+#             if result:
+#                 review_content1, review_content2 = result
+#                 results.append([today, keyword, pid, review_content1, review_content2])  # 결과에 요약 추가
+#                 product_count += 1
+#             else:
+#                 logging.warning(f"[{keyword}] 리뷰가 없는 상품 제외: {pid}")
+        
+#         logging.info(f"[{keyword}] 작업 종료, 2초 대기")
+#         time.sleep(2)  # 2초 대기
+
+#     if results:
+#         save_results_to_sheet(results)  # 결과를 Google Sheets에 저장
+#     else:
+#         logging.warning("최종 결과가 없습니다.")
+
+#     logging.info("[END] 프로그램 종료")
+
+
 def main():
     logging.info("[START] 프로그램 시작")
     keywords = get_keywords_from_google_sheet()  # Google Sheets에서 키워드 가져오기
@@ -289,6 +329,10 @@ def main():
     today = datetime.today().strftime('%Y-%m-%d')
     
     for keyword in keywords:
+        if not keyword:  # 키워드가 None이나 빈 값일 경우 건너뛰기
+            logging.warning("빈 키워드 발견, 건너뜁니다.")
+            continue
+        
         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
         ids = scrape_product_ids_and_titles(keyword)  # 제품 ID 크롤링
         extracted_reviews = []
@@ -316,7 +360,6 @@ def main():
         logging.warning("최종 결과가 없습니다.")
 
     logging.info("[END] 프로그램 종료")
-
 
 
 
