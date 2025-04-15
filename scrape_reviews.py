@@ -61,9 +61,50 @@ def save_reviews_to_sheet(results):
         traceback.print_exc()
 
 def get_and_summarize_reviews(product_id, keyword):
-    # 리뷰 추출 및 요약 코드 동일 (생략)
-    # 이 부분은 앞서 설명한 대로 review_content1, review_content2를 추출하여 반환하는 형태로 진행됩니다.
-    pass
+    try:
+        url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+            "Accept": "application/json"
+        }
+
+        response = requests.get(url, headers=headers, timeout=30)
+        if response.status_code != 200:
+            logging.error(f"[{product_id}] 리뷰 데이터 요청 실패, 상태 코드: {response.status_code}, 내용: {response.text}")
+            return None
+        
+        # JSON 형식 확인
+        if 'application/json' in response.headers.get('Content-Type', ''):
+            data = response.json()
+        else:
+            logging.error(f"[{product_id}] JSON 형식이 아닙니다: {response.text}")
+            return None
+
+        reviews = data.get('data', {}).get('evaViewList', [])
+        if not reviews:
+            logging.warning(f"[{product_id}] 리뷰가 없습니다.")
+            return None
+
+        # buyerTranslationFeedback 추출
+        extracted_reviews = [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
+        logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
+
+        if len(extracted_reviews) < 1:
+            logging.warning(f"[{product_id}] 필요한 리뷰가 부족합니다.")
+            return None
+        
+        # 리뷰 요약
+        result = summarize_reviews(extracted_reviews, keyword)
+        if result is None:
+            return None
+        
+        review_content1, review_content2 = result
+        return review_content1, review_content2
+
+    except Exception as e:
+        logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
+        traceback.print_exc()
+        return None
 
 def main():
     product_ids = get_product_ids_from_google_sheet()  # 'result' 시트에서 상품 ID 리스트 가져오기
