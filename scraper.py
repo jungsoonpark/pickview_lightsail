@@ -212,9 +212,8 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
-from playwright.sync_api import sync_playwright
 
-def get_and_summarize_reviews_with_playwright(product_id, extracted_reviews, reviews_needed=5, keyword=None):
+def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
         # 상품 제목 추출
         product_data = scrape_product_ids_and_titles(keyword)
