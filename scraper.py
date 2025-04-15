@@ -157,102 +157,6 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
-# def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
-#     try:
-#         # 상품 제목 추출
-#         product_data = scrape_product_ids_and_titles(keyword)
-#         product_title = next((title for pid, title in product_data if pid == product_id), 'No title')
-#         logging.info(f"[{product_id}] 상품 제목: {product_title}")
-
-#         # 리뷰 크롤링 및 요약 처리
-#         url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
-#         headers = {"User-Agent": "Mozilla/5.0"}
-
-#         response = requests.get(url, headers=headers, timeout=30)
-#         if response.status_code != 200:
-#             logging.error(f"[{product_id}] 리뷰 API 응답 실패")
-#             return None
-        
-#         try:
-#             data = response.json()
-#         except ValueError:
-#             logging.error(f"[{product_id}] JSON 파싱 오류")
-#             return None
-        
-#         reviews = data.get('data', {}).get('evaViewList', [])
-#         if not reviews:
-#             return None
-
-#         # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
-#         extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
-        
-#         if len(extracted_reviews) < reviews_needed:
-#             return None
-        
-#         # 리뷰 요약
-#         result = summarize_reviews(extracted_reviews, product_title)
-#         if result is None:
-#             return None
-        
-#         review_content1, review_content2 = result
-#         return review_content1, review_content2
-#     except Exception as e:
-#         logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
-#         traceback.print_exc()
-#         return None
-
-
-
-
-
-# def summarize_reviews(reviews, product_title):
-    
-#     reviews_text = "\n".join(reviews)
-#     try:
-#         # review_content1: 10-15자 이내로 간결한 카피라이팅 문구 작성
-#         response1 = openai.ChatCompletion.create(
-#             model="gpt-4",
-#             messages=[
-#                 {
-#                     "role": "user",
-#                     "content": f"다음 상품 제목과 리뷰를 바탕으로 이 상품의 가장 핵심적인 장점을 10-20자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용: {reviews_text}. 상품 제목: {product_title}"
-#                 }
-#             ],
-#             timeout=30
-#         )
-        
-#         review_content1 = response1['choices'][0]['message']['content'].strip()
-
-        
-#         logging.info(f"상품 제목: {product_title}, 카피라이팅 문구: {review_content1}")
-
-        
-#         # review_content2: 상품의 추가적인 긍정적인 특징을 15-40자 이내로 자연스럽게 작성
-#         response2 = openai.ChatCompletion.create(
-#             model="gpt-4",
-#             messages=[
-#                 {
-#                     "role": "user", 
-#                     "content": f"다음 상품 제목과 리뷰를 바탕으로, '{review_content1}'에서 다루지 않은 추가적인 장점을 문장당 15-40자 이내의 1~2개 문장으로 작성해 주세요. 리뷰 내용: {reviews_text}. 상품 제목: {product_title}"
-#                 }
-#             ],
-#             timeout=30
-#         )
-        
-#         review_content2 = response2['choices'][0]['message']['content'].strip()
-
-#         # 5개 리뷰가 안 채워지면 다음 상품을 가져오는 로직 추가
-#         if len(review_content1) == 0 or len(review_content2) == 0:
-#             return None  # 리뷰 추출 또는 요약 실패시 None 반환
-
-#         return review_content1, review_content2
-#     except Exception as e:
-#         logging.error(f"GPT 요약 중 오류 발생: {e}")
-#         traceback.print_exc()
-#         return None  # 오류 발생 시 None 반환
-
-
-
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
         # 상품 제목 추출
@@ -266,7 +170,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
 
         response = requests.get(url, headers=headers, timeout=30)
         if response.status_code != 200:
-            logging.error(f"[{product_id}] 리뷰 API 응답 실패: 상태 코드 {response.status_code}")
+            logging.error(f"[{product_id}] 리뷰 API 응답 실패")
             return None
         
         try:
@@ -274,25 +178,20 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         except ValueError:
             logging.error(f"[{product_id}] JSON 파싱 오류")
             return None
-
-
         
         reviews = data.get('data', {}).get('evaViewList', [])
         if not reviews:
-            logging.warning(f"[{product_id}] 리뷰가 없습니다.")
             return None
 
         # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
         extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
         
         if len(extracted_reviews) < reviews_needed:
-            logging.warning(f"[{product_id}] 리뷰가 {reviews_needed}개 미만입니다. 추가 리뷰 요청.")
             return None
         
         # 리뷰 요약
         result = summarize_reviews(extracted_reviews, product_title)
         if result is None:
-            logging.error(f"[{product_id}] 리뷰 요약 실패")
             return None
         
         review_content1, review_content2 = result
@@ -303,52 +202,58 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         return None
 
 
-def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
+
+
+
+def summarize_reviews(reviews, product_title):
+    
+    reviews_text = "\n".join(reviews)
     try:
-        # 상품 제목 추출
-        product_data = scrape_product_ids_and_titles(keyword)
-        product_title = next((title for pid, title in product_data if pid == product_id), 'No title')
-        logging.info(f"[{product_id}] 상품 제목: {product_title}")
+        # review_content1: 10-15자 이내로 간결한 카피라이팅 문구 작성
+        response1 = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"다음 상품 제목과 리뷰를 바탕으로 이 상품의 가장 핵심적인 장점을 10-20자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용: {reviews_text}. 상품 제목: {product_title}"
+                }
+            ],
+            timeout=30
+        )
+        
+        review_content1 = response1['choices'][0]['message']['content'].strip()
 
-        # 리뷰 크롤링 및 요약 처리
-        url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
-        headers = {"User-Agent": "Mozilla/5.0"}
+        
+        logging.info(f"상품 제목: {product_title}, 카피라이팅 문구: {review_content1}")
 
-        response = requests.get(url, headers=headers, timeout=30)
-        if response.status_code != 200:
-            logging.error(f"[{product_id}] 리뷰 API 응답 실패: 상태 코드 {response.status_code}")
-            return None
         
-        # 응답 내용 확인
-        logging.info(f"[{product_id}] 리뷰 응답 내용: {response.text}")
+        # review_content2: 상품의 추가적인 긍정적인 특징을 15-40자 이내로 자연스럽게 작성
+        response2 = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "user", 
+                    "content": f"다음 상품 제목과 리뷰를 바탕으로, '{review_content1}'에서 다루지 않은 추가적인 장점을 문장당 15-40자 이내의 1~2개 문장으로 작성해 주세요. 리뷰 내용: {reviews_text}. 상품 제목: {product_title}"
+                }
+            ],
+            timeout=30
+        )
+        
+        review_content2 = response2['choices'][0]['message']['content'].strip()
 
-        try:
-            data = response.json()  # JSON 파싱
-        except ValueError as e:
-            logging.error(f"[{product_id}] JSON 파싱 오류: {e}. 응답 내용: {response.text}")
-            return None
-        
-        reviews = data.get('data', {}).get('evaViewList', [])
-        if not reviews:
-            return None
+        # 5개 리뷰가 안 채워지면 다음 상품을 가져오는 로직 추가
+        if len(review_content1) == 0 or len(review_content2) == 0:
+            return None  # 리뷰 추출 또는 요약 실패시 None 반환
 
-        # 리뷰가 부족할 경우, 추가적인 상품을 계속해서 가져옴
-        extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
-        
-        if len(extracted_reviews) < reviews_needed:
-            return None
-        
-        # 리뷰 요약
-        result = summarize_reviews(extracted_reviews, product_title)
-        if result is None:
-            return None
-        
-        review_content1, review_content2 = result
         return review_content1, review_content2
     except Exception as e:
-        logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
+        logging.error(f"GPT 요약 중 오류 발생: {e}")
         traceback.print_exc()
-        return None
+        return None  # 오류 발생 시 None 반환
+
+
+
+
 
 
 
