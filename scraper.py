@@ -151,6 +151,7 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
+
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
         # 상품 제목 추출
