@@ -177,7 +177,7 @@ def scrape_product_ids_and_titles(keyword):
                     # logging.info(f"[{keyword}] 상품 ID 추출: {product_id}")
 
                     # 상품 제목 추출
-                    product_title = element.text_content().strip().split('\n')[0]  # 상품 제목만 추출 (가격 등 정보는 제외)
+                    product_title = element.inner_text().strip().split('\n')[0]  # 상품 제목만 추출 (가격 등 정보는 제외)
 
                     # 제목이 없는 경우 건너뛰기
                     if not product_title:
@@ -309,15 +309,25 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
         headers = {"User-Agent": "Mozilla/5.0"}
 
+        # response = requests.get(url, headers=headers, timeout=30)
+        # if response.status_code != 200:
+        #     logging.error(f"[{product_id}] 리뷰 API 응답 실패: 상태 코드 {response.status_code}")
+        #     return None
+        
+        # try:
+        #     data = response.json()
+        # except ValueError:
+        #     logging.error(f"[{product_id}] JSON 파싱 오류")
+        #     return None
+
         response = requests.get(url, headers=headers, timeout=30)
         if response.status_code != 200:
             logging.error(f"[{product_id}] 리뷰 API 응답 실패: 상태 코드 {response.status_code}")
             return None
-        
         try:
-            data = response.json()
-        except ValueError:
-            logging.error(f"[{product_id}] JSON 파싱 오류")
+            data = response.json()  # JSON 파싱
+        except ValueError as e:
+            logging.error(f"[{product_id}] JSON 파싱 오류: {e}. 응답 내용: {response.text}")
             return None
         
         reviews = data.get('data', {}).get('evaViewList', [])
