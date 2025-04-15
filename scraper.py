@@ -210,6 +210,9 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
+import requests
+import logging
+import traceback
 
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
@@ -219,7 +222,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
 
         # 리뷰 크롤링 및 요약 처리
         url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
-        headers = {"User-Agent": "Mozilla/5.0"}
+        headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
 
         # 리뷰 페이지 요청
         response = requests.get(url, headers=headers)
@@ -227,11 +230,14 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
             logging.error(f"[{product_id}] 리뷰 페이지 요청 실패, 상태 코드: {response.status_code}")
             return None
 
+        # 응답 내용 로그 추가: 응답이 JSON인지 확인
+        logging.info(f"[{product_id}] 응답 내용: {response.text[:300]}")  # 처음 500자만 출력
+
         # JSON 응답에서 데이터 추출
         try:
             data = response.json()  # 응답을 JSON으로 파싱
         except ValueError as e:
-            logging.error(f"[{product_id}] JSON 파싱 오류: {e}")
+            logging.error(f"[{product_id}] JSON 파싱 오류: {e}. 응답 내용: {response.text}")
             return None
 
         reviews = data.get('data', {}).get('evaViewList', [])
