@@ -42,13 +42,18 @@ def get_product_ids_from_google_sheet():
     try:
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
         data = sheet.get_all_records()
-        product_ids = [(row['product_id'], row['keyword']) for row in data if not row['review_content1']]
-        logging.info(f"리뷰 추출할 상품 ID 리스트 수집 완료: {product_ids}")
+        today = datetime.today().strftime('%Y-%m-%d')  # 오늘 날짜 가져오기
+        product_ids = [
+            (row['product_id'], row['keyword']) for row in data 
+            if str(row.get('date', '')) == today and not row['review_content1']  # 오늘 날짜와 리뷰가 없는 상품만
+        ]
+        logging.info(f"오늘 날짜({today}) 리뷰 추출할 상품 ID 리스트 수집 완료: {product_ids}")
         return product_ids
     except Exception as e:
         logging.error(f"상품 ID 수집 실패: {e}")
         traceback.print_exc()
         return []
+
 
 def save_reviews_to_sheet(results):
     try:
@@ -147,7 +152,7 @@ def summarize_reviews(reviews, product_title):
         return None
 
 def main():
-    product_ids = get_product_ids_from_google_sheet()
+    product_ids = get_product_ids_from_google_sheet()  # `result` 시트에서 상품 ID 리스트 가져오기
     if not product_ids:
         logging.error("리뷰를 추출할 상품이 없습니다. 프로그램 종료합니다.")
         return
