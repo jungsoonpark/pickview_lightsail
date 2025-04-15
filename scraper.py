@@ -231,11 +231,11 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
             logging.error(f"[{product_id}] JSON 파싱 오류")
             return None
 
-        # 리뷰 추출 (buyerTranslatedFeedback에서 실제 리뷰 추출)
+        # 리뷰 추출 (buyerTranslationFeedback에서 실제 리뷰 추출)
         reviews = []
         review_elements = data.get('data', {}).get('evaViewList', [])
         for review_element in review_elements:
-            review_text = review_element.get('buyerTranslatedFeedback', '')
+            review_text = review_element.get('buyerTranslationFeedback', '')
             if review_text:
                 reviews.append(review_text)
 
