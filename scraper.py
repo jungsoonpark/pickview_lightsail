@@ -118,14 +118,16 @@ def scrape_product_ids_and_titles(keyword):
             # 페이지 완전히 로드 대기
             page.wait_for_load_state('load')  # 페이지가 완전히 로드될 때까지 대기
 
-            
-            # 스크롤을 통해 더 많은 상품을 로딩 (한 번만 스크롤)
-            page.evaluate('window.scrollBy(0, window.innerHeight);')  # 한 번만 스크롤
-            time.sleep(2)  # 스크롤 후 대기
+            # 상품 요소가 로드될 때까지 대기
+            page.wait_for_selector('a[href*="/item/"]')  # 상품 링크가 로드될 때까지 대기
+            logging.info(f"[{keyword}] 상품 요소 로드 완료")
 
-            
-            # 상위 5개 상품만 처리
+            # 상품 요소 추출
             product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
+
+            if not product_elements:  # 상품이 없으면
+                logging.warning(f"[{keyword}] 상품 결과가 없습니다.")
+                return product_data  # 결과가 없으면 빈 리스트 반환
 
             for element in product_elements:
                 href = element.get_attribute('href')
@@ -150,6 +152,7 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
 
     return product_data
+
 
 
 
