@@ -44,8 +44,9 @@ def get_product_ids_from_google_sheet():
         data = sheet.get_all_records()
         today = datetime.today().strftime('%Y-%m-%d')  # 오늘 날짜 가져오기
         product_ids = [
-            (row['product_id'], row['keyword']) for row in data 
-            if str(row.get('date', '')) == today and not row['review_content1']  # 오늘 날짜와 리뷰가 없는 상품만
+            (row['product_id'], row['keyword'], row['review_content1'], row['review_content2'], row['row_number'])
+            for row in data 
+            if str(row.get('date', '')) == today  # 오늘 날짜의 상품들만 필터링
         ]
         logging.info(f"오늘 날짜({today}) 리뷰 추출할 상품 ID 리스트 수집 완료: {product_ids}")
         return product_ids
@@ -54,7 +55,6 @@ def get_product_ids_from_google_sheet():
         traceback.print_exc()
         return []
 
-
 def save_reviews_to_sheet(results):
     try:
         if not results:
@@ -62,7 +62,8 @@ def save_reviews_to_sheet(results):
             return
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
         for row in results:
-            sheet.append_row(row)  # 날짜, keyword, product_id, title, review_content1, review_content2
+            sheet.update_cell(row[4], 4, row[3])  # review_content1 업데이트 (4번째 열)
+            sheet.update_cell(row[4], 5, row[4])  # review_content2 업데이트 (5번째 열)
         logging.info(f"구글 시트에 리뷰 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
     except Exception as e:
         logging.error(f"결과 저장 실패: {e}")
@@ -160,19 +161,21 @@ def main():
     results = []
     today = datetime.today().strftime('%Y-%m-%d')
 
-    for product_id, keyword in product_ids:
+    for product_id, keyword, review_content1, review_content2, row_number in product_ids:
         logging.info(f"[{keyword}] '{product_id}' 작업 시작")
         
         # 리뷰 크롤링 및 요약
-        result = get_and_summarize_reviews(product_id, keyword)
-        
-        if result:
-            review_content1, review_content2 = result
-            # 결과를 date, keyword, product_id, title, review_content1, review_content2 형태로 저장
-            results.append([today, keyword, product_id, "", review_content1, review_content2])  # 제목은 빈 문자열로 두기
+        if not review_content1 or not review_content2:  # 비어있는 부분만 리뷰 추출
+            result = get_and_summarize_reviews(product_id, keyword)
+            
+            if result:
+                review_content1, review_content2 = result
+                results.append([today, keyword, product_id, review_content1, review_content2, row_number])
+            else:
+                logging.warning(f"[{keyword}] 리뷰가 없는 상품 제외: {product_id}")
         else:
-            logging.warning(f"[{keyword}] 리뷰가 없는 상품 제외: {product_id}")
-        
+            logging.info(f"[{keyword}] 리뷰가 이미 존재합니다. 건너뜁니다.")
+
         logging.info(f"[{keyword}] 작업 종료, 2초 대기")
         time.sleep(2)
 
