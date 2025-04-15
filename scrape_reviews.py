@@ -62,12 +62,15 @@ def save_reviews_to_sheet(results):
             return
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
         for row in results:
-            sheet.update_cell(row[4], 4, row[3])  # review_content1 업데이트 (4번째 열)
-            sheet.update_cell(row[4], 5, row[4])  # review_content2 업데이트 (5번째 열)
+            # row[4]는 행 번호로 수정
+            row_number = row[5]  # row_number는 results에서 6번째로, 즉 `row_number`를 받음
+            sheet.update_cell(row_number, 4, row[3])  # review_content1 업데이트 (4번째 열)
+            sheet.update_cell(row_number, 5, row[4])  # review_content2 업데이트 (5번째 열)
         logging.info(f"구글 시트에 리뷰 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
     except Exception as e:
         logging.error(f"결과 저장 실패: {e}")
         traceback.print_exc()
+
 
 def get_and_summarize_reviews(product_id, keyword):
     try:
