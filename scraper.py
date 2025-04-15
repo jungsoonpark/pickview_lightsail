@@ -224,7 +224,7 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
                 data = response.json()  # JSON으로 응답을 파싱
                 logging.info(f"응답 데이터: {data}")
             except ValueError:
-                logging.error(f"JSON 파싱 실패, 응답 내용: {response.text}")
+                # logging.error(f"JSON 파싱 실패, 응답 내용: {response.text}")
         else:
             logging.error(f"페이지 로드 실패. 상태 코드: {response.status_code}")
 
