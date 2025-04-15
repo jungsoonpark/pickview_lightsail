@@ -107,6 +107,49 @@ def get_and_summarize_reviews(product_id, keyword):
         traceback.print_exc()
         return None
 
+
+
+
+def summarize_reviews(reviews, product_title):
+    reviews_text = "\n".join(reviews)
+    try:
+        # review_content1: 10-15자 이내로 간결한 카피라이팅 문구 작성
+        response1 = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"다음 상품 제목과 리뷰를 바탕으로 이 상품의 가장 핵심적인 장점을 10-20자 이내로 간결하게 표현하는 카피라이팅 문구를 작성해 주세요. 리뷰 내용: {reviews_text}. 상품 제목: {product_title}"
+                }
+            ],
+            timeout=30
+        )
+        
+        review_content1 = response1['choices'][0]['message']['content'].strip()
+        
+        # review_content2: 상품의 추가적인 긍정적인 특징을 15-40자 이내로 자연스럽게 작성
+        response2 = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "user", 
+                    "content": f"다음 상품 제목과 리뷰를 바탕으로, '{review_content1}'에서 다루지 않은 추가적인 장점을 문장당 15-40자 이내의 1~2개 문장으로 작성해 주세요. 리뷰 내용: {reviews_text}. 상품 제목: {product_title}"
+                }
+            ],
+            timeout=30
+        )
+        
+        review_content2 = response2['choices'][0]['message']['content'].strip()
+
+        return review_content1, review_content2
+    except Exception as e:
+        logging.error(f"GPT 요약 중 오류 발생: {e}")
+        traceback.print_exc()
+        return None
+
+
+
+
 def main():
     product_ids = get_product_ids_from_google_sheet()  # 'result' 시트에서 상품 ID 리스트 가져오기
     if not product_ids:
