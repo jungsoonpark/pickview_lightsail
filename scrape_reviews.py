@@ -60,16 +60,36 @@ def save_reviews_to_sheet(results):
         if not results:
             logging.warning("저장할 리뷰가 없습니다.")
             return
+
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
+
+        # 첫 번째 행에서 열 이름을 가져오기
+        header = sheet.row_values(1)
+        
+        # 열 이름을 기준으로 각 열의 인덱스를 찾기 (0-based index)
+        date_col = header.index('date') + 1  # 'date' 열 (1-based index)
+        keyword_col = header.index('keyword') + 1  # 'keyword' 열
+        product_id_col = header.index('product_id') + 1  # 'product_id' 열
+        title_col = header.index('title') + 1  # 'title' 열
+        review_content1_col = header.index('review_content1') + 1  # 'review_content1' 열
+        review_content2_col = header.index('review_content2') + 1  # 'review_content2' 열
+
         for row in results:
-            # row[4]는 행 번호로 수정
-            row_number = row[5]  # row_number는 results에서 6번째로, 즉 `row_number`를 받음
-            sheet.update_cell(row_number, 4, row[3])  # review_content1 업데이트 (4번째 열)
-            sheet.update_cell(row_number, 5, row[4])  # review_content2 업데이트 (5번째 열)
+            row_number = row[5]  # 리뷰를 저장할 행 번호
+
+            # 각 열 번호에 맞게 업데이트
+            sheet.update_cell(row_number, date_col, row[0])  # date
+            sheet.update_cell(row_number, keyword_col, row[1])  # keyword
+            sheet.update_cell(row_number, product_id_col, row[2])  # product_id
+            sheet.update_cell(row_number, title_col, row[3])  # title
+            sheet.update_cell(row_number, review_content1_col, row[4])  # review_content1
+            sheet.update_cell(row_number, review_content2_col, row[5])  # review_content2
+
         logging.info(f"구글 시트에 리뷰 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
     except Exception as e:
         logging.error(f"결과 저장 실패: {e}")
         traceback.print_exc()
+
 
 
 def get_and_summarize_reviews(product_id, keyword):
