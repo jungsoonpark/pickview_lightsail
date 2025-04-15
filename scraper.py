@@ -216,47 +216,48 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
         # 상품 제목 추출
         product_data = scrape_product_ids_and_titles(keyword)
         product_title = next((title for pid, title in product_data if pid == product_id), 'No title')
-        logging.info(f"[{product_id}] 상품 제목: {product_title}")
 
+        # 리뷰 크롤링 및 요약 처리
         url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
+        headers = {"User-Agent": "Mozilla/5.0"}
+
+        response = requests.get(url, headers=headers, timeout=30)
+
+        if response.status_code != 200:
+            logging.error(f"[{product_id}] 리뷰 페이지 요청 실패, 상태 코드: {response.status_code}")
+            return None
+
+        # 응답이 JSON 형식인지 확인
+        try:
+            data = response.json()  # JSON 파싱
+            logging.info(f"[{product_id}] JSON 파싱 성공")
+        except ValueError:
+            logging.error(f"[{product_id}] JSON 파싱 실패, HTML 응답을 받았음")
+            return None
         
-        # Playwright 사용하여 페이지 열기
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.goto(url)
+        # 리뷰 데이터 추출
+        reviews = data.get('data', {}).get('evaViewList', [])
+        if not reviews:
+            logging.warning(f"[{product_id}] 리뷰가 없습니다.")
+            return None
 
-            # 리뷰가 포함된 DOM 요소를 기다림
-            page.wait_for_selector("div.review-text")  # 실제 페이지에서 리뷰 텍스트를 포함하는 요소를 찾아야 합니다.
+        # 필요한 리뷰 수만큼 추출
+        extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
 
-            # 리뷰 요소 추출
-            reviews = page.query_selector_all("div.review-text")
-            
-            if not reviews:
-                logging.warning(f"[{product_id}] 리뷰가 없습니다.")
-                return None
-            
-            # 리뷰 추출
-            for review in reviews:
-                review_text = review.inner_text().strip()
-                if review_text:
-                    extracted_reviews.append(review_text)
+        # 중간 로깅: 리뷰 수집 완료 후 출력
+        logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
 
-            logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
+        if len(extracted_reviews) < reviews_needed:
+            return None
 
-            if len(extracted_reviews) < reviews_needed:
-                logging.info(f"[{product_id}] 리뷰가 {reviews_needed}개에 미치지 못합니다. 추가 리뷰 수집 필요.")
-                return None
+        # 리뷰 요약
+        result = summarize_reviews(extracted_reviews, product_title)
+        if result is None:
+            return None
+        
+        review_content1, review_content2 = result
+        return review_content1, review_content2
 
-            # 리뷰 요약
-            result = summarize_reviews(extracted_reviews, product_title)
-            if result is None:
-                logging.error(f"[{product_id}] 리뷰 요약 실패.")
-                return None
-
-            review_content1, review_content2 = result
-            logging.info(f"[{product_id}] 리뷰 요약 완료.")
-            return review_content1, review_content2
     except Exception as e:
         logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
