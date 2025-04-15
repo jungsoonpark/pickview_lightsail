@@ -1,29 +1,27 @@
-import requests
-import logging
+from playwright.sync_api import sync_playwright
 
-def get_reviews(product_id):
-    url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-    }
-    
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()  # HTTP 오류 발생 시 예외 발생
-        data = response.json()  # JSON 데이터로 변환
-        reviews = data.get('data', {}).get('evaViewList', [])
-        
-        # 'buyerTranslationFeedback' 추출
-        feedbacks = [review.get('buyerTranslationFeedback') for review in reviews if review.get('buyerTranslationFeedback')]
-        return feedbacks
-    except requests.exceptions.RequestException as e:
-        logging.error(f"HTTP 요청 오류: {e}")
-        return []
-    except ValueError as e:
-        logging.error(f"JSON 파싱 오류: {e}")
-        return []
+def get_reviews_with_playwright(product_id):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context()
+        page = context.new_page()
+
+        # 로그인 페이지로 이동
+        page.goto("https://www.aliexpress.com")
+        # 로그인 과정 추가 (필요한 경우)
+
+        # 리뷰 페이지로 이동
+        url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
+        page.goto(url)
+
+        # 리뷰 데이터 추출
+        reviews = page.query_selector_all('selector-for-reviews')  # 적절한 셀렉터로 변경
+        extracted_reviews = [review.inner_text() for review in reviews]
+
+        browser.close()
+        return extracted_reviews
 
 # 사용 예시
-product_id = "1005007171050895"  # 예시 상품 ID
-reviews = get_reviews(product_id)
+product_id = "1005007171050895"
+reviews = get_reviews_with_playwright(product_id)
 print(reviews)
