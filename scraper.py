@@ -149,66 +149,6 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
-# def dynamic_selector_search(page, keyword, type='id'):
-#     # 상품 ID와 상품 제목을 위한 셀렉터를 분리
-#     if type == 'id':
-#         # 상품 ID를 추출할 셀렉터 리스트
-#         selectors = [
-#             'a[data-product-id]',  # 상품 링크에서 추출
-#             'div[data-spm="itemlist"] a[href*="/item/"]',  # 다른 형식의 상품 링크
-#             'a[href*="/item/"]'  # 일반적인 링크 패턴
-#         ]
-#     elif type == 'title':
-#         # 상품 제목을 추출할 셀렉터 리스트
-#         selectors = [
-#             'span.product-title',  # 기본 상품 제목
-#             'div.item-title',  # 대체 셀렉터 예시
-#             'h1.product-title'  # 다른 대체 셀렉터
-#         ]
-    
-#     # 셀렉터 검색 시도
-#     for selector in selectors:
-#         try:
-#             logging.info(f"[{keyword}] 셀렉터 시도: {selector}")
-#             page.wait_for_selector(selector, timeout=30000)  # 셀렉터를 찾을 때까지 최대 30초 대기
-#             elements = page.query_selector_all(selector)
-#             if elements:
-#                 logging.info(f"[{keyword}] 셀렉터 '{selector}'로 {len(elements)}개 요소 발견")
-#                 return elements
-#         except PlaywrightTimeoutError as te:
-#             logging.warning(f"[{keyword}] 셀렉터 '{selector}' 타임아웃: {te}")
-#         except Exception as e:
-#             logging.error(f"[{keyword}] 셀렉터 '{selector}' 오류: {e}")
-    
-#     return []
-
-
-
-
-# def get_product_title(product_id):
-#     url = f"https://www.aliexpress.com/item/{product_id}"
-    
-#     headers = {
-#         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36',
-#         'Accept-Language': 'en-US,en;q=0.9',
-#     }
-    
-#     response = requests.get(url, headers=headers)
-#     if response.status_code != 200:
-#         logging.error(f"상품 상세 페이지를 불러오는 데 실패했습니다. (상품 ID: {product_id})")
-#         return 'No title'
-
-#     soup = BeautifulSoup(response.text, 'html.parser')
-
-#     # 상품 제목 추출 (헤더에 따라 다른 선택자 사용)
-#     title = soup.find('h1', class_='product-title-text')
-#     if title:
-#         return title.text.strip()
-    
-#     return 'No title'
-
-
-
 
 
 def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
