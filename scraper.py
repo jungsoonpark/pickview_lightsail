@@ -132,6 +132,10 @@ def scrape_product_ids_and_titles(keyword):
     product_data = []  # 상품 ID와 제목을 저장할 리스트
     tried_products = set()  # 이미 시도한 상품을 기록할 set (중복 방지)
 
+    if not keyword:  # 키워드가 None일 경우 바로 종료
+        logging.warning(f"검색어가 비어 있습니다. 건너뜁니다.")
+        return product_data  # 빈 키워드면 바로 종료
+
     try:
         with sync_playwright() as p:
             logging.info(f"[{keyword}] Playwright 브라우저 실행")
@@ -190,6 +194,7 @@ def scrape_product_ids_and_titles(keyword):
         traceback.print_exc()
 
     return product_data
+
 
 
 
