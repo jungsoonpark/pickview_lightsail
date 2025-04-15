@@ -160,7 +160,7 @@ def scrape_product_ids_and_titles(keyword):
             product_elements = page.query_selector_all('a[href*="/item/"]')[:5]  # 상위 5개만 선택
 
             if not product_elements:
-                logging.warning(f"[{keyword}] 상품 요소가 없습니다. 건너뜁니다.")
+                # logging.warning(f"[{keyword}] 상품 요소가 없습니다. 건너뜁니다.")
                 return product_data  # 상품 요소가 없다면 바로 반환
 
             for element in product_elements:
@@ -174,14 +174,14 @@ def scrape_product_ids_and_titles(keyword):
                         continue
                     tried_products.add(product_id)  # 상품 ID를 시도 목록에 추가
 
-                    logging.info(f"[{keyword}] 상품 ID 추출: {product_id}")
+                    # logging.info(f"[{keyword}] 상품 ID 추출: {product_id}")
 
                     # 상품 제목 추출
                     product_title = element.inner_text().strip().split('\n')[0]  # 상품 제목만 추출 (가격 등 정보는 제외)
 
                     # 제목이 없는 경우 건너뛰기
                     if not product_title:
-                        logging.warning(f"[{keyword}] 상품 제목을 찾을 수 없습니다: {href}")
+                        # logging.warning(f"[{keyword}] 상품 제목을 찾을 수 없습니다: {href}")
                         continue  # 상품 제목이 없는 경우 건너뛰기
                     
                     # 추출된 상품 ID와 제목을 튜플로 저장
