@@ -216,15 +216,17 @@ def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, k
 
         # 리뷰 크롤링 및 요약 처리
         url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
-        headers = {"User-Agent": "Mozilla/5.0"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
+        }
+        response = requests.get(url, headers=headers, allow_redirects=True)
 
-        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             try:
                 data = response.json()  # JSON으로 응답을 파싱
                 logging.info(f"응답 데이터: {data}")
             except ValueError:
-                # logging.error(f"JSON 파싱 실패, 응답 내용: {response.text}")
+                logging.error(f"JSON 파싱 실패, 응답 내용: {response.text}")
         else:
             logging.error(f"페이지 로드 실패. 상태 코드: {response.status_code}")
 
