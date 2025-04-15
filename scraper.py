@@ -212,70 +212,58 @@ def scrape_product_ids_and_titles(keyword):
 
 
 
-def get_and_summarize_reviews(product_id, extracted_reviews, reviews_needed=5, keyword=None):
+from playwright.sync_api import sync_playwright
+
+def get_and_summarize_reviews_with_playwright(product_id, extracted_reviews, reviews_needed=5, keyword=None):
     try:
         # 상품 제목 추출
         product_data = scrape_product_ids_and_titles(keyword)
         product_title = next((title for pid, title in product_data if pid == product_id), 'No title')
 
-        # 리뷰 크롤링 및 요약 처리
-        url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
-        
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",
-            "Accept": "application/json",
-            "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Connection": "keep-alive",
-        }
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
 
-        # 쿠키 추가 (적절한 쿠키 값이 필요할 수 있음)
-        cookies = {
-            'cookie_name': 'cookie_value',  # 실제 쿠키 값으로 대체 필요
-        }
+            url = f"https://feedback.aliexpress.com/pc/searchEvaluation.do?productId={product_id}&lang=ko_KR&country=KR&page=1&pageSize=10&filter=5&sort=complex_default"
+            page.goto(url)
 
-        # 리뷰 페이지 요청
-        response = requests.get(url, headers=headers, cookies=cookies)
-        if response.status_code != 200:
-            logging.error(f"[{product_id}] 리뷰 페이지 요청 실패, 상태 코드: {response.status_code}")
-            return None
+            # JSON 데이터를 포함하는 script 태그 찾기
+            page.wait_for_selector('script[type="application/json"]')  # JSON 데이터 포함된 script 기다리기
 
-        # 응답 내용 로그 추가: 응답이 JSON인지 확인
-        logging.info(f"[{product_id}] 응답 내용: {response.text[:500]}")  # 처음 500자만 출력
+            # 데이터 추출
+            script_content = page.query_selector('script[type="application/json"]').inner_text()
 
-        # JSON 응답에서 데이터 추출
-        try:
-            data = response.json()  # 응답을 JSON으로 파싱
-        except ValueError as e:
-            logging.error(f"[{product_id}] JSON 파싱 오류: {e}. 응답 내용: {response.text}")
-            return None
+            # JSON 파싱
+            data = json.loads(script_content)
 
-        reviews = data.get('data', {}).get('evaViewList', [])
-        if not reviews:
-            logging.warning(f"[{product_id}] 리뷰가 없습니다.")
-            return None
+            reviews = data.get('data', {}).get('evaViewList', [])
+            if not reviews:
+                logging.warning(f"[{product_id}] 리뷰가 없습니다.")
+                return None
 
-        # buyerTranslationFeedback 값 추출
-        extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
+            # buyerTranslationFeedback 값 추출
+            extracted_reviews += [review.get('buyerTranslationFeedback', '') for review in reviews if review.get('buyerTranslationFeedback')]
 
-        # 중간 로깅: 리뷰 수집 완료 후 출력
-        logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
+            # 중간 로깅: 리뷰 수집 완료 후 출력
+            logging.info(f"[{product_id}] 리뷰 수집 완료: {len(extracted_reviews)}개")
 
-        # 원하는 리뷰 수가 부족할 경우 None 반환
-        if len(extracted_reviews) < reviews_needed:
-            return None
+            # 원하는 리뷰 수가 부족할 경우 None 반환
+            if len(extracted_reviews) < reviews_needed:
+                return None
 
-        # 리뷰 요약
-        result = summarize_reviews(extracted_reviews, product_title)
-        if result is None:
-            return None
+            # 리뷰 요약
+            result = summarize_reviews(extracted_reviews, product_title)
+            if result is None:
+                return None
 
-        review_content1, review_content2 = result
-        return review_content1, review_content2
+            review_content1, review_content2 = result
+            return review_content1, review_content2
 
     except Exception as e:
         logging.error(f"[{product_id}] 리뷰 크롤링 도중 예외 발생: {e}")
         traceback.print_exc()
         return None
+
 
 
 
