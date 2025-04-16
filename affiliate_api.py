@@ -82,16 +82,33 @@ def get_existing_product_ids(keyword):
         return []
 
 def save_results_to_sheet(results):
-    try:
-        sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
-        sheet.clear()
-        sheet.append_row(['date', 'keyword', 'product_id', 'product_title', 'target_sale_price', 'affiliate_link'])
-        for row in results:
-            sheet.append_row(row)
-        logging.info(f"구글 시트에 결과 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
-    except Exception as e:
-        logging.error(f"결과 저장 실패: {e}")
-        traceback.print_exc()
+    # Google Sheets API 클라이언트 설정
+    gc = gspread.service_account(filename=os.getenv("JSON_KEY_PATH"))
+    sheet = gc.open_by_key(os.getenv("SHEET_ID")).sheet1
+
+    # 기존 데이터 가져오기
+    existing_data = sheet.get_all_records()
+    existing_ids = {row['product_id']: index + 2 for index, row in enumerate(existing_data)}  # 1-based index
+
+    for result in results:
+        today, keyword, product_id, product_title, target_sale_price, affiliate_link, discount_price, discount_rate, average_rating, sales_volume, product_main_image_url = result
+        
+        # JSON 형태로 details 정보 생성
+        details = {
+            "product_title": product_title,
+            "target_sale_price": target_sale_price,
+            "affiliate_link": affiliate_link,
+            "discount_price": discount_price,
+            "discount_rate": discount_rate,
+            "average_rating": average_rating,
+            "sales_volume": sales_volume,
+            "product_main_image_url": product_main_image_url
+        }
+        
+        # G열에 details JSON 입력
+        row_index = existing_ids[product_id]  # product_id가 항상 존재하므로 직접 접근
+        sheet.update_cell(row_index, 7, json.dumps(details, ensure_ascii=False))  # G열은 7번째 열
+        logging.info(f"[{product_id}] G열에 details 정보 업데이트: {details}")
 
 # --- AliExpress Affiliate API 함수 --- 
 def get_product_detail_api(product_id):
@@ -101,7 +118,7 @@ def get_product_detail_api(product_id):
         "product_id": product_id,
         "countryCode": "KR",
         "currency": "KRW",
-        "fields": "product_id,product_title,target_sale_price,product_main_image_url,detail_url",
+        "fields": "product_id,product_title,target_sale_price,discount_price,discount_rate,average_rating,sales_volume,product_main_image_url,detail_url",
         "local": "ko_KR",
         "method": "aliexpress.affiliate.productdetail.get",
         "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
@@ -109,13 +126,31 @@ def get_product_detail_api(product_id):
     }
     params["sign"] = generate_signature(params, os.getenv("ALIEXPRESS_API_SECRET"))
     logging.info(f"[{product_id}] 요청 파라미터 (productdetail): {json.dumps(params, indent=2, ensure_ascii=False)}")
+    
     response = requests.get("https://api-sg.aliexpress.com/sync", params=params)
     logging.info(f"[{product_id}] productdetail 응답 코드: {response.status_code}")
     response.raise_for_status()
+    
     data = response.json()
     detail = data.get("aliexpress_affiliate_productdetail_get_response", {}).get("result", {})
-    logging.info(f"[{product_id}] 상품 상세 정보: {json.dumps(detail, indent=2, ensure_ascii=False)}")
-    return detail
+    
+    # 필요한 정보 추출
+    product_info = {
+        "product_id": detail.get("product_id"),
+        "product_title": detail.get("product_title"),
+        "target_sale_price": detail.get("target_sale_price"),
+        "discount_price": detail.get("discount_price"),
+        "discount_rate": detail.get("discount_rate"),
+        "average_rating": detail.get("average_rating"),
+        "sales_volume": detail.get("sales_volume"),
+        "product_main_image_url": detail.get("product_main_image_url"),
+        "detail_url": detail.get("detail_url")
+    }
+    
+    logging.info(f"[{product_id}] 상품 상세 정보: {json.dumps(product_info, indent=2, ensure_ascii=False)}")
+    return product_info
+
+
 
 def generate_affiliate_link_api(product_id):
     params = {
@@ -129,13 +164,18 @@ def generate_affiliate_link_api(product_id):
     }
     params["sign"] = generate_signature(params, os.getenv("ALIEXPRESS_API_SECRET"))
     logging.info(f"[{product_id}] 요청 파라미터 (link.generate): {json.dumps(params, indent=2, ensure_ascii=False)}")
+    
     response = requests.get("https://api-sg.aliexpress.com/sync", params=params)
     logging.info(f"[{product_id}] link.generate 응답 코드: {response.status_code}")
     response.raise_for_status()
+    
     data = response.json()
     link = data.get("aliexpress_affiliate_link_generate_response", {}).get("result", {})
+    
     logging.info(f"[{product_id}] 제휴 링크 정보: {json.dumps(link, indent=2, ensure_ascii=False)}")
     return link
+
+
 
 # --- Main orchestration ---
 def main():
@@ -144,20 +184,16 @@ def main():
     if not keywords:
         logging.error("오늘 날짜의 키워드가 없습니다. 프로그램 종료.")
         return
+    
     results = []
     today = datetime.today().strftime('%Y-%m-%d')
+    
     for keyword in keywords:
         logging.info(f"[PROCESS] '{keyword}' 작업 시작")
         existing_ids = get_existing_product_ids(keyword)
-        # 여기서는 기존에 저장된 상품 ID가 없을 경우에만 진행합니다.
+        
         if not existing_ids:
-            # 만약 API를 통해 상품 검색 기능이 별도로 필요하면 추가 작성합니다.
-            # 예를 들어, 여기에 상위 5개의 상품 ID를 조회하는 API 호출 함수를 구현하거나,
-            # 기존에 검색된 ID를 사용할 수 있으면 그대로 진행
-            # 여기서는 임의의 상품 ID를 예시로 진행합니다.
-            # 실제 구현 시에는 추가적인 검색 API 함수를 만들어야 합니다.
             logging.info(f"[{keyword}] 기존 결과 없음, 임의의 상품 ID 사용 (예시)")
-            # 예시: 기존에 여러분이 테스트한 상품 ID, 실제 구현 시 대체 필요
             pids = ["1005008742459910", "1005005120738913", "1005006955548562", "1005006388837801", "1005005967496979"]
         else:
             pids = existing_ids[:5]
@@ -167,19 +203,28 @@ def main():
             try:
                 detail = get_product_detail_api(pid)
                 affiliate_link = generate_affiliate_link_api(pid)
+                
                 # 최종 결과에 날짜, 키워드, 상품ID, 제품명, 판매가, 제휴 링크 저장
-                product_title = detail.get("product_title", "")
-                target_sale_price = detail.get("target_sale_price", "")
-                results.append([today, keyword, pid, product_title, target_sale_price, affiliate_link.get("promotion_link", "")])
+                results.append([
+                    today,
+                    keyword,
+                    detail.get("product_id"),
+                    detail.get("product_title"),
+                    detail.get("target_sale_price"),
+                    affiliate_link.get("promotion_link", "")
+                ])
             except Exception as e:
                 logging.error(f"[{pid}] 상품 정보 처리 중 오류 발생: {e}")
                 traceback.print_exc()
+        
         logging.info(f"[{keyword}] 작업 종료, 2초 대기")
         time.sleep(2)
+    
     if results:
         save_results_to_sheet(results)
     else:
         logging.warning("최종 결과가 없습니다.")
+    
     logging.info("[END] 프로그램 종료")
 
 if __name__ == '__main__':
