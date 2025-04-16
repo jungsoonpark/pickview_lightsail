@@ -30,10 +30,17 @@ def get_github_secrets():
     }
 
 def generate_signature(params, secret_key):
+    """
+    서명 생성 함수:
+    서명은 'app_key', 'code', 'timestamp'와 같은 파라미터를 정렬하여 결합한 후,
+    'app_secret'을 앞뒤에 붙여 MD5 해시로 변환하여 서명을 생성합니다.
+    """
     sorted_params = sorted(params.items())
     param_string = ''.join(f"{key}{value}" for key, value in sorted_params)
-    string_to_sign = f"{secret_key}{param_string}{secret_key}"
-    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
+    string_to_sign = f"{secret_key}{param_string}{secret_key}"  # app_secret을 앞뒤로 붙입니다.
+    logger.debug(f"String to sign: {string_to_sign}")  # 서명 문자열을 로그로 출력
+
+    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()  # MD5 해시로 변환 후 대문자로 반환
     return signature
 
 def request_access_token(secrets, authorization_code):
