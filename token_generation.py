@@ -32,23 +32,44 @@ def get_github_secrets():
 
 
 
-
-def generate_signature(params, app_secret):
-    # 파라미터 정렬 (알파벳 오름차순)
-    sorted_params = sorted(params.items())
-    canonicalized_query_string = ''
-    for k, v in sorted_params:
-        canonicalized_query_string += f"{k}{v}"
-
-    # HMAC-SHA256 서명 생성
-    string_to_sign = canonicalized_query_string
-    sign = hmac.new(
-        app_secret.encode('utf-8'),
-        string_to_sign.encode('utf-8'),
-        hashlib.sha256
-    ).hexdigest().upper()
-
+def generate_signature(params, secret_key):
+    """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
+    # sign 파라미터 제외하고 정렬
+    params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
+    
+    # 키만 정렬
+    sorted_keys = sorted(params_to_sign.keys())
+    
+    # 파라미터 문자열 생성 (URL 인코딩 없이)
+    param_pairs = []
+    for key in sorted_keys:
+        value = params_to_sign[key]
+        if value is not None and value != "":
+            # 값이 문자열이 아닌 경우 문자열로 변환
+            if not isinstance(value, str):
+                value = str(value)
+            param_pairs.append(f"{key}{value}")
+    
+    param_string = ''.join(param_pairs)
+    
+    # app_secret을 앞뒤에 추가
+    string_to_sign = f"{secret_key}{param_string}{secret_key}"
+    
+    # MD5 해시 생성
+    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
+    
+    # 디버깅 정보 출력
+    print("\n=== 서명 생성 정보 ===")
+    print(f"파라미터 문자열: {param_string}")
+    print(f"서명할 문자열: {string_to_sign}")
+    print(f"생성된 서명: {signature}")
+    print("===================\n")
+    
     return signature
+
+
+
+
 
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
