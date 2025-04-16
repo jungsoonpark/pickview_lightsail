@@ -30,7 +30,7 @@ def get_github_secrets():
         "api_secret": api_secret
     }
 
-def generate_signature(params, secret_key, api_name):
+def generate_signature(params, secret_key):
     """
     서명 생성 함수:
     서명은 'app_key', 'code', 'timestamp'와 같은 파라미터를 정렬하여 결합한 후,
@@ -41,12 +41,12 @@ def generate_signature(params, secret_key, api_name):
     param_string = ''.join(f"{key}{value}" for key, value in sorted_params)  # 파라미터 결합
 
     # 서명 문자열 앞에 API 이름 추가 (시스템 인터페이스의 경우)
-    query_string = api_name + param_string  # 시스템 인터페이스의 경우 API 이름 추가
+    query_string = param_string + secret_key  # API 이름을 포함하지 않고 secret_key를 추가
 
     logger.debug(f"String to sign: {query_string}")
 
-    # Step 3: Generate HMAC-SHA256 signature
-    signature = hmac.new(secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest().upper()
+    # MD5 서명 생성
+    signature = hashlib.md5(query_string.encode('utf-8')).hexdigest().upper()
 
     return signature
 
