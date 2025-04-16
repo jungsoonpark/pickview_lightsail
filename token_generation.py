@@ -16,11 +16,16 @@ def get_github_secrets():
     # 비밀을 딕셔너리로 변환
     secrets_dict = {secret.name: secret for secret in secrets}
 
-    print(f"API Key: {secrets_dict.get('ALIEXPRESS_API_KEY')}")
+    # API 키를 가져오기
+    api_key = secrets_dict.get("ALIEXPRESS_API_KEY").secret  # 실제 API 키 값 가져오기
+    api_secret = secrets_dict.get("ALIEXPRESS_API_SECRET").secret  # 실제 API Secret 값 가져오기
+
+    # 디버깅: API 키 출력
+    print(f"API Key: {api_key}")  # 디버깅 출력
 
     return {
-        "api_key": secrets_dict.get("ALIEXPRESS_API_KEY"),
-        "api_secret": secrets_dict.get("ALIEXPRESS_API_SECRET")
+        "api_key": api_key,
+        "api_secret": api_secret
     }
 
 def generate_signature(params, secret_key):
