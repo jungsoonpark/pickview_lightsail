@@ -6,10 +6,10 @@ import requests
 import sys
 from github import Github
 
+# SDK 경로 추가
 sys.path.append('/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop')
 
 from iop import IopClient, IopRequest  # iop 모듈 import
-
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
@@ -71,8 +71,3 @@ if __name__ == "__main__":
 
     # 토큰 요청
     request_access_token(secrets, authorization_code)
-
-
-
- 
-
