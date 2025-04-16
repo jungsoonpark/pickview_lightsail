@@ -85,7 +85,7 @@ def request_access_token(secrets, authorization_code):
     }
 
     # 서명 생성
-    params["sign"] = generate_signature(params, secrets['api_secret'], "/auth/token/create")
+    params["sign"] = generate_signature(params, secrets['api_secret'])
 
     try:
         # POST 요청 보내기
