@@ -7,7 +7,7 @@ from github import Github
 sys.path.append(os.path.join(os.path.dirname(__file__), 'aliexpress_sdk'))  # aliexpress_sdk 경로 추가
 
 # SDK에서 IopClient 클래스를 가져옵니다.
-from iop import IopClient  # 'iop' 모듈에서 IopClient 클래스 가져오기
+from iop import IopClient, IopRequest  # 'iop' 모듈에서 IopClient 클래스 가져오기
 
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다 (이제는 환경 변수에서 직접 가져옴)."""
