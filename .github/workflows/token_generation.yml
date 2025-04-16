@@ -18,7 +18,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests PyGithub
+          pip install -r requirements.txt
+          pip install aliexpress-sdk  # iop 모듈 설치
 
       - name: Run token generation script
         env:
