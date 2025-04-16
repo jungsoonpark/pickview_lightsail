@@ -1,11 +1,17 @@
 import os
 import json
+import sys  # sys 모듈을 임포트합니다.
+import time
 from github import Github
+
+# SDK 경로 추가
+sys.path.append(os.path.join(os.path.dirname(__file__), 'aliexpress_sdk'))  # aliexpress_sdk 폴더 경로 추가
+
 from aliexpress_sdk import AliExpress  # SDK에서 AliExpress 클래스를 가져옵니다.
 
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
-    g = Github(os.environ.get("GITHUB_TOKEN"))
+    g = Github(os.environ.get("REPO_TOKEN"))  # REPO_TOKEN 사용
     repo = g.get_repo("jungsoonpark/pickview_lightsail")  # 리포지토리 이름 확인
     secrets = repo.get_secrets()
 
