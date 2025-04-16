@@ -10,17 +10,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'aliexpress_sdk'))  # al
 from iop import IopClient  # 'iop' 모듈에서 IopClient 클래스 가져오기
 
 def get_github_secrets():
-    """GitHub Secrets에서 값을 가져옵니다."""
-    g = Github(os.environ.get("GITHUB_TOKEN"))  # REPO_TOKEN 사용
-    repo = g.get_repo("jungsoonpark/pickview_lightsail")  # 리포지토리 이름 확인
-    secrets = repo.get_secrets()
-
-    # 비밀을 딕셔너리로 변환
-    secrets_dict = {secret.name: secret for secret in secrets}
+    """GitHub Secrets에서 값을 가져옵니다 (이제는 환경 변수에서 직접 가져옴)."""
+    api_key = os.environ.get("ALIEXPRESS_API_KEY")  # 환경 변수에서 API 키 값을 가져오기
+    api_secret = os.environ.get("ALIEXPRESS_API_SECRET")  # 환경 변수에서 API Secret 값을 가져오기
 
     return {
-        "api_key": secrets_dict.get("ALIEXPRESS_API_KEY").value,  # 실제 API 키 값 가져오기
-        "api_secret": secrets_dict.get("ALIEXPRESS_API_SECRET").value  # 실제 API Secret 값 가져오기
+        "api_key": api_key,
+        "api_secret": api_secret
     }
 
 def request_access_token(secrets):
