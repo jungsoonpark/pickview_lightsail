@@ -23,6 +23,6 @@ jobs:
 
       - name: Run token generation script
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub Secrets에서 가져온 토큰
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}  # GitHub Secrets에서 가져온 토큰
         run: |
           python token_generation.py  # Python 스크립트의 경로를 지정
