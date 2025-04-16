@@ -6,8 +6,8 @@ from github import Github
 # SDK 경로 추가
 sys.path.append(os.path.join(os.path.dirname(__file__), 'aliexpress_sdk'))  # aliexpress_sdk 경로 추가
 
-# SDK에서 IopClient 클래스를 가져옵니다.
-from iop import IopClient, IopRequest  # 'iop' 모듈에서 IopClient 클래스 가져오기
+# SDK에서 IopClient 및 IopRequest 클래스를 가져옵니다.
+from iop import IopClient, IopRequest  # 'iop' 모듈에서 IopClient 및 IopRequest 클래스 가져오기
 
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다 (이제는 환경 변수에서 직접 가져옴)."""
@@ -32,6 +32,7 @@ def request_access_token(secrets):
         # 토큰 요청 및 응답 받기
         response = aliexpress_client.execute(request)  # IopClient의 execute() 메서드 사용
         
+        print(f"토큰 요청 응답 코드: {response.code}")
         print(f"토큰 요청 응답 내용: {response.body}")
 
         if response.code != "0":  # 성공적 응답 확인
