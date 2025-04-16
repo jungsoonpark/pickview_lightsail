@@ -15,14 +15,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'  # 원하는 Python 버전 설정
+          python-version: '3.8'
 
       - name: Install dependencies
         run: |
-          pip install requests PyGithub
+          pip install requests
 
       - name: Run token generation script
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}  # GitHub Secrets에서 가져온 토큰
+          ALIEXPRESS_API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}
+          ALIEXPRESS_API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}
         run: |
-          python token_generation.py  # Python 스크립트의 경로를 지정
+          python token_generation.py
+
