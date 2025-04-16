@@ -26,4 +26,4 @@ jobs:
           ALIEXPRESS_ACCESS_TOKEN: ${{ secrets.ALIEXPRESS_ACCESS_TOKEN }}  # AliExpress Access Token
           ALIEXPRESS_REFRESH_TOKEN: ${{ secrets.ALIEXPRESS_REFRESH_TOKEN }}  # AliExpress Refresh Token
         run: |
-          python path/to/your_script.py  # 스크립트의 경로를 지정
+          python path/to/token_generation.py  # 스크립트의 경로를 지정
