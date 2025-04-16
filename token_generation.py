@@ -6,7 +6,7 @@ import requests
 import sys
 from github import Github
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'pickview_lightsail/aliexpress_sdk'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'aliexpress_sdk/iop'))
 
 from iop import IopClient, IopRequest  # iop 모듈 import
 
