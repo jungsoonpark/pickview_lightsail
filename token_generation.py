@@ -34,27 +34,66 @@ def generate_signature(params, secret_key, api_name):
     """
     서명 생성 함수:
     서명은 'app_key', 'code', 'timestamp'와 같은 파라미터를 정렬하여 결합한 후,
-    'app_secret'을 앞뒤에 붙여 MD5 해시로 변환하여 서명을 생성합니다.
+    'app_secret'을 앞뒤에 붙여 SHA256 해시로 변환하여 서명을 생성합니다.
     """
     # 파라미터 알파벳 순으로 정렬
-    sorted_params = sorted(params.items())  # 파라미터를 알파벳 순으로 정렬
-    param_string = ''.join(f"{key}{value}" for key, value in sorted_params)  # 파라미터 결합
+    sorted_params = sorted(params.items())
+    param_string = ''.join(f"{key}{value}" for key, value in sorted_params)
 
-    # 디버깅: 서명 문자열 출력
-    logger.debug(f"Sorted Parameters: {sorted_params}")  # 정렬된 파라미터
-    logger.debug(f"Param String: {param_string}")  # 결합된 파라미터
+    # API 이름 추가
+    query_string = api_name + param_string
 
-    # 서명 문자열 앞에 API 이름 추가 (시스템 인터페이스의 경우)
-    query_string = api_name + param_string  # 시스템 인터페이스의 경우 API 이름 추가
-
-    # 디버깅: 최종 서명 문자열 출력
-    logger.debug(f"String to sign: {query_string}")  # 서명 문자열을 출력하여 확인
+    logger.debug(f"String to sign: {query_string}")
 
     # HMAC-SHA256 서명 생성
     signature = hmac.new(secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest().upper()
 
-    # 서명 반환
     return signature
+
+def request_access_token(secrets, authorization_code):
+    """새로운 액세스 토큰을 발급받습니다."""
+    url = "https://api-sg.aliexpress.com/rest/auth/token/create"
+
+    # 요청 파라미터 설정
+    params = {
+        "app_key": secrets['api_key'],
+        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
+        "sign_method": "sha256",
+        "code": authorization_code,
+        "grant_type": "authorization_code",
+    }
+
+    # 서명 생성
+    params["sign"] = generate_signature(params, secrets['api_secret'], "/auth/token/create")
+
+    try:
+        # POST 요청 보내기
+        response = requests.post(url, data=params)
+        
+        logger.debug(f"Request URL: {url}")
+        logger.debug(f"Response Status Code: {response.status_code}")
+        logger.debug(f"Response Body: {response.text}")
+
+        if response.status_code == 200:
+            response_data = response.json()
+            if "error_response" in response_data:
+                logger.error(f"Token request failed: {response_data['error_response']['code']} - {response_data['error_response']['msg']}")
+                return None
+            else:
+                logger.debug("Token request succeeded!")
+                with open('token_info.json', 'w') as f:
+                    json.dump(response_data, f, indent=2)
+                logger.debug("New token information saved to token_info.json")
+                return response_data.get('access_token')
+        else:
+            logger.error(f"API Error: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        logger.error(f"Error during token request: {str(e)}")
+        return None
+
+
+
 
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
