@@ -1,7 +1,9 @@
 import os
 import json
-import sys  # sys 모듈을 임포트합니다.
+import time
+import hashlib
 import logging
+import requests
 from github import Github
 
 # 로깅 설정
@@ -26,38 +28,64 @@ def get_github_secrets():
         "api_secret": api_secret
     }
 
-def request_access_token(secrets):
+def generate_signature(params, secret_key):
+    sorted_params = sorted(params.items())
+    param_string = ''.join(f"{key}{value}" for key, value in sorted_params)
+    string_to_sign = f"{secret_key}{param_string}{secret_key}"
+    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
+    return signature
+
+def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
-    # IopClient 초기화
-    aliexpress_client = IopClient(server_url="https://api-sg.aliexpress.com", app_key=secrets['api_key'], app_secret=secrets['api_secret'])
+    # AliExpress 인증 URL 설정
+    url = "https://api-sg.aliexpress.com/rest/auth/token"
+
+    # Params to send in the request
+    params = {
+        "app_key": secrets['api_key'],
+        "format": "json",
+        "method": "aliexpress.auth.token.create",
+        "sign_method": "md5",
+        "timestamp": str(int(time.time() * 1000)),
+        "v": "2.0",
+        "code": authorization_code,  # Temporary code obtained from user authorization
+        "grant_type": "authorization_code",  # Correct grant type
+    }
+
+    # Generate the signature
+    params["sign"] = generate_signature(params, secrets['api_secret'])
 
     try:
-        # 액세스 토큰 요청 (예시 API)
-        request = IopRequest("aliexpress.auth.token.create")  # 해당 API 메서드를 사용할 수 있도록 수정
-        request.add_api_param("grant_type", "client_credentials")  # 필요한 파라미터 추가
-
-        # 토큰 요청 및 응답 받기
-        response = aliexpress_client.execute(request)  # IopClient의 execute() 메서드 사용
+        # Send POST request
+        response = requests.post(url, data=params)
         
-        # 디버깅 출력
-        logger.debug(f"Request URL: {aliexpress_client._server_url}/{request._api_pame}")  # 요청 URL 출력
-        logger.debug(f"Response Status Code: {response.code}")  # 응답 상태 코드 출력
-        logger.debug(f"Response Body: {response.body}")  # 응답 본문 출력
+        logger.debug(f"Request URL: {url}")
+        logger.debug(f"Response Status Code: {response.status_code}")
+        logger.debug(f"Response Body: {response.text}")
 
-        if response.code != "0":  # 성공적 응답 확인
-            logger.debug(f"토큰 요청 실패: {response.code} - {response.message}")
-            return None
+        if response.status_code == 200:
+            response_data = response.json()
+            if "error_response" in response_data:
+                logger.error(f"Token request failed: {response_data['error_response']['code']} - {response_data['error_response']['msg']}")
+                return None
+            else:
+                logger.debug("Token request succeeded!")
+                with open('token_info.json', 'w') as f:
+                    json.dump(response_data, f, indent=2)
+                logger.debug("New token information saved to token_info.json")
+                return response_data.get('access_token')
         else:
-            logger.debug("토큰 발급 성공!")
-            # 새로운 토큰 정보를 파일에 저장
-            with open('token_info.json', 'w') as f:
-                json.dump(response.body, f, indent=2)
-            logger.debug("새로운 토큰 정보가 token_info.json 파일에 저장되었습니다.")
-            return response.body.get('access_token')
+            logger.error(f"API Error: {response.status_code} - {response.text}")
+            return None
     except Exception as e:
-        logger.error(f"토큰 요청 중 에러 발생: {str(e)}")
+        logger.error(f"Error during token request: {str(e)}")
         return None
 
 if __name__ == "__main__":
     secrets = get_github_secrets()
-    request_access_token(secrets)
+
+    # The `authorization_code` needs to be obtained after user authorization
+    authorization_code = "YOUR_AUTHORIZATION_CODE"  # Replace with the actual code received after user authorization
+
+    # Request Access Token
+    request_access_token(secrets, authorization_code)
