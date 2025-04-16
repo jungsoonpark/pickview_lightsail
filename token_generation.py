@@ -30,6 +30,8 @@ def get_github_secrets():
         "api_secret": api_secret
     }
 
+
+
 def generate_signature(params, secret_key):
     """
     서명 생성 함수:
@@ -40,8 +42,8 @@ def generate_signature(params, secret_key):
     sorted_params = sorted(params.items())  # 파라미터를 알파벳 순으로 정렬
     param_string = ''.join(f"{key}{value}" for key, value in sorted_params)  # 파라미터 결합
 
-    # 서명 문자열 앞에 API 이름 추가 (시스템 인터페이스의 경우)
-    query_string = param_string + secret_key  # API 이름을 포함하지 않고 secret_key를 추가
+    # 서명 문자열 앞에 secret_key 추가
+    query_string = param_string + secret_key  # secret_key를 추가
 
     logger.debug(f"String to sign: {query_string}")
 
@@ -49,6 +51,8 @@ def generate_signature(params, secret_key):
     signature = hashlib.md5(query_string.encode('utf-8')).hexdigest().upper()
 
     return signature
+
+
 
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
@@ -68,7 +72,7 @@ def request_access_token(secrets, authorization_code):
     }
 
     # 서명 생성
-    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
+    params["sign"] = generate_signature(params, secrets['api_secret'])  # 인수 수정
 
     try:
         # POST 요청 보내기
