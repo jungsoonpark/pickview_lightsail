@@ -8,14 +8,14 @@ import urllib.parse
 from github import Github
 
 
-repo = g.get_repo("jungsoonpark/pickview_lightsail")
+
 
 
 
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
     g = Github(os.environ.get("GITHUB_TOKEN"))
-    repo = g.get_repo("PickView/pickview_lightsail")  # 리포지토리 이름 확인
+    repo = g.get_repo("jungsoonpark/pickview_lightsail")  # 리포지토리 이름 확인
     secrets = repo.get_secrets()
 
     # 비밀을 딕셔너리로 변환
