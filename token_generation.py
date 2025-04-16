@@ -10,7 +10,7 @@ from github import Github
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
     g = Github(os.environ.get("GITHUB_TOKEN"))
-    repo = g.get_repo("pickview_lightsail")
+    repo = g.get_repo("junsoonpark/pickview_lightsail")
     secrets = repo.get_secrets()
     
     return {
