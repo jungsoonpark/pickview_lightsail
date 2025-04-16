@@ -20,9 +20,10 @@ jobs:
       - name: Install dependencies
         run: |
           pip install requests
-          pip install requests PyGithub
+          pip install PyGithub
           pip install aliexpress-sdk  # AliExpress SDK 설치
 
+          
       - name: Run token generation script
         env:
           ALIEXPRESS_API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}
