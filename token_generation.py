@@ -76,10 +76,14 @@ def request_access_token(secrets, authorization_code):
         "app_key": secrets['api_key'],
         "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
         "sign_method": "md5",
-        "code": authorization_code,
+        "code": authorization_code,  # 필수: OAuth 인증 코드
         "grant_type": "authorization_code",
-        "v": "2.0"  # 추가된 버전 정보
+        "v": "2.0",  # 버전 추가
+        "method": "aliexpress.auth.token.create"  # method 파라미터 추가
     }
+
+    # uuid는 선택적 파라미터이므로 추가하지 않거나 필요 시 추가하세요
+    # params["uuid"] = "your_uuid"  # 필요시 추가
 
     # 서명 생성
     api_name = "/rest/auth/token/create"  # API 경로
@@ -110,6 +114,7 @@ def request_access_token(secrets, authorization_code):
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
+
 
 
 
