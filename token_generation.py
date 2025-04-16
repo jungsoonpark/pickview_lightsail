@@ -7,18 +7,28 @@ import hashlib
 import urllib.parse
 from github import Github
 
+
+repo = g.get_repo("jungsoonpark/pickview_lightsail")
+
+
+
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
     g = Github(os.environ.get("GITHUB_TOKEN"))
-    repo = g.get_repo("jungsoonpark/pickview_lightsail")
+    repo = g.get_repo("PickView/pickview_lightsail")  # 리포지토리 이름 확인
     secrets = repo.get_secrets()
-    
+
+    # 비밀을 딕셔너리로 변환
+    secrets_dict = {secret.name: secret for secret in secrets}
+
     return {
-        "api_key": secrets.get("ALIEXPRESS_API_KEY"),
-        "api_secret": secrets.get("ALIEXPRESS_API_SECRET"),
-        "access_token": secrets.get("ALIEXPRESS_ACCESS_TOKEN"),
-        "refresh_token": secrets.get("ALIEXPRESS_REFRESH_TOKEN")
+        "api_key": secrets_dict.get("ALIEXPRESS_API_KEY"),
+        "api_secret": secrets_dict.get("ALIEXPRESS_API_SECRET"),
+        "access_token": secrets_dict.get("ALIEXPRESS_ACCESS_TOKEN"),
+        "refresh_token": secrets_dict.get("ALIEXPRESS_REFRESH_TOKEN")
     }
+
+
 
 def generate_signature(params, secret_key):
     """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
