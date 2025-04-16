@@ -23,9 +23,7 @@ def get_github_secrets():
 
     return {
         "api_key": secrets_dict.get("ALIEXPRESS_API_KEY"),
-        "api_secret": secrets_dict.get("ALIEXPRESS_API_SECRET"),
-        "access_token": secrets_dict.get("ALIEXPRESS_ACCESS_TOKEN"),
-        "refresh_token": secrets_dict.get("ALIEXPRESS_REFRESH_TOKEN")
+        "api_secret": secrets_dict.get("ALIEXPRESS_API_SECRET")
     }
 
 
