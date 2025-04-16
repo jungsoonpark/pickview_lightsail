@@ -7,7 +7,7 @@ import sys
 from github import Github
 from iop import IopClient, IopRequest
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'pickview_lightsail/aliexpress_sdk'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'aliexpress_sdk'))
 
 
 # 로깅 설정
