@@ -43,6 +43,8 @@ def generate_signature(params, secret_key, api_name):
     # 서명 문자열 앞에 API 이름 추가 (시스템 인터페이스의 경우)
     query_string = api_name + param_string  # 시스템 인터페이스의 경우 API 이름 추가
 
+    logger.debug(f"String to sign: {query_string}")
+
     # Step 3: Generate HMAC-SHA256 signature
     signature = hmac.new(secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest().upper()
 
