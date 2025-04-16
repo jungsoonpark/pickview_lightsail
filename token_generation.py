@@ -3,6 +3,7 @@ import json
 import sys
 import time
 import hashlib
+import hmac
 import logging
 import requests
 from github import Github
@@ -29,19 +30,35 @@ def get_github_secrets():
         "api_secret": api_secret
     }
 
-def generate_signature(params, secret_key):
-    """
-    서명 생성 함수:
-    서명은 'app_key', 'code', 'timestamp'와 같은 파라미터를 정렬하여 결합한 후,
-    'app_secret'을 앞뒤에 붙여 MD5 해시로 변환하여 서명을 생성합니다.
-    """
-    sorted_params = sorted(params.items())
-    param_string = ''.join(f"{key}{value}" for key, value in sorted_params)
-    string_to_sign = f"{secret_key}{param_string}{secret_key}"  # app_secret을 앞뒤로 붙입니다.
-    logger.debug(f"String to sign: {string_to_sign}")  # 서명 문자열을 로그로 출력
+def generate_signature(params, secret_key, api_name):
+    # Step 1: Sort parameters
+    sorted_params = sorted(params.items())  # 파라미터를 알파벳 순으로 정렬
+    param_string = ''.join(f"{key}{value}" for key, value in sorted_params)  # 파라미터 결합
 
-    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()  # MD5 해시로 변환 후 대문자로 반환
+    # Step 2: Add API name for system interfaces
+    query_string = api_name + param_string  # 시스템 인터페이스의 경우 API 이름 추가
+
+    # Step 3: Generate HMAC-SHA256 signature
+    signature = hmac.new(secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest().upper()
+
     return signature
+
+# Example usage
+params = {
+    "app_key": "your_app_key",
+    "method": "aliexpress.auth.token.create",
+    "timestamp": "2025-04-16 10:00:00",
+    "code": "your_authorization_code",
+    "grant_type": "authorization_code",
+    "v": "2.0"
+}
+
+api_name = "/auth/token/create"  # API 이름 추가
+secret_key = "your_app_secret"  # 앱 시크릿
+
+signature = generate_signature(params, secret_key, api_name)
+print(f"Generated Signature: {signature}")
+
 
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
