@@ -1,5 +1,6 @@
 import os
 import json
+import sys  # sys 모듈을 임포트합니다.
 import time
 import hashlib
 import logging
