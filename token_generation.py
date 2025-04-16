@@ -32,9 +32,10 @@ def request_access_token(secrets):
         # 토큰 요청 및 응답 받기
         response = aliexpress_client.execute(request)  # IopClient의 execute() 메서드 사용
         
-        print(f"Request URL: {full_url}")  # 요청한 전체 URL 출력
-        print(f"Response Status Code: {response.status_code}")  # 응답 상태 코드 출력
-        print(f"Response Text: {response.text}")  # 응답 본문 출력
+        # 디버깅 출력
+        print(f"Request URL: {aliexpress_client._server_url}/{request._api_pame}")  # 요청 URL 출력
+        print(f"Response Status Code: {response.code}")  # 응답 상태 코드 출력
+        print(f"Response Body: {response.body}")  # 응답 본문 출력
 
         if response.code != "0":  # 성공적 응답 확인
             print(f"토큰 요청 실패: {response.code} - {response.message}")
