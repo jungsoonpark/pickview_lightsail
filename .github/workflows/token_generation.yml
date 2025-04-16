@@ -18,13 +18,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests
-          pip install PyGithub
-
+          pip install requests PyGithub
 
       - name: Run token generation script
         env:
-          REPO_TOKEN: ${{ secrets.REPO_TOKEN }}  # REPO_TOKEN 환경 변수로 사용
+          REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
           ALIEXPRESS_API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}
           ALIEXPRESS_API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}
         run: |
