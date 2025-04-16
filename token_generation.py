@@ -1,7 +1,12 @@
 import os
 import json
 import sys  # sys 모듈을 임포트합니다.
+import logging
 from github import Github
+
+# 로깅 설정
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
+logger = logging.getLogger()
 
 # SDK 경로 추가
 sys.path.append(os.path.join(os.path.dirname(__file__), 'aliexpress_sdk'))  # aliexpress_sdk 경로 추가
@@ -13,6 +18,8 @@ def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다 (이제는 환경 변수에서 직접 가져옴)."""
     api_key = os.environ.get("ALIEXPRESS_API_KEY")  # 환경 변수에서 API 키 값을 가져오기
     api_secret = os.environ.get("ALIEXPRESS_API_SECRET")  # 환경 변수에서 API Secret 값을 가져오기
+    logger.debug(f"API Key: {api_key}")  # 디버깅 출력
+    logger.debug(f"API Secret: {api_secret}")  # 디버깅 출력
 
     return {
         "api_key": api_key,
@@ -28,27 +35,27 @@ def request_access_token(secrets):
         # 액세스 토큰 요청 (예시 API)
         request = IopRequest("aliexpress.auth.token.create")  # 해당 API 메서드를 사용할 수 있도록 수정
         request.add_api_param("grant_type", "client_credentials")  # 필요한 파라미터 추가
-        
+
         # 토큰 요청 및 응답 받기
         response = aliexpress_client.execute(request)  # IopClient의 execute() 메서드 사용
         
         # 디버깅 출력
-        print(f"Request URL: {aliexpress_client._server_url}/{request._api_pame}")  # 요청 URL 출력
-        print(f"Response Status Code: {response.code}")  # 응답 상태 코드 출력
-        print(f"Response Body: {response.body}")  # 응답 본문 출력
+        logger.debug(f"Request URL: {aliexpress_client._server_url}/{request._api_pame}")  # 요청 URL 출력
+        logger.debug(f"Response Status Code: {response.code}")  # 응답 상태 코드 출력
+        logger.debug(f"Response Body: {response.body}")  # 응답 본문 출력
 
         if response.code != "0":  # 성공적 응답 확인
-            print(f"토큰 요청 실패: {response.code} - {response.message}")
+            logger.debug(f"토큰 요청 실패: {response.code} - {response.message}")
             return None
         else:
-            print("토큰 발급 성공!")
+            logger.debug("토큰 발급 성공!")
             # 새로운 토큰 정보를 파일에 저장
             with open('token_info.json', 'w') as f:
                 json.dump(response.body, f, indent=2)
-            print("새로운 토큰 정보가 token_info.json 파일에 저장되었습니다.")
+            logger.debug("새로운 토큰 정보가 token_info.json 파일에 저장되었습니다.")
             return response.body.get('access_token')
     except Exception as e:
-        print(f"토큰 요청 중 에러 발생: {str(e)}")
+        logger.error(f"토큰 요청 중 에러 발생: {str(e)}")
         return None
 
 if __name__ == "__main__":
