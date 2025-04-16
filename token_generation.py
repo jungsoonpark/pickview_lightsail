@@ -3,7 +3,6 @@ import json
 import sys
 import time
 import hashlib
-import hmac
 import logging
 import requests
 from github import Github
@@ -31,34 +30,22 @@ def get_github_secrets():
     }
 
 def generate_signature(params, secret_key, api_name):
-    # Step 1: Sort parameters
+    """
+    서명 생성 함수:
+    서명은 'app_key', 'code', 'timestamp'와 같은 파라미터를 정렬하여 결합한 후,
+    'app_secret'을 앞뒤에 붙여 MD5 해시로 변환하여 서명을 생성합니다.
+    """
+    # 파라미터 알파벳 순으로 정렬
     sorted_params = sorted(params.items())  # 파라미터를 알파벳 순으로 정렬
     param_string = ''.join(f"{key}{value}" for key, value in sorted_params)  # 파라미터 결합
 
-    # Step 2: Add API name for system interfaces
+    # 서명 문자열 앞에 API 이름 추가 (시스템 인터페이스의 경우)
     query_string = api_name + param_string  # 시스템 인터페이스의 경우 API 이름 추가
 
     # Step 3: Generate HMAC-SHA256 signature
     signature = hmac.new(secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest().upper()
 
     return signature
-
-# Example usage
-params = {
-    "app_key": "your_app_key",
-    "method": "aliexpress.auth.token.create",
-    "timestamp": "2025-04-16 10:00:00",
-    "code": "your_authorization_code",
-    "grant_type": "authorization_code",
-    "v": "2.0"
-}
-
-api_name = "/auth/token/create"  # API 이름 추가
-secret_key = "your_app_secret"  # 앱 시크릿
-
-signature = generate_signature(params, secret_key, api_name)
-print(f"Generated Signature: {signature}")
-
 
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
@@ -77,11 +64,11 @@ def request_access_token(secrets, authorization_code):
         "grant_type": "authorization_code",  # Correct grant type
     }
 
-    # Generate the signature
-    params["sign"] = generate_signature(params, secrets['api_secret'])
+    # 서명 생성
+    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
 
     try:
-        # Send POST request
+        # POST 요청 보내기
         response = requests.post(url, data=params)
         
         logger.debug(f"Request URL: {url}")
@@ -109,8 +96,9 @@ def request_access_token(secrets, authorization_code):
 if __name__ == "__main__":
     secrets = get_github_secrets()
 
-    # The `authorization_code` needs to be obtained after user authorization
-    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 실제 authorization_code로 교체
+    # 사용자 인증 후 받은 실제 'authorization_code'를 여기에 입력
+    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
 
-    # Request Access Token
+    # 토큰 요청
     request_access_token(secrets, authorization_code)
+
