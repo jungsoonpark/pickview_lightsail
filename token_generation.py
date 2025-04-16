@@ -32,36 +32,36 @@ def get_github_secrets():
 
 
 
-def generate_signature(params, secret_key):
+def generate_signature(params, secret_key, api_name):
     """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
     # sign 파라미터 제외하고 정렬
     params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
-    
+
     # 키만 정렬
     sorted_keys = sorted(params_to_sign.keys())
-    
+
     # 파라미터 문자열 생성 (URL 인코딩 없이)
     param_pairs = []
     for key in sorted_keys:
         value = params_to_sign[key]
         if value is not None and value != "":
             param_pairs.append(f"{key}{value}")
-    
+
     param_string = ''.join(param_pairs)
-    
+
     # app_secret을 앞뒤에 추가
-    string_to_sign = f"{secret_key}{param_string}{secret_key}"
-    
+    string_to_sign = f"{api_name}{param_string}{secret_key}"
+
     # MD5 해시 생성
     signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
-    
+
     # 디버깅 정보 출력
-    print("\n=== 서명 생성 정보 ===")
-    print(f"파라미터 문자열: {param_string}")
-    print(f"서명할 문자열: {string_to_sign}")
-    print(f"생성된 서명: {signature}")
-    print("===================\n")
-    
+    logger.debug("\n=== 서명 생성 정보 ===")
+    logger.debug(f"파라미터 문자열: {param_string}")
+    logger.debug(f"서명할 문자열: {string_to_sign}")
+    logger.debug(f"생성된 서명: {signature}")
+    logger.debug("===================\n")
+
     return signature
 
 
@@ -78,10 +78,12 @@ def request_access_token(secrets, authorization_code):
         "sign_method": "md5",
         "code": authorization_code,
         "grant_type": "authorization_code",
+        "v": "2.0"  # 추가된 버전 정보
     }
 
     # 서명 생성
-    params["sign"] = generate_signature(params, secrets['api_secret'])  # 인수 수정
+    api_name = "/rest/auth/token/create"  # API 경로
+    params["sign"] = generate_signature(params, secrets['api_secret'], api_name)  # 서명 생성
 
     try:
         # POST 요청 보내기
@@ -108,6 +110,9 @@ def request_access_token(secrets, authorization_code):
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
+
+
+
 
 if __name__ == "__main__":
     secrets = get_github_secrets()
