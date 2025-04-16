@@ -45,9 +45,6 @@ def generate_signature(params, secret_key):
     for key in sorted_keys:
         value = params_to_sign[key]
         if value is not None and value != "":
-            # 값이 문자열이 아닌 경우 문자열로 변환
-            if not isinstance(value, str):
-                value = str(value)
             param_pairs.append(f"{key}{value}")
     
     param_string = ''.join(param_pairs)
@@ -66,6 +63,9 @@ def generate_signature(params, secret_key):
     print("===================\n")
     
     return signature
+
+
+
 
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
