@@ -86,7 +86,7 @@ if __name__ == "__main__":
     secrets = get_github_secrets()
 
     # The `authorization_code` needs to be obtained after user authorization
-    authorization_code = "YOUR_AUTHORIZATION_CODE"  # Replace with the actual code received after user authorization
+    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # Replace with the actual code received after user authorization
 
     # Request Access Token
     request_access_token(secrets, authorization_code)
