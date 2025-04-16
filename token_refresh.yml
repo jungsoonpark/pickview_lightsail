@@ -1,0 +1,29 @@
+name: Refresh AliExpress Access Token
+
+on:
+  workflow_dispatch:  # 수동으로 실행할 수 있도록 설정
+
+jobs:
+  refresh_token:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'  # 원하는 Python 버전 설정
+
+      - name: Install dependencies
+        run: |
+          pip install requests PyGithub
+
+      - name: Run token refresh script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub Secrets에서 가져온 토큰
+          ALIEXPRESS_ACCESS_TOKEN: ${{ secrets.ALIEXPRESS_ACCESS_TOKEN }}  # AliExpress Access Token
+          ALIEXPRESS_REFRESH_TOKEN: ${{ secrets.ALIEXPRESS_REFRESH_TOKEN }}  # AliExpress Refresh Token
+        run: |
+          python path/to/your_script.py  # 스크립트의 경로를 지정
