@@ -21,6 +21,7 @@ jobs:
         run: |
           pip install requests
           pip install requests PyGithub
+          pip install aliexpress-sdk  # AliExpress SDK 설치
 
       - name: Run token generation script
         env:
