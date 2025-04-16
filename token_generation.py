@@ -9,7 +9,7 @@ from github import Github
 
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
-    g = Github(os.environ.get("REPO_TOKEN"))
+    g = Github(os.environ.get("GITHUB_TOKEN"))
     repo = g.get_repo("jungsoonpark/pickview_lightsail")  # 리포지토리 이름 확인
     secrets = repo.get_secrets()
 
@@ -17,8 +17,8 @@ def get_github_secrets():
     secrets_dict = {secret.name: secret for secret in secrets}
 
     # API 키를 가져오기
-    api_key = secrets_dict.get("ALIEXPRESS_API_KEY").get_secret_value()  # 실제 API 키 값 가져오기
-    api_secret = secrets_dict.get("ALIEXPRESS_API_SECRET").get_secret_value()  # 실제 API Secret 값 가져오기
+    api_key = secrets_dict.get("ALIEXPRESS_API_KEY").value  # 실제 API 키 값 가져오기
+    api_secret = secrets_dict.get("ALIEXPRESS_API_SECRET").value  # 실제 API Secret 값 가져오기
 
     # 디버깅: API 키 출력
     print(f"API Key: {api_key}")  # 디버깅 출력
