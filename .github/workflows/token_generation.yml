@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  token_generation:
+  refresh_token:
     runs-on: ubuntu-latest
 
     steps:
@@ -14,17 +14,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.8'  # 원하는 Python 버전 설정
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install PyGithub  # github 모듈 설치
           pip install aliexpress-sdk  # iop 모듈 설치
 
       - name: Run token generation script
         env:
-          REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
-          ALIEXPRESS_API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}
-          ALIEXPRESS_API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}  # GitHub Secrets에서 가져온 토큰
         run: |
-          python token_generation.py
+          python token_generation.py  # Python 스크립트 실행
