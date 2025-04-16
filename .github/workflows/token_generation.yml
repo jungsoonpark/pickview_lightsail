@@ -27,6 +27,7 @@ jobs:
         env:
           ALIEXPRESS_API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}
           ALIEXPRESS_API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
           python token_generation.py
 
