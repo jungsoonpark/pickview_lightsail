@@ -3,9 +3,6 @@ name: Refresh AliExpress Access Token
 on:
   workflow_dispatch:  # 수동으로 실행할 수 있도록 설정
 
-permissions:
-  contents: read  # 리포지토리 내용 읽기 권한
-  secrets: read   # 비밀 읽기 권한
 
 jobs:
   refresh_token:
