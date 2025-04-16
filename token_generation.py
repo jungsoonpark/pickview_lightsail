@@ -16,6 +16,8 @@ def get_github_secrets():
     # 비밀을 딕셔너리로 변환
     secrets_dict = {secret.name: secret for secret in secrets}
 
+    print(f"API Key: {secrets_dict.get('ALIEXPRESS_API_KEY')}")
+
     return {
         "api_key": secrets_dict.get("ALIEXPRESS_API_KEY"),
         "api_secret": secrets_dict.get("ALIEXPRESS_API_SECRET")
