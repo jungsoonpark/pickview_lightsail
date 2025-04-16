@@ -1,10 +1,9 @@
 import os
+import sys
 import json
-import sys  # sys 모듈을 임포트합니다.
 import time
 import hashlib
 import logging
-import requests
 from github import Github
 
 # 로깅 설정
@@ -39,7 +38,7 @@ def generate_signature(params, secret_key):
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     # AliExpress 인증 URL 설정
-    url = "https://api-sg.aliexpress.com/rest/auth/token"
+    url = "https://api-sg.aliexpress.com/rest/auth/token/create"  # 올바른 API 경로 설정
 
     # Params to send in the request
     params = {
@@ -58,26 +57,28 @@ def request_access_token(secrets, authorization_code):
 
     try:
         # Send POST request
-        response = requests.post(url, data=params)
-        
-        logger.debug(f"Request URL: {url}")
-        logger.debug(f"Response Status Code: {response.status_code}")
-        logger.debug(f"Response Body: {response.text}")
+        client = IopClient(url, secrets['api_key'], secrets['api_secret'])
+        request = IopRequest('/auth/token/create')
+        request.add_api_param('code', authorization_code)  # Authorization code
+        request.add_api_param('uuid', 'uuid')  # User-specific UUID (optional)
 
-        if response.status_code == 200:
-            response_data = response.json()
-            if "error_response" in response_data:
-                logger.error(f"Token request failed: {response_data['error_response']['code']} - {response_data['error_response']['msg']}")
-                return None
-            else:
-                logger.debug("Token request succeeded!")
-                with open('token_info.json', 'w') as f:
-                    json.dump(response_data, f, indent=2)
-                logger.debug("New token information saved to token_info.json")
-                return response_data.get('access_token')
-        else:
-            logger.error(f"API Error: {response.status_code} - {response.text}")
+        # Execute the request and get the response
+        response = client.execute(request)
+
+        logger.debug(f"Response Type: {response.type}")
+        logger.debug(f"Response Body: {response.body}")
+
+        if response.type == "ISV" and "error_response" in response.body:
+            logger.error(f"Error: {response.body['error_response']}")
             return None
+        else:
+            logger.debug("Token request succeeded!")
+            # Save token information
+            with open('token_info.json', 'w') as f:
+                json.dump(response.body, f, indent=2)
+            logger.debug("Token information saved to token_info.json")
+            return response.body.get('access_token')
+
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     secrets = get_github_secrets()
 
     # The `authorization_code` needs to be obtained after user authorization
-    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # Replace with the actual code received after user authorization
+    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 실제 authorization_code로 교체
 
     # Request Access Token
     request_access_token(secrets, authorization_code)
