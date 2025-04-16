@@ -6,7 +6,7 @@ import requests
 import sys
 from github import Github
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'aliexpress_sdk/iop'))
+sys.path.append('/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop')
 
 from iop import IopClient, IopRequest  # iop 모듈 import
 
@@ -39,6 +39,7 @@ def request_access_token(secrets, authorization_code):
     request.add_api_param('code', authorization_code)
     request.add_api_param('grant_type', 'authorization_code')
     request.add_api_param('v', '2.0')
+    request.add_api_param('timestamp', str(int(time.time() * 1000)))  # UTC 타임스탬프 추가
 
     # 서명 및 요청 보내기
     try:
@@ -46,7 +47,7 @@ def request_access_token(secrets, authorization_code):
         
         logger.debug(f"Request URL: {url}")
         logger.debug(f"Response Status Code: {response.code}")
-        logger.debug(f"Response Body: {response.body}")
+        logger.debug(f"Response Body: {json.dumps(response.body, indent=2)}")  # JSON 형식으로 출력
 
         if response.code == "0":
             # 응답이 성공적일 경우, 토큰 저장
