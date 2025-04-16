@@ -30,9 +30,7 @@ def get_github_secrets():
         "api_secret": api_secret
     }
 
-
-
-def generate_signature(params, secret_key):
+def generate_signature(params, secret_key, api_name):
     """
     서명 생성 함수:
     서명은 'app_key', 'code', 'timestamp'와 같은 파라미터를 정렬하여 결합한 후,
@@ -42,17 +40,21 @@ def generate_signature(params, secret_key):
     sorted_params = sorted(params.items())  # 파라미터를 알파벳 순으로 정렬
     param_string = ''.join(f"{key}{value}" for key, value in sorted_params)  # 파라미터 결합
 
-    # 서명 문자열 앞에 secret_key 추가
-    query_string = param_string + secret_key  # secret_key를 추가
+    # 디버깅: 서명 문자열 출력
+    logger.debug(f"Sorted Parameters: {sorted_params}")  # 정렬된 파라미터
+    logger.debug(f"Param String: {param_string}")  # 결합된 파라미터
 
-    logger.debug(f"String to sign: {query_string}")
+    # 서명 문자열 앞에 API 이름 추가 (시스템 인터페이스의 경우)
+    query_string = api_name + param_string  # 시스템 인터페이스의 경우 API 이름 추가
 
-    # MD5 서명 생성
-    signature = hashlib.md5(query_string.encode('utf-8')).hexdigest().upper()
+    # 디버깅: 최종 서명 문자열 출력
+    logger.debug(f"String to sign: {query_string}")  # 서명 문자열을 출력하여 확인
 
+    # HMAC-SHA256 서명 생성
+    signature = hmac.new(secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest().upper()
+
+    # 서명 반환
     return signature
-
-
 
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
@@ -72,7 +74,7 @@ def request_access_token(secrets, authorization_code):
     }
 
     # 서명 생성
-    params["sign"] = generate_signature(params, secrets['api_secret'])  # 인수 수정
+    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
 
     try:
         # POST 요청 보내기
@@ -108,4 +110,6 @@ if __name__ == "__main__":
 
     # 토큰 요청
     request_access_token(secrets, authorization_code)
+
+ 
 
