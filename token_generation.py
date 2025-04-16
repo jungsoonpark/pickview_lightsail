@@ -3,8 +3,12 @@ import json
 import time
 import logging
 import requests
+import sys
 from github import Github
 from iop import IopClient, IopRequest
+
+sys.path.append(os.path.join(os.path.dirname(__file__), 'pickview_lightsail/aliexpress_sdk'))
+
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
