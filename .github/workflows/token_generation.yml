@@ -25,10 +25,13 @@ jobs:
           # 압축 파일을 GitHub Actions에서 풀기
           unzip /home/runner/work/pickview_lightsail/pickview_lightsail/1.0.2-1699927624346NFOi.zip -d /home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk
 
+      - name: Set up SDK path
+        run: |
+          # 압축을 풀고 경로를 설정
+          echo "sys.path.append('/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop')" >> $GITHUB_ENV
+
       - name: Run token generation script
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}  # GitHub Secrets에서 가져온 토큰
         run: |
-          # Python 코드 내에서 경로 추가
-          python -c "import sys; sys.path.append('/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop'); import token_generation"
-
+          python /home/runner/work/pickview_lightsail/pickview_lightsail/token_generation.py  # Python 스크립트 실행
