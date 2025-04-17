@@ -16,12 +16,23 @@ print("Current sys.path:", sys.path)
 
 from iop import IopClient, IopRequest  # iop 모듈 import
 
+# 중복 경로 추가 방지
+path_to_iop = '/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop'
+
+# 경로가 이미 추가되지 않았으면 추가
+if path_to_iop not in sys.path:
+    sys.path.append(path_to_iop)
+
+# 경로 확인
+print("Updated sys.path:", sys.path)
+
 # iop 모듈 import 시도
 try:
     from iop import IopClient, IopRequest
     print("iop module imported successfully.")
 except ModuleNotFoundError as e:
     print(f"Error: {e}")
+    
     
 
 # 로깅 설정
