@@ -90,17 +90,14 @@ def get_github_secrets():
     api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
     api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
 
-    logger.debug(f"API Key: {api_key}")
-    logger.debug(f"API Secret: {api_secret}")
-
+    # 값이 None이라면 오류를 출력하도록 합니다.
     if api_key is None or api_secret is None:
         logger.error("API Key or Secret is missing in GitHub Secrets!")
-    
+
     return {
         "api_key": api_key,
         "api_secret": api_secret
     }
-
 
 
 def request_access_token(secrets, authorization_code):
