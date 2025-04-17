@@ -20,6 +20,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install requests
+          pip3 install PyGithub
+
 
       - name: Run token generation script
         env:
