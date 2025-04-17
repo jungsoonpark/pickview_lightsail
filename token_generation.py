@@ -86,8 +86,9 @@ def generate_signature(params, secret_key, api_name):
 
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
-    api_key = "your_api_key"  # 실제 API 키 값을 넣으세요
-    api_secret = "your_api_secret"  # 실제 API Secret 값을 넣으세요
+   api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
+   api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
+
     return {
         "api_key": api_key,
         "api_secret": api_secret
@@ -135,11 +136,6 @@ def request_access_token(secrets, authorization_code):
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
-
-if __name__ == "__main__":
-    secrets = get_github_secrets()
-    authorization_code = "your_authorization_code"  # authorization code를 실제로 넣으세요
-    request_access_token(secrets, authorization_code)
 
 
 
