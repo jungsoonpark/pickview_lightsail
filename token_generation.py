@@ -45,15 +45,27 @@ logger.addHandler(handler)
 
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
-    api_key = os.environ.get("ALIEXPRESS_API_KEY")  # 환경 변수에서 API 키 값을 가져오기
-    api_secret = os.environ.get("ALIEXPRESS_API_SECRET")  # 환경 변수에서 API Secret 값을 가져오기
-    logger.debug(f"API Key: {api_key}")  # 디버깅 출력
-    logger.debug(f"API Secret: {api_secret}")  # 디버깅 출력
+    g = Github(os.environ.get("REPO_TOKEN"))  # REPO_TOKEN 사용
+    repo = g.get_repo("jungsoonpark/pickview_lightsail")  # 리포지토리 이름 확인
+    secrets = repo.get_secrets()
 
+    # 비밀을 딕셔너리로 변환
+    secrets_dict = {secret.name: secret for secret in secrets}
+
+    # API 키 출력
+    api_key = secrets_dict.get("ALIEXPRESS_API_KEY").get_secret_value()  # 실제 API 키 값 가져오기
+    api_secret = secrets_dict.get("ALIEXPRESS_API_SECRET").get_secret_value()  # 실제 API Secret 값 가져오기
+    
+    # 디버깅: API Secret 출력
+    logger.debug(f"API Key: {api_key}")
+    logger.debug(f"API Secret: {api_secret}")
+    
     return {
         "api_key": api_key,
         "api_secret": api_secret
-    }
+
+
+        
 def generate_signature(params, secret_key, api_name):
     """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
     # sign 파라미터 제외하고 정렬
@@ -88,6 +100,9 @@ def generate_signature(params, secret_key, api_name):
     logger.debug(f"Generated Signature: {signature}")
     
     return signature
+
+
+
 
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
@@ -134,7 +149,6 @@ def request_access_token(secrets, authorization_code):
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
-
 
 
 if __name__ == "__main__":
