@@ -7,6 +7,7 @@ import sys
 import hashlib
 import hmac
 from github import Github
+import urllib.parse
 
 # 현재 파일의 디렉토리 경로
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -67,82 +68,52 @@ def get_github_secrets():
     }
 
 
-
 def generate_signature(params, secret_key, api_name):
-    """서명 생성: 필수 파라미터와 서명 규격에 맞춰 생성"""
-    # sign 파라미터 제외하고 정렬
-    params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
-    
-    # 키만 정렬
-    sorted_keys = sorted(params_to_sign.keys())
-    
-    # 파라미터 문자열 생성 (URL 인코딩 없이)
+    # 1. 파라미터 정렬
+    sorted_keys = sorted(params.keys())
     param_pairs = []
     for key in sorted_keys:
-        value = params_to_sign[key]
-        if value is not None:
+        value = params[key]
+        if value is not None and value != "":
             param_pairs.append(f"{key}{value}")
-        else:
-            logger.warning(f"Warning: The parameter {key} has a None value!")
     
+    # 2. 파라미터 문자열 생성
     param_string = ''.join(param_pairs)
-
-    # app_secret을 앞뒤에 추가
+    
+    # 3. api_name 앞에 추가
     string_to_sign = f"{api_name}{param_string}{secret_key}"
-
-    # MD5 해시 생성
+    
+    # 4. MD5 해시 생성
     signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
-    logger.debug(f"Generated Signature: {signature}")
     
     return signature
 
 def request_access_token(secrets, authorization_code):
-    """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
 
-    # 요청 파라미터 설정
     params = {
         "app_key": secrets['api_key'],
-        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
+        "timestamp": str(int(time.time() * 1000)),
         "sign_method": "md5",
         "code": authorization_code,
         "grant_type": "authorization_code",
     }
 
     # 서명 생성
-    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")  # 수정됨
+    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
 
-    try:
-        # POST 요청 보내기
-        response = requests.post(url, data=params)
-        
-        logger.debug(f"Request URL: {url}")
-        logger.debug(f"Response Status Code: {response.status_code}")
-        logger.debug(f"Response Body: {response.text}")
+    # 요청 보내기
+    response = requests.post(url, data=params)
 
-        if response.status_code == 200:
-            response_data = response.json()
-            if "error_response" in response_data:
-                logger.error(f"Token request failed: {response_data['error_response']['code']} - {response_data['error_response']['msg']}")
-                return None
-            else:
-                logger.debug("Token request succeeded!")
-                if "access_token" in response_data:
-                    # access_token이 있는 경우에만 파일 저장
-                    with open('token_info.json', 'w') as f:
-                        json.dump(response_data, f, indent=2)
-                    logger.debug("New token information saved to token_info.json")
-                    return response_data.get('access_token')
-                else:
-                    logger.error("Access token not found in response data")
-                    return None
-        else:
-            logger.error(f"API Error: {response.status_code} - {response.text}")
+    if response.status_code == 200:
+        response_data = response.json()
+        if "error_response" in response_data:
+            print(f"Error: {response_data['error_response']['msg']}")
             return None
-    except Exception as e:
-        logger.error(f"Error during token request: {str(e)}")
+        return response_data.get('access_token')
+    else:
+        print(f"API Error: {response.status_code} - {response.text}")
         return None
-
 
 
 
