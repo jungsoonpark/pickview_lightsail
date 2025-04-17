@@ -51,13 +51,13 @@ def generate_signature(params, secret_key, api_name):
 
     return signature
 
-def request_access_token(api_key, api_secret, app_key, authorization_code):
+def request_access_token(api_key, api_secret, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
 
     # 요청 파라미터 설정
     params = {
-        "app_key": app_key,
+        "app_key": api_key,
         "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프 (밀리초)
         "sign_method": "md5",
         "code": authorization_code,
@@ -99,9 +99,9 @@ if __name__ == "__main__":
     # GitHub Actions에서 설정한 환경 변수에서 직접 가져오기
     api_key = os.environ.get('API_KEY')
     api_secret = os.environ.get('API_SECRET')
-    app_key = os.environ.get('APP_KEY')
+   
 
-    if api_key is None or api_secret is None or app_key is None:
+    if api_key is None or api_secret is None or api_key is None:
         logger.error("API Key, Secret, or App Key is missing in GitHub Secrets!")
         sys.exit(1)  # 오류 발생 시 프로그램 종료
 
@@ -109,4 +109,4 @@ if __name__ == "__main__":
     authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
 
     # 토큰 요청
-    access_token = request_access_token(api_key, api_secret, app_key, authorization_code)  # 환경 변수를 사용하여 토큰 요청
+    access_token = request_access_token(api_key, api_secret, authorization_code)  # 환경 변수를 사용하여 토큰 요청
