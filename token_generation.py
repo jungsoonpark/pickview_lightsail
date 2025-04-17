@@ -103,8 +103,8 @@ if __name__ == "__main__":
     api_secret = os.environ.get('API_SECRET')
    
 
-    if api_key is None or api_secret is None or api_key is None:
-        logger.error("API Key, Secret, or App Key is missing in GitHub Secrets!")
+    if api_key is None or api_secret is None :
+        logger.error("api_key, api_secret is missing in GitHub Secrets!")
         sys.exit(1)  # 오류 발생 시 프로그램 종료
 
     # 사용자 인증 후 받은 실제 'authorization_code'를 여기에 입력
