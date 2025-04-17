@@ -108,7 +108,7 @@ def request_access_token(secrets, authorization_code):
         logger.error(f"Error during token request: {str(e)}")
         return None
 
-# ... 기존 코드 ...
+
 
 if __name__ == "__main__":
     # GitHub Actions에서 설정한 환경 변수에서 직접 가져오기
