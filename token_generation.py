@@ -69,7 +69,7 @@ def get_github_secrets():
 
 
 def generate_signature(params, secret_key, api_name):
-    """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
+    """서명 생성: 필수 파라미터와 서명 규격에 맞춰 생성"""
     # sign 파라미터 제외하고 정렬
     params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
     
@@ -80,8 +80,6 @@ def generate_signature(params, secret_key, api_name):
     param_pairs = []
     for key in sorted_keys:
         value = params_to_sign[key]
-        
-        # None이 아닌 값만 처리
         if value is not None:
             param_pairs.append(f"{key}{value}")
         else:
@@ -93,15 +91,11 @@ def generate_signature(params, secret_key, api_name):
     string_to_sign = f"{api_name}{param_string}{secret_key}"
 
     # MD5 해시 생성
-    try:
-        signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
-    except Exception as e:
-        logger.error(f"Error during signature generation: {str(e)}")
-        return None
-
+    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
     logger.debug(f"Generated Signature: {signature}")
     
     return signature
+
 
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
@@ -117,7 +111,7 @@ def request_access_token(secrets, authorization_code):
     }
 
     # 서명 생성
-    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")  # 수정됨
+    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
 
     try:
         # POST 요청 보내기
@@ -144,6 +138,8 @@ def request_access_token(secrets, authorization_code):
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
+
+
 
 if __name__ == "__main__":
     secrets = get_github_secrets()
