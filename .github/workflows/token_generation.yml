@@ -18,8 +18,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install PyGithub  # github 모듈 설치
-          pip install aliexpress-sdk  # iop 모듈 설치
+          pip install requests PyGithub  # 필요한 패키지 설치
+
+      - name: Extract AliExpress SDK ZIP
+        run: |
+          # 압축 파일을 GitHub Actions에서 풀기
+          unzip /home/runner/work/pickview_lightsail/pickview_lightsail/1.0.2-1699927624346NFOi.zip -d /home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk
+
+      - name: Set up SDK path
+        run: |
+          # 압축을 풀고 경로를 설정
+          echo "sys.path.append('/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop')" >> $GITHUB_ENV
 
       - name: Run token generation script
         env:
