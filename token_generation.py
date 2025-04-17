@@ -22,6 +22,16 @@ try:
 except ModuleNotFoundError as e:
     print(f"Error: {e}")
 
+
+# IopClient 인스턴스 생성
+client = IopClient(app_key=secrets['app_key'], app_secret=secrets['api_secret'])
+
+# 예시: API 요청 보내기
+request = IopRequest(client)
+response = request.send("some_api_endpoint", params)
+
+
+
 # 로깅 설정
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
