@@ -89,7 +89,6 @@ def generate_signature(params, secret_key, api_name):
     
     return signature
 
-
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
@@ -102,6 +101,10 @@ def request_access_token(secrets, authorization_code):
         "code": authorization_code,
         "grant_type": "authorization_code",
     }
+
+    # 디버깅: API 키와 비밀키 확인
+    logger.debug(f"API Key: {secrets['api_key']}")
+    logger.debug(f"API Secret: {secrets['api_secret']}")
 
     # 서명 생성
     params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")  # 수정됨
@@ -131,7 +134,6 @@ def request_access_token(secrets, authorization_code):
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
-
 
 
 
