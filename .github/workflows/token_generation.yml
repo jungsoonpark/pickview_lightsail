@@ -30,8 +30,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}  # GitHub Secrets에서 가져온 토큰
         run: |
           # Python 코드 내에서 경로를 설정
-          python -c "
-import sys
-sys.path.append('/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop')
-import token_generation
-          "  # Python 코드 실행
+          python -c "import sys 
+                      sys.path.append('/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop')
+                      import token_generation"  # Python 코드 실행
