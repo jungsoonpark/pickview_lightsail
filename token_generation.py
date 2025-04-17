@@ -9,6 +9,8 @@ import hmac
 from github import Github
 import urllib.parse
 
+
+
 # 현재 파일의 디렉토리 경로
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 상위 경로 추가
@@ -20,23 +22,6 @@ try:
 except ModuleNotFoundError as e:
     print(f"Error: {e}")
 
-
-# 경로 추가 여부 확인
-print("Current sys.path:", sys.path)
-
-
-# 경로 확인
-print("Updated sys.path:", sys.path)
-
-# iop 모듈 import 시도
-try:
-    from iop import IopClient, IopRequest
-    print("iop module imported successfully.")
-except ModuleNotFoundError as e:
-    print(f"Error: {e}")
-    
-    
-
 # 로깅 설정
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -45,30 +30,6 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-
-
-
-def get_github_secrets():
-    """GitHub Secrets에서 값을 가져옵니다."""
-    api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
-    api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
-    app_key = os.environ.get('APP_KEY')  # GitHub Actions에서 설정한 APP_KEY
-
-    logger.debug(f"API Key: {api_key}")
-    logger.debug(f"API Secret: {api_secret}")
-    logger.debug(f"App Key: {app_key}")
-
-    if api_key is None or api_secret is None or app_key is None:
-        logger.error("API Key, Secret, or App Key is missing in GitHub Secrets!")
-
-    return {
-        "api_key": api_key,
-        "api_secret": api_secret,
-        "app_key": app_key  # app_key를 반환
-    }
-
-
-
 
 def generate_signature(params, secret_key, api_name):
     """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
@@ -94,45 +55,21 @@ def generate_signature(params, secret_key, api_name):
 
     return signature
 
-# 요청 파라미터 설정
-params = {
-    "app_key": secrets['api_key'],
-    "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프 (밀리초)
-    "sign_method": "md5",
-    "code": authorization_code,
-    "grant_type": "authorization_code",
-}
-
-# 서명 생성
-params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
-
-
-
-
-
-
-
-
-
-
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
 
     # 요청 파라미터 설정
     params = {
-        "app_key": secrets['api_key'],
+        "app_key": secrets['app_key'],
         "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프 (밀리초)
         "sign_method": "md5",
         "code": authorization_code,
         "grant_type": "authorization_code",
     }
 
-    # 파라미터 정렬
-    params_to_sign = {k: v for k, v in sorted(params.items())}  # 키 기준으로 정렬
-
     # 서명 생성
-    params["sign"] = generate_signature(params_to_sign, secrets['api_secret'], "/rest/auth/token/create")
+    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
 
     try:
         # POST 요청 보내기
@@ -161,27 +98,24 @@ def request_access_token(secrets, authorization_code):
         logger.error(f"Error during token request: {str(e)}")
         return None
 
-
-
-
-
 if __name__ == "__main__":
-    secrets = get_github_secrets()  # secrets 변수를 정의
+    # GitHub Actions에서 설정한 환경 변수에서 직접 가져오기
+    api_key = os.environ.get('API_KEY')
+    api_secret = os.environ.get('API_SECRET')
+    app_key = os.environ.get('APP_KEY')
+
+    if api_key is None or api_secret is None or app_key is None:
+        logger.error("API Key, Secret, or App Key is missing in GitHub Secrets!")
+        sys.exit(1)  # 오류 발생 시 프로그램 종료
+
+    secrets = {
+        "api_key": api_key,
+        "api_secret": api_secret,
+        "app_key": app_key
+    }
 
     # 사용자 인증 후 받은 실제 'authorization_code'를 여기에 입력
     authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
-
-    # 요청 파라미터 설정
-    params = {
-        "app_key": secrets['app_key'],  # 환경 변수에서 가져온 app_key 사용
-        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프 (밀리초)
-        "sign_method": "md5",
-        "code": authorization_code,
-        "grant_type": "authorization_code",
-    }
-
-    # 서명 생성
-    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
 
     # 토큰 요청
     access_token = request_access_token(secrets, authorization_code)  # secrets를 사용하여 토큰 요청
