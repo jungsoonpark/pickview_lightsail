@@ -43,27 +43,6 @@ formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-def get_github_secrets():
-    """GitHub Secrets에서 값을 가져옵니다."""
-    g = Github(os.environ.get("REPO_TOKEN"))  # REPO_TOKEN 사용
-    repo = g.get_repo("jungsoonpark/pickview_lightsail")  # 리포지토리 이름 확인
-    secrets = repo.get_secrets()
-
-    # 비밀을 딕셔너리로 변환
-    secrets_dict = {secret.name: secret for secret in secrets}
-
-    # API 키 출력
-    api_key = secrets_dict.get("ALIEXPRESS_API_KEY").get_secret_value()  # 실제 API 키 값 가져오기
-    api_secret = secrets_dict.get("ALIEXPRESS_API_SECRET").get_secret_value()  # 실제 API Secret 값 가져오기
-    
-    # 디버깅: API Secret 출력
-    logger.debug(f"API Key: {api_key}")
-    logger.debug(f"API Secret: {api_secret}")
-    
-    return {
-        "api_key": api_key,
-        "api_secret": api_secret
-
 
         
 def generate_signature(params, secret_key, api_name):
@@ -101,6 +80,30 @@ def generate_signature(params, secret_key, api_name):
     
     return signature
 
+
+
+
+def get_github_secrets():
+    """GitHub Secrets에서 값을 가져옵니다."""
+    g = Github(os.environ.get("REPO_TOKEN"))  # REPO_TOKEN 사용
+    repo = g.get_repo("jungsoonpark/pickview_lightsail")  # 리포지토리 이름 확인
+    secrets = repo.get_secrets()
+
+    # 비밀을 딕셔너리로 변환
+    secrets_dict = {secret.name: secret for secret in secrets}
+
+    # API 키 출력
+    api_key = secrets_dict.get("ALIEXPRESS_API_KEY").value  # 수정: 직접 'value' 속성에 접근
+    api_secret = secrets_dict.get("ALIEXPRESS_API_SECRET").value  # 수정: 직접 'value' 속성에 접근
+    
+    # 디버깅: API Key와 Secret 출력
+    logger.debug(f"API Key: {api_key}")
+    logger.debug(f"API Secret: {api_secret}")
+    
+    return {
+        "api_key": api_key,
+        "api_secret": api_secret
+    }
 
 
 
