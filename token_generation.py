@@ -50,8 +50,8 @@ logger.addHandler(handler)
 
 def get_github_secrets():
       """GitHub Secrets에서 값을 가져옵니다."""
-      api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
-      api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
+      api_key = os.environ.get('ALIEXPRESS_API_KEY')  # GitHub Actions에서 설정한 API_KEY
+      api_secret = os.environ.get('ALIEXPRESS_API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
 
       logger.debug(f"API Key: {api_key}")
       logger.debug(f"API Secret: {api_secret}")
