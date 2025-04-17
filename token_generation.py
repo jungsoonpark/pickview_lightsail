@@ -46,7 +46,28 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-        
+
+
+
+
+
+def get_github_secrets():
+    """GitHub Secrets에서 값을 가져옵니다."""
+    # GitHub Secrets에서 환경 변수로 API Key와 API Secret 값을 가져옵니다.
+    api_key = os.environ.get("ALIEXPRESS_API_KEY")
+    api_secret = os.environ.get("ALIEXPRESS_API_SECRET")
+    
+    # 디버깅: API Key와 API Secret 출력
+    logger.debug(f"API Key: {api_key}")
+    logger.debug(f"API Secret: {api_secret}")
+    
+    return {
+        "api_key": api_key,
+        "api_secret": api_secret
+    }
+
+
+
 def generate_signature(params, secret_key, api_name):
     """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
     # sign 파라미터 제외하고 정렬
@@ -82,26 +103,6 @@ def generate_signature(params, secret_key, api_name):
     
     return signature
 
-
-
-
-def get_github_secrets():
-    """GitHub Secrets에서 값을 가져옵니다."""
-    # GitHub Secrets에서 환경 변수로 API Key와 API Secret 값을 가져옵니다.
-    api_key = os.environ.get("ALIEXPRESS_API_KEY")
-    api_secret = os.environ.get("ALIEXPRESS_API_SECRET")
-    
-    # 디버깅: API Key와 API Secret 출력
-    logger.debug(f"API Key: {api_key}")
-    logger.debug(f"API Secret: {api_secret}")
-    
-    return {
-        "api_key": api_key,
-        "api_secret": api_secret
-    }
-
-
-
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
@@ -114,10 +115,6 @@ def request_access_token(secrets, authorization_code):
         "code": authorization_code,
         "grant_type": "authorization_code",
     }
-
-    # 디버깅: API 키와 비밀키 확인
-    logger.debug(f"API Key: {secrets['api_key']}")
-    logger.debug(f"API Secret: {secrets['api_secret']}")
 
     # 서명 생성
     params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")  # 수정됨
@@ -147,7 +144,6 @@ def request_access_token(secrets, authorization_code):
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
-
 
 if __name__ == "__main__":
     secrets = get_github_secrets()
