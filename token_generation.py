@@ -90,6 +90,50 @@ def generate_signature(params, secret_key, api_name):
     return signature
 
 
+def request_access_token(secrets, authorization_code):
+    """새로운 액세스 토큰을 발급받습니다."""
+    url = "https://api-sg.aliexpress.com/rest/auth/token/create"
+
+    # 요청 파라미터 설정
+    params = {
+        "app_key": secrets['api_key'],
+        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
+        "sign_method": "md5",
+        "code": authorization_code,
+        "grant_type": "authorization_code",
+    }
+
+    # 서명 생성
+    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")  # 수정됨
+
+    try:
+        # POST 요청 보내기
+        response = requests.post(url, data=params)
+        
+        logger.debug(f"Request URL: {url}")
+        logger.debug(f"Response Status Code: {response.status_code}")
+        logger.debug(f"Response Body: {response.text}")
+
+        if response.status_code == 200:
+            response_data = response.json()
+            if "error_response" in response_data:
+                logger.error(f"Token request failed: {response_data['error_response']['code']} - {response_data['error_response']['msg']}")
+                return None
+            else:
+                logger.debug("Token request succeeded!")
+                with open('token_info.json', 'w') as f:
+                    json.dump(response_data, f, indent=2)
+                logger.debug("New token information saved to token_info.json")
+                return response_data.get('access_token')
+        else:
+            logger.error(f"API Error: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        logger.error(f"Error during token request: {str(e)}")
+        return None
+
+
+
 
 if __name__ == "__main__":
     secrets = get_github_secrets()
