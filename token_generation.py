@@ -54,33 +54,40 @@ def get_github_secrets():
         "api_key": api_key,
         "api_secret": api_secret
     }
-def request_access_token(secrets, authorization_code):
-    """새로운 액세스 토큰을 발급받습니다."""
-    client = IopClient('https://api-sg.aliexpress.com', secrets['api_key'], secrets['api_secret'])
-    request = IopRequest('/rest/auth/token/create')
-
-    # 요청 파라미터 설정
-    request.add_api_param('code', authorization_code)
-    request.add_api_param('grant_type', 'authorization_code')
-    request.add_api_param('v', '2.0')
-    request.add_api_param('timestamp', str(int(time.time() * 1000)))  # UTC 타임스탬프 추가
-
-    # 서명 및 요청 보내기
-    try:
-        response = client.execute(request)
+def generate_signature(params, secret_key, api_name):
+    """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
+    # sign 파라미터 제외하고 정렬
+    params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
+    
+    # 키만 정렬
+    sorted_keys = sorted(params_to_sign.keys())
+    
+    # 파라미터 문자열 생성 (URL 인코딩 없이)
+    param_pairs = []
+    for key in sorted_keys:
+        value = params_to_sign[key]
         
-        if response.code == "0":
-            # 응답이 성공적일 경우, 토큰 저장
-            with open('token_info.json', 'w') as f:
-                json.dump(response.body, f, indent=2)
-            return response.body.get('access_token')
+        # None이 아닌 값만 처리
+        if value is not None:
+            param_pairs.append(f"{key}{value}")
         else:
-            print(f"Token request failed: {response.message}")
-            return None
+            logger.warning(f"Warning: The parameter {key} has a None value!")
+    
+    param_string = ''.join(param_pairs)
 
+    # app_secret을 앞뒤에 추가
+    string_to_sign = f"{api_name}{param_string}{secret_key}"
+
+    # MD5 해시 생성
+    try:
+        signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
     except Exception as e:
-        print(f"Error during token request: {str(e)}")
+        logger.error(f"Error during signature generation: {str(e)}")
         return None
+
+    logger.debug(f"Generated Signature: {signature}")
+    
+    return signature
 
 
 
