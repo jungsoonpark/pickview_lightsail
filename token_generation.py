@@ -53,6 +53,7 @@ def generate_signature(params, secret_key, api_name):
 
     return signature
 
+
 def request_access_token(api_key, api_secret, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
