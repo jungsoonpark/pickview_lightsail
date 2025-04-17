@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install requests
-          pip3 install PyGithub
+          pip install PyGithub
           pip install iop  # iop 모듈 설치
 
 
