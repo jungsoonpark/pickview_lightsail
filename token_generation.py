@@ -4,6 +4,8 @@ import time
 import logging
 import requests
 import sys
+import hashlib
+import hmac
 from github import Github
 
 # 현재 파일의 디렉토리 경로
