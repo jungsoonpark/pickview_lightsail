@@ -1,12 +1,13 @@
-name: AliExpress Token Generation
+name: Run token generation script
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  refresh_token:
+  run:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -18,15 +19,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests PyGithub
-
-      - name: Extract AliExpress SDK ZIP
-        run: |
-          unzip /home/runner/work/pickview_lightsail/pickview_lightsail/1.0.2-1699927624346NFOi.zip -d /home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk
+          pip install requests
 
       - name: Run token generation script
         env:
-          ALIEXPRESS_API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}  # GitHub Secrets에서 가져온 API Key
-          ALIEXPRESS_API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}  # GitHub Secrets에서 가져온 API Secret
+          API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}  # GitHub Secrets에서 API_KEY 가져오기
+          API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}  # GitHub Secrets에서 API_SECRET 가져오기
         run: |
-          python /home/runner/work/pickview_lightsail/pickview_lightsail/token_generation.py  # Python 스크립트 실행
+          python token_generation.py  # 파이썬 스크립트 실행
