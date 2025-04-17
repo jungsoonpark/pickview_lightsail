@@ -109,17 +109,17 @@ def request_access_token(secrets, authorization_code):
     # 요청 파라미터 설정
     params = {
         "app_key": secrets['api_key'],
+        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프 (밀리초)
+        "sign_method": "md5",
         "code": authorization_code,
         "grant_type": "authorization_code",
-        "sign_method": "md5",
-        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
-        
-        
-        
     }
 
+    # 파라미터 정렬
+    params_to_sign = {k: v for k, v in sorted(params.items())}  # 키 기준으로 정렬
+
     # 서명 생성
-    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
+    params["sign"] = generate_signature(params_to_sign, secrets['api_secret'], "/rest/auth/token/create")
 
     try:
         # POST 요청 보내기
@@ -147,6 +147,8 @@ def request_access_token(secrets, authorization_code):
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
+
+
 
 
 
