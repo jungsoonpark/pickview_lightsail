@@ -14,7 +14,7 @@ sys.path.append(os.path.join(current_dir, 'aliexpress_sdk', 'iop'))
 print("Current sys.path:", sys.path)
 
 
-from iop import IopClient, IopRequest  # iop 모듈 import
+from iop.base import IopClient, IopRequest  # iop 모듈 import
 
 # 중복 경로 추가 방지
 path_to_iop = '/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop'
