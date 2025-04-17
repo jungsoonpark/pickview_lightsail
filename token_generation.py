@@ -108,6 +108,8 @@ def request_access_token(secrets, authorization_code):
         logger.error(f"Error during token request: {str(e)}")
         return None
 
+# ... 기존 코드 ...
+
 if __name__ == "__main__":
     # GitHub Actions에서 설정한 환경 변수에서 직접 가져오기
     api_key = os.environ.get('API_KEY')
@@ -123,6 +125,9 @@ if __name__ == "__main__":
         "api_secret": api_secret,
         "app_key": app_key
     }
+
+    # IopClient 인스턴스 생성
+    client = IopClient(app_key=secrets['app_key'], app_secret=secrets['api_secret'])
 
     # 사용자 인증 후 받은 실제 'authorization_code'를 여기에 입력
     authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
