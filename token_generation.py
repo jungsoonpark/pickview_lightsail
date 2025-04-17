@@ -86,8 +86,8 @@ def generate_signature(params, secret_key, api_name):
 
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
-   api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
-   api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
+        api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
+        api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
 
     return {
         "api_key": api_key,
