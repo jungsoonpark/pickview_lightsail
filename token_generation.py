@@ -167,4 +167,4 @@ if __name__ == "__main__":
     authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
 
     # 토큰 요청
-    request_access_token(secrets, authorization_code)
+    access_token = request_access_token(secrets, authorization_code)
