@@ -8,27 +8,13 @@ import hashlib
 import hmac
 from github import Github
 import urllib.parse
+from iop.base import IopClient, IopRequest  # iop 모듈 import
 
 
 
 # 현재 파일의 디렉토리 경로
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 상위 경로 추가
-
-# iop 모듈 import 시도
-try:
-    from iop.base import IopClient, IopRequest
-    print("iop module imported successfully.")
-except ModuleNotFoundError as e:
-    print(f"Error: {e}")
-
-
-# IopClient 인스턴스 생성
-client = IopClient(app_key=secrets['app_key'], app_secret=secrets['api_secret'])
-
-# 예시: API 요청 보내기
-request = IopRequest(client)
-response = request.send("some_api_endpoint", params)
 
 
 
@@ -65,13 +51,13 @@ def generate_signature(params, secret_key, api_name):
 
     return signature
 
-def request_access_token(secrets, authorization_code):
+def request_access_token(api_key, api_secret, app_key, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
 
     # 요청 파라미터 설정
     params = {
-        "app_key": secrets['app_key'],
+        "app_key": app_key,
         "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프 (밀리초)
         "sign_method": "md5",
         "code": authorization_code,
@@ -79,7 +65,7 @@ def request_access_token(secrets, authorization_code):
     }
 
     # 서명 생성
-    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
+    params["sign"] = generate_signature(params, api_secret, "/rest/auth/token/create")
 
     try:
         # POST 요청 보내기
@@ -109,7 +95,6 @@ def request_access_token(secrets, authorization_code):
         return None
 
 
-
 if __name__ == "__main__":
     # GitHub Actions에서 설정한 환경 변수에서 직접 가져오기
     api_key = os.environ.get('API_KEY')
@@ -120,17 +105,8 @@ if __name__ == "__main__":
         logger.error("API Key, Secret, or App Key is missing in GitHub Secrets!")
         sys.exit(1)  # 오류 발생 시 프로그램 종료
 
-    secrets = {
-        "api_key": api_key,
-        "api_secret": api_secret,
-        "app_key": app_key
-    }
-
-    # IopClient 인스턴스 생성
-    client = IopClient(app_key=secrets['app_key'], app_secret=secrets['api_secret'])
-
     # 사용자 인증 후 받은 실제 'authorization_code'를 여기에 입력
     authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
 
     # 토큰 요청
-    access_token = request_access_token(secrets, authorization_code)  # secrets를 사용하여 토큰 요청
+    access_token = request_access_token(api_key, api_secret, app_key, authorization_code)  # 환경 변수를 사용하여 토큰 요청
