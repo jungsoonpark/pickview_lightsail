@@ -110,7 +110,7 @@ def request_access_token(secrets, authorization_code):
     # 요청 파라미터 설정
     params = {
         "app_key": secrets['api_key'],
-        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
+        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프 (밀리초)
         "sign_method": "md5",
         "code": authorization_code,
         "grant_type": "authorization_code",
@@ -123,7 +123,6 @@ def request_access_token(secrets, authorization_code):
         # POST 요청 보내기
         response = requests.post(url, data=params)
 
-        # 디버깅: 요청 URL 및 응답 정보 출력
         logger.debug(f"Request URL: {url}")
         logger.debug(f"Response Status Code: {response.status_code}")
         logger.debug(f"Response Body: {response.text}")
@@ -137,7 +136,6 @@ def request_access_token(secrets, authorization_code):
                 logger.debug("Token request succeeded!")
                 with open('token_info.json', 'w') as f:
                     json.dump(response_data, f, indent=2)
-                logger.debug("New token information saved to token_info.json")
                 return response_data.get('access_token')
         else:
             logger.error(f"API Error: {response.status_code} - {response.text}")
