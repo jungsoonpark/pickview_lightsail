@@ -8,13 +8,15 @@ import hashlib
 import hmac
 from github import Github
 import urllib.parse
-from iop.base import IopClient, IopRequest  # iop 모듈 import
 
 
 
 # 현재 파일의 디렉토리 경로
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 상위 경로 추가
+sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 경로 추가
+
+
+from iop.base import IopClient, IopRequest  # iop 모듈 import
 
 
 
