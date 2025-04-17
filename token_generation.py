@@ -35,8 +35,13 @@ except ModuleNotFoundError as e:
     
 
 # 로깅 설정
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
