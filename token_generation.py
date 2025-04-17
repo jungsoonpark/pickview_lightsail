@@ -49,20 +49,20 @@ logger.addHandler(handler)
 
 
 def get_github_secrets():
-      """GitHub Secrets에서 값을 가져옵니다."""
-      api_key = os.environ.get('ALIEXPRESS_API_KEY')  # GitHub Actions에서 설정한 API_KEY
-      api_secret = os.environ.get('ALIEXPRESS_API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
+    """GitHub Secrets에서 값을 가져옵니다."""
+    api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
+    api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
 
-      logger.debug(f"API Key: {api_key}")
-      logger.debug(f"API Secret: {api_secret}")
+    logger.debug(f"API Key: {api_key}")
+    logger.debug(f"API Secret: {api_secret}")
 
-      if api_key is None or api_secret is None:
-          logger.error("API Key or Secret is missing in GitHub Secrets!")
+    if api_key is None or api_secret is None:
+        logger.error("API Key or Secret is missing in GitHub Secrets!")
 
-      return {
-          "api_key": api_key,
-          "api_secret": api_secret
-      }
+    return {
+        "api_key": api_key,
+        "api_secret": api_secret
+    }
 
 
 def generate_signature(params, secret_key, api_name):
