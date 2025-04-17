@@ -6,9 +6,9 @@ import requests
 import sys
 from github import Github
 
-# SDK 경로 추가
-path_to_iop = '/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop'
-sys.path.append(path_to_iop)
+# 현재 파일의 디렉토리 경로
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(current_dir, 'aliexpress_sdk', 'iop'))
 
 # 경로 추가 여부 확인
 print("Current sys.path:", sys.path)
