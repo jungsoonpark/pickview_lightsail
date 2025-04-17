@@ -8,7 +8,10 @@ from github import Github
 
 # SDK 경로 추가
 sys.path.append('/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop')
+sys.path.append(path_to_iop)
 
+# 경로 추가 여부 확인
+print("Current sys.path:", sys.path)
 
 
 from iop import IopClient, IopRequest  # iop 모듈 import
