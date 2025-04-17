@@ -54,10 +54,11 @@ logger.addHandler(handler)
 
 def generate_signature(params, secret_key, api_name):
     """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
+    
     # sign 파라미터 제외하고 정렬
     params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
 
-    # 키만 정렬
+    # 키만 정렬 (ASCII 순)
     sorted_keys = sorted(params_to_sign.keys())
 
     # 파라미터 문자열 생성 (URL 인코딩 없이)
@@ -66,7 +67,7 @@ def generate_signature(params, secret_key, api_name):
         value = params_to_sign[key]
         if value is not None and value != "":
             param_pairs.append(f"{key}{value}")
-
+    
     param_string = ''.join(param_pairs)
 
     # app_secret을 앞뒤에 추가
@@ -123,6 +124,7 @@ def request_access_token(secrets, authorization_code):
         # POST 요청 보내기
         response = requests.post(url, data=params)
 
+        # 디버깅: 요청 URL 및 응답 정보 출력
         logger.debug(f"Request URL: {url}")
         logger.debug(f"Response Status Code: {response.status_code}")
         logger.debug(f"Response Body: {response.text}")
@@ -136,6 +138,7 @@ def request_access_token(secrets, authorization_code):
                 logger.debug("Token request succeeded!")
                 with open('token_info.json', 'w') as f:
                     json.dump(response_data, f, indent=2)
+                logger.debug("New token information saved to token_info.json")
                 return response_data.get('access_token')
         else:
             logger.error(f"API Error: {response.status_code} - {response.text}")
@@ -143,6 +146,15 @@ def request_access_token(secrets, authorization_code):
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
+
+if __name__ == "__main__":
+    secrets = get_github_secrets()
+
+    # 사용자 인증 후 받은 실제 'authorization_code'를 여기에 입력
+    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
+
+    # 토큰 요청
+    request_access_token(secrets, authorization_code)
 
 
 
