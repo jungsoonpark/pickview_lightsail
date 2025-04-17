@@ -52,10 +52,7 @@ def get_github_secrets():
 
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
-    url = "https://api-sg.aliexpress.com/rest/auth/token/create"
-    
-    # SDK 초기화
-    client = IopClient(url, secrets['api_key'], secrets['api_secret'])
+    client = IopClient('https://api-sg.aliexpress.com', secrets['api_key'], secrets['api_secret'])
     request = IopRequest('/rest/auth/token/create')
 
     # 요청 파라미터 설정
@@ -68,23 +65,20 @@ def request_access_token(secrets, authorization_code):
     try:
         response = client.execute(request)
         
-        logger.debug(f"Request URL: {url}")
-        logger.debug(f"Response Status Code: {response.code}")
-        logger.debug(f"Response Body: {json.dumps(response.body, indent=2)}")  # JSON 형식으로 출력
-
         if response.code == "0":
             # 응답이 성공적일 경우, 토큰 저장
-            logger.debug("Token request succeeded!")
             with open('token_info.json', 'w') as f:
                 json.dump(response.body, f, indent=2)
             return response.body.get('access_token')
         else:
-            logger.error(f"Token request failed: {response.message}")
+            print(f"Token request failed: {response.message}")
             return None
 
     except Exception as e:
-        logger.error(f"Error during token request: {str(e)}")
+        print(f"Error during token request: {str(e)}")
         return None
+
+
 
 if __name__ == "__main__":
     secrets = get_github_secrets()
