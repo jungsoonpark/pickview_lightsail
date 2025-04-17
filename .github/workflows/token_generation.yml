@@ -14,20 +14,19 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'  # 원하는 Python 버전 설정
+          python-version: '3.8'
 
       - name: Install dependencies
         run: |
-          pip install requests PyGithub  # 필요한 패키지 설치
+          pip install requests PyGithub
 
       - name: Extract AliExpress SDK ZIP
         run: |
-          # 압축 파일을 GitHub Actions에서 풀기
           unzip /home/runner/work/pickview_lightsail/pickview_lightsail/1.0.2-1699927624346NFOi.zip -d /home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk
 
       - name: Run token generation script
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}  # GitHub Secrets에서 가져온 토큰
+          ALIEXPRESS_API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}  # GitHub Secrets에서 가져온 API Key
+          ALIEXPRESS_API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}  # GitHub Secrets에서 가져온 API Secret
         run: |
           python /home/runner/work/pickview_lightsail/pickview_lightsail/token_generation.py  # Python 스크립트 실행
-
