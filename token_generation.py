@@ -12,12 +12,12 @@ import urllib.parse
 
 
 # 현재 파일의 디렉토리 경로
-sys.path.append(os.path.join(os.path.dirname(__file__), 'aliexpress_sdk', 'iop'))
+sys.path.append('/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop')
 
 print(sys.path)
 
 
-from iop.base import IopClient, IopRequest  # iop 모듈 import
+from iop.base import IopClient, IopRequest
 
 
 
