@@ -9,20 +9,11 @@ import hmac
 from github import Github
 import urllib.parse
 
-
-
 # 현재 파일의 디렉토리 경로
-sys.path.append(os.path.join(os.path.dirname(__file__), 'aliexpress_sdk', 'iop'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 상위 경로 추가
 
-
-print(sys.path)
-
-
-from iop.base import IopClient, IopRequest
-
-
-
-# iop 모듈 임포트
+# iop 모듈 import 시도
 try:
     from iop.base import IopClient, IopRequest
     print("iop module imported successfully.")
@@ -30,7 +21,21 @@ except ModuleNotFoundError as e:
     print(f"Error: {e}")
 
 
+# 경로 추가 여부 확인
+print("Current sys.path:", sys.path)
 
+
+# 경로 확인
+print("Updated sys.path:", sys.path)
+
+# iop 모듈 import 시도
+try:
+    from iop import IopClient, IopRequest
+    print("iop module imported successfully.")
+except ModuleNotFoundError as e:
+    print(f"Error: {e}")
+    
+    
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -41,16 +46,30 @@ formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+
+
+
+
+
+
 def generate_signature(params, secret_key, api_name):
     """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
     # sign 파라미터 제외하고 정렬
-    params_to_sign = {k: v for k, v in sorted(params.items()) if k != 'sign'}
+    params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
+
+    # 키만 정렬
+    sorted_keys = sorted(params_to_sign.keys())
 
     # 파라미터 문자열 생성 (URL 인코딩 없이)
-    param_pairs = [f"{key}{value}" for key, value in params_to_sign.items() if value]
+    param_pairs = []
+    for key in sorted_keys:
+        value = params_to_sign[key]
+        if value is not None and value != "":
+            param_pairs.append(f"{key}{value}")
+
     param_string = ''.join(param_pairs)
 
-    # API 경로 앞에 추가
+    # app_secret을 앞뒤에 추가
     string_to_sign = f"{api_name}{param_string}{secret_key}"
 
     # MD5 해시 생성
@@ -66,21 +85,41 @@ def generate_signature(params, secret_key, api_name):
     return signature
 
 
-def request_access_token(api_key, api_secret, authorization_code):
+def get_github_secrets():
+    """GitHub Secrets에서 값을 가져옵니다."""
+    api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
+    api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
+
+    logger.debug(f"API Key: {api_key}")
+    logger.debug(f"API Secret: {api_secret}")
+
+    if api_key is None or api_secret is None:
+        logger.error("API Key or Secret is missing in GitHub Secrets!")
+
+    return {
+        "api_key": api_key,
+        "api_secret": api_secret
+    }
+
+
+def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
 
     # 요청 파라미터 설정
     params = {
-        "app_key": api_key,
+        "app_key": secrets['api_key'],
         "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프 (밀리초)
         "sign_method": "md5",
         "code": authorization_code,
         "grant_type": "authorization_code",
     }
 
+    # 파라미터 정렬
+    params_to_sign = {k: v for k, v in sorted(params.items())}  # 키 기준으로 정렬
+
     # 서명 생성
-    params["sign"] = generate_signature(params, api_secret, "/rest/auth/token/create")
+    params["sign"] = generate_signature(params_to_sign, secrets['api_secret'], "/rest/auth/token/create")
 
     try:
         # POST 요청 보내기
@@ -110,18 +149,14 @@ def request_access_token(api_key, api_secret, authorization_code):
         return None
 
 
-if __name__ == "__main__":
-    # GitHub Actions에서 설정한 환경 변수에서 직접 가져오기
-    api_key = os.environ.get('API_KEY')
-    api_secret = os.environ.get('API_SECRET')
-   
 
-    if api_key is None or api_secret is None :
-        logger.error("api_key, api_secret is missing in GitHub Secrets!")
-        sys.exit(1)  # 오류 발생 시 프로그램 종료
+
+
+if __name__ == "__main__":
+    secrets = get_github_secrets()
 
     # 사용자 인증 후 받은 실제 'authorization_code'를 여기에 입력
     authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
 
     # 토큰 요청
-    access_token = request_access_token(api_key, api_secret, authorization_code)  # 환경 변수를 사용하여 토큰 요청
+    request_access_token(secrets, authorization_code)
