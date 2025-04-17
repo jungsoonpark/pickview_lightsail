@@ -85,18 +85,11 @@ def generate_signature(params, secret_key, api_name):
 
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
-    g = Github(os.environ.get("REPO_TOKEN"))  # REPO_TOKEN 사용
-    repo = g.get_repo("jungsoonpark/pickview_lightsail")  # 리포지토리 이름 확인
-    secrets = repo.get_secrets()
-
-    # 비밀을 딕셔너리로 변환
-    secrets_dict = {secret.name: secret for secret in secrets}
-
-    # API 키 출력
-    api_key = secrets_dict.get("ALIEXPRESS_API_KEY").value  # 수정: 직접 'value' 속성에 접근
-    api_secret = secrets_dict.get("ALIEXPRESS_API_SECRET").value  # 수정: 직접 'value' 속성에 접근
+    # GitHub Secrets에서 환경 변수로 API Key와 API Secret 값을 가져옵니다.
+    api_key = os.environ.get("ALIEXPRESS_API_KEY")
+    api_secret = os.environ.get("ALIEXPRESS_API_SECRET")
     
-    # 디버깅: API Key와 Secret 출력
+    # 디버깅: API Key와 API Secret 출력
     logger.debug(f"API Key: {api_key}")
     logger.debug(f"API Secret: {api_secret}")
     
