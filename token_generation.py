@@ -8,20 +8,19 @@ from github import Github
 
 # 현재 파일의 디렉토리 경로
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_dir, 'aliexpress_sdk', 'iop'))
+sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 상위 경로 추가
+
+# iop 모듈 import 시도
+try:
+    from iop.base import IopClient, IopRequest
+    print("iop module imported successfully.")
+except ModuleNotFoundError as e:
+    print(f"Error: {e}")
+
 
 # 경로 추가 여부 확인
 print("Current sys.path:", sys.path)
 
-
-from iop.base import IopClient, IopRequest  # iop 모듈 import
-
-# 중복 경로 추가 방지
-path_to_iop = '/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop'
-
-# 경로가 이미 추가되지 않았으면 추가
-if path_to_iop not in sys.path:
-    sys.path.append(path_to_iop)
 
 # 경로 확인
 print("Updated sys.path:", sys.path)
