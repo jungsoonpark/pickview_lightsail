@@ -127,16 +127,22 @@ def request_access_token(secrets, authorization_code):
                 return None
             else:
                 logger.debug("Token request succeeded!")
-                with open('token_info.json', 'w') as f:
-                    json.dump(response_data, f, indent=2)
-                logger.debug("New token information saved to token_info.json")
-                return response_data.get('access_token')
+                if "access_token" in response_data:
+                    # access_token이 있는 경우에만 파일 저장
+                    with open('token_info.json', 'w') as f:
+                        json.dump(response_data, f, indent=2)
+                    logger.debug("New token information saved to token_info.json")
+                    return response_data.get('access_token')
+                else:
+                    logger.error("Access token not found in response data")
+                    return None
         else:
             logger.error(f"API Error: {response.status_code} - {response.text}")
             return None
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
+
 
 
 
