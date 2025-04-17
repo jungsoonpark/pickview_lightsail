@@ -16,6 +16,14 @@ print("Current sys.path:", sys.path)
 
 from iop import IopClient, IopRequest  # iop 모듈 import
 
+# iop 모듈 import 시도
+try:
+    from iop import IopClient, IopRequest
+    print("iop module imported successfully.")
+except ModuleNotFoundError as e:
+    print(f"Error: {e}")
+    
+
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
 logger = logging.getLogger()
