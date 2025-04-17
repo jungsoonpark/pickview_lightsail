@@ -49,7 +49,6 @@ def get_github_secrets():
         "api_key": api_key,
         "api_secret": api_secret
     }
-
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     client = IopClient('https://api-sg.aliexpress.com', secrets['api_key'], secrets['api_secret'])
