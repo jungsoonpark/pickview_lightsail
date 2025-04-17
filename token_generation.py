@@ -90,10 +90,19 @@ def get_github_secrets():
     api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
     api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
 
+    logger.debug(f"API Key: {api_key}")
+    logger.debug(f"API Secret: {api_secret}")
+
+    if api_key is None or api_secret is None:
+        logger.error("API Key or Secret is missing in GitHub Secrets!")
+    
     return {
         "api_key": api_key,
         "api_secret": api_secret
     }
+
+
+
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
