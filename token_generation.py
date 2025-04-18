@@ -11,7 +11,7 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.debug("Request URL: %s/rest/auth/token/create", server_url)
+logger.debug("Request URL: %s/rest/auth/token/create", url)
 logger.debug("Request Parameters: %s", request._api_params)
 
 
