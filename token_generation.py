@@ -13,6 +13,8 @@ formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+
+
 def generate_signature(params, secret_key):
     """서명 생성 함수"""
     # sign 파라미터 제외하고 정렬
@@ -22,22 +24,23 @@ def generate_signature(params, secret_key):
     sorted_keys = sorted(params_to_sign.keys())
     
     # 정렬된 파라미터들을 하나의 문자열로 결합
-    param_pairs = []
-    for key in sorted_keys:
-        value = params_to_sign[key]
-        if value:
-            param_pairs.append(f"{key}{value}")
-    
-    # 파라미터 문자열 생성
-    param_string = ''.join(param_pairs)
+    param_string = ''.join(f"{key}{params_to_sign[key]}" for key in sorted_keys)
 
-    # 서명할 문자열 구성
+    # 서명할 문자열 구성: secret_key + 파라미터 문자열 + secret_key
     string_to_sign = f"{secret_key}{param_string}{secret_key}"
+
+    # 디버깅: 서명할 문자열 출력
+    print(f"서명할 문자열: {string_to_sign}")
 
     # MD5 해시로 서명 생성
     signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
 
+    # 디버깅: 서명 출력
+    print(f"생성된 서명: {signature}")
+
     return signature
+
+
 
 
 def request_access_token(app_key, app_secret, authorization_code):
