@@ -2,7 +2,6 @@ import requests
 import time
 import hashlib
 import logging
-import os
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -20,8 +19,6 @@ def generate_signature(params, secret_key):
     
     # 파라미터를 ASCII 순으로 정렬
     sorted_keys = sorted(params_to_sign.keys())
-    
-    # 정렬된 파라미터들을 하나의 문자열로 결합
     param_string = ''.join(f"{key}{params_to_sign[key]}" for key in sorted_keys)
 
     # 서명할 문자열 구성: secret_key + 파라미터 문자열 + secret_key
@@ -38,13 +35,18 @@ def generate_signature(params, secret_key):
 
     return signature
 
-def request_access_token(app_key, app_secret, authorization_code):
+def request_access_token():
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
-    
+
+    # 하드코딩된 app_key와 app_secret
+    app_key = "513774"  # 실제 app_key를 여기에 하드코딩
+    app_secret = "L2SMzWXVw58POzLojjQALzHqXRX4Bg2U"  # 실제 app_secret을 여기에 하드코딩
+    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자 인증 후 받은 실제 코드로 교체
+
     # 요청 파라미터 설정
     params = {
-        "app_key": app_key,  # GitHub Secrets에서 가져온 app_key 값
+        "app_key": app_key,  # 하드코딩된 app_key
         "timestamp": str(int(time.time() * 1000)),  # 밀리초로 타임스탬프
         "sign_method": "md5",  # 서명 방법 md5
         "code": authorization_code,  # authorization_code
@@ -81,16 +83,10 @@ def request_access_token(app_key, app_secret, authorization_code):
         print(f"Error during token request: {str(e)}")
         return None
 
-
-# 실제 실행 코드 (GitHub Secrets에서 가져온 app_key와 app_secret 전달)
+# 실제 실행 코드
 if __name__ == "__main__":
-    # GitHub Secrets에서 정확한 키 값 가져오기
-    app_key = os.environ.get('ALIEXPRESS_API_KEY')  # GitHub Secrets에서 app_key 가져오기
-    app_secret = os.environ.get('ALIEXPRESS_API_SECRET')  # GitHub Secrets에서 app_secret 가져오기
-    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자 인증 후 받은 실제 코드로 교체
-
     # 토큰 요청
-    token = request_access_token(app_key, app_secret, authorization_code)
+    token = request_access_token()
     if token:
         print(f"Access Token: {token}")
     else:
