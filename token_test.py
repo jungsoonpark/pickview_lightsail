@@ -13,8 +13,8 @@ logger.addHandler(handler)
 
 # 하드코딩된 app_key와 app_secret
 app_key = "513774"  # 자신의 app_key
-app_secret = "L2SMzWXVw58POzLojjQALzHqXRX4Bg2U"  # 자신의 app_secret
-authorization_code = "3_513774_fZF0biL3vtaoirRHEis6ek4i777"  # 사용자 인증 후 받은 실제 코드
+app_secret = "Uzy0PtFg3oqmIFZtXrrGEN9s0speXaXl"  # 자신의 app_secret
+authorization_code = "3_513774_fJdwqT8Zk7RsicAwXQj9qxGc4347"  # 사용자 인증 후 받은 실제 코드
 
 # 타임스탬프 (밀리초 단위로)
 timestamp = str(int(time.time() * 1000))
