@@ -10,17 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2  # 리포지토리 체크아웃
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.8'  # Python 3.8 설정
 
       - name: Install dependencies
         run: |
           pip install requests
-          pip3 install PyGithub
+          pip install PyGithub
+          pip install -r requirements.txt  # 의존성 설치 (필요한 패키지들 설치)
+
+      - name: Set up iop SDK path
+        run: |
+          echo "/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop" >> $GITHUB_PATH  # iop 경로 설정
 
       - name: Run token generation script
         env:
