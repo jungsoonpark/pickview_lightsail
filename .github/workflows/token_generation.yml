@@ -1,31 +1,31 @@
 name: Run token generation script
 
 on:
- push:
-   branches:
-     - main
+  push:
+    branches:
+      - main
 
 jobs:
- run:
-   runs-on: ubuntu-latest
-   steps:
-     - name: Checkout repository
-       uses: actions/checkout@v2
+  run:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-     - name: Set up Python
-       uses: actions/setup-python@v2
-       with:
-         python-version: '3.8'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
 
-     - name: Install dependencies
-       run: |
-         pip install requests
-         pip3 install PyGithub
+      - name: Install dependencies
+        run: |
+          pip install requests
+          pip install PyGithub
 
-
-     - name: Run token generation script
-       env:
-         API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}  # GitHub Secrets에서 API_KEY 가져오기
-         API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}  # GitHub Secrets에서 API_SECRET 가져오기
-       run: |
-         python token_generation.py  # 파이썬 스크립트 실행
+      - name: Run token generation script
+        env:
+          API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}  # GitHub Secrets에서 API_KEY 가져오기
+          API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}  # GitHub Secrets에서 API_SECRET 가져오기
+        run: |
+          python token_generation.py  # 파이썬 스크립트 실행
