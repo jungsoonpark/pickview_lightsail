@@ -9,32 +9,21 @@ from iop.base import IopClient, IopRequest  # iop SDK 사용
 
 
 
-# 현재 파일의 디렉토리 경로
+# 현재 파일 경로
 current_dir = os.path.dirname(os.path.abspath(__file__))
+iop_path = os.path.join(current_dir, 'aliexpress_sdk', 'iop')
 
-# 경로 추가 확인
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+# 경로가 sys.path에 추가되어 있는지 확인
+if iop_path not in sys.path:
+    sys.path.append(iop_path)
 
-# iop 모듈 경로 설정
-sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 상위 경로 추가
+print("Current sys.path:", sys.path)
 
-logger.debug(f"sys.path after appending: {sys.path}")
-
-# iop 모듈 import 시도
 try:
     from iop.base import IopClient, IopRequest  # iop SDK 사용
-    logger.debug("iop module imported successfully.")
+    print("iop module imported successfully.")
 except ModuleNotFoundError as e:
-    logger.error(f"Error importing iop module: {e}")
-    
-# 확인을 위한 출력
-logger.debug("Current sys.path:", sys.path)
+    print(f"Error: {e}")
 
 
 
