@@ -49,30 +49,30 @@ logger.addHandler(handler)
 
 
 
-
-
 def generate_signature(params, secret_key, api_name):
-    """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
+    """서명 생성 함수"""
     # sign 파라미터 제외하고 정렬
     params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
 
-    # 파라미터 정렬
+    # 파라미터를 ASCII 순으로 정렬
     sorted_keys = sorted(params_to_sign.keys())
-
-    # 파라미터 문자열 생성
+    
+    # 정렬된 파라미터들을 하나의 문자열로 결합
     param_pairs = []
     for key in sorted_keys:
         value = params_to_sign[key]
-        if value is not None and value != "":
+        if value:
             param_pairs.append(f"{key}{value}")
-
+    
+    # 파라미터 문자열 생성
     param_string = ''.join(param_pairs)
 
-    # 서명할 문자열: api_name + 파라미터 문자열 + app_secret
+    # API 경로와 결합
     string_to_sign = f"{api_name}{param_string}{secret_key}"
 
-    # MD5 해시 생성
+    # MD5 해시로 서명 생성
     signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
+
 
     # 디버깅 정보 출력
     logger.debug("\n=== 서명 생성 정보 ===")
@@ -81,7 +81,14 @@ def generate_signature(params, secret_key, api_name):
     logger.debug(f"생성된 서명: {signature}")
     logger.debug("===================\n")
 
+
+    
     return signature
+
+
+
+
+
 
 
 
