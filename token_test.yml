@@ -1,0 +1,33 @@
+name: Token Test
+
+on:
+  push:
+    branches:
+      - main  # main 브랜치에 푸시할 때 실행
+  pull_request:
+    branches:
+      - main  # main 브랜치에 PR이 생성될 때 실행
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'  # 사용할 Python 버전
+
+      - name: Install dependencies
+        run: |
+          pip install requests pyyaml
+
+      - name: Run token test
+        run: python token_test.py
+        env:
+          APP_KEY: ${{ secrets.APP_KEY }}  # GitHub Secrets에서 App Key 가져오기
+          APP_SECRET: ${{ secrets.APP_SECRET }}  # GitHub Secrets에서 Secret Key 가져오기
+          AUTHORIZATION_CODE: ${{ secrets.AUTHORIZATION_CODE }}  # GitHub Secrets에서 Authorization Code 가져오기
