@@ -21,20 +21,6 @@ jobs:
         run: |
           pip install requests  # requests 라이브러리 설치
 
-      - name: Print environment variables for API keys (DEBUGGING)
-        run: |
-          echo "API Key from secrets: ${{ secrets.ALIEXPRESS_API_KEY }}"
-          echo "API Secret from secrets: ${{ secrets.ALIEXPRESS_API_SECRET }}"
-
-      - name: Set up environment variables for API keys (DEBUGGING)
-        env:
-          ALIEXPRESS_API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}  # GitHub Secrets에서 ALIEXPRESS_API_KEY 가져오기
-          ALIEXPRESS_API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}  # GitHub Secrets에서 ALIEXPRESS_API_SECRET 가져오기
-        run: |
-          echo "Setting up environment variables"
-          echo "ALIEXPRESS_API_KEY from environment: $ALIEXPRESS_API_KEY"  # 환경 변수 확인
-          echo "ALIEXPRESS_API_SECRET from environment: $ALIEXPRESS_API_SECRET"  # 환경 변수 확인
-
       - name: Run token generation script
         run: |
-          python token_generation.py  # 새로운 Python 스크립트 실행
+          python token_generation.py  # 하드코딩된 값을 사용하여 Python 스크립트 실행
