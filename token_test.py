@@ -25,7 +25,7 @@ sign_method = "md5"
 # grant_type 값
 grant_type = "authorization_code"
 
-# 서명할 문자열 구성
+# 서명할 문자열 구성 (app_secret 양 끝에 추가)
 string_to_sign = f"{app_secret}app_key{app_key}code{authorization_code}grant_type{grant_type}sign_method{sign_method}timestamp{timestamp}{app_secret}"
 
 # 디버깅: 서명할 문자열 출력
