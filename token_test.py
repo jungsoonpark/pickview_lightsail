@@ -41,6 +41,10 @@ def main():
     # 서명 생성
     params['sign'] = generate_signature(params, app_secret)
 
+    # 디버깅 정보 출력
+    print("Request URL:", url)
+    print("Request Parameters:", params)
+
     # POST 요청 보내기
     response = requests.post(url, data=params)
 
