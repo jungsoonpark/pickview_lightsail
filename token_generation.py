@@ -1,7 +1,7 @@
-import requests
-import time
 import hashlib
 import logging
+import time
+import requests
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -39,17 +39,16 @@ def request_access_token():
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
 
-    
     # 하드코딩된 app_key와 app_secret
-    app_key = "513774"  # 실제 app_key를 여기에 하드코딩
-    app_secret = "L2SMzWXVw58POzLojjQALzHqXRX4Bg2U"  # 실제 app_secret을 여기에 하드코딩
-    authorization_code = "3_513774_fZF0biL3vtaoirRHEis6ek4i777"  # 사용자 인증 후 받은 실제 코드로 교체
+    app_key = "513774"  # 실제 app_key
+    app_secret = "L2SMzWXVw58POzLojjQALzHqXRX4Bg2U"  # 실제 app_secret
+    authorization_code = "3_513774_fZF0biL3vtaoirRHEis6ek4i777"  # 사용자 인증 후 받은 실제 코드
 
     # 요청 파라미터 설정
     params = {
-        "app_key": app_key,  # 하드코딩된 app_key
+        "app_key": app_key,  # 실제 app_key
         "timestamp": str(int(time.time() * 1000)),  # 밀리초로 타임스탬프
-        "sign_method": "MD5",  # 서명 방법 md5
+        "sign_method": "md5",  # 서명 방법 md5
         "code": authorization_code,  # authorization_code
         "grant_type": "authorization_code",  # grant_type
     }
@@ -95,6 +94,3 @@ if __name__ == "__main__":
         logger.debug(f"Access Token: {token}")
     else:
         logger.debug("Failed to obtain access token.")
-
-
-
