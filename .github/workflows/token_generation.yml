@@ -28,7 +28,16 @@ jobs:
         run: |
           echo "Setting up environment variables"
           echo "ALIEXPRESS_API_KEY=${{ secrets.ALIEXPRESS_API_KEY }}" >> $GITHUB_ENV
-          echo "ALIEXPRESS_API_SECRET=${{ secrets.ALIEXPRESS_API_SECRET }}" >> $GITHUB_ENV
+          echo "ALIEXPRESS_API_SECRET=${{ secrets.ALIEXPRESS_API_SECRET }}" >> $GITHUB_ENV- name: Print environment variables for API keys
+
+
+      - name: Print environment variables for API keys
+        run: |
+          echo "API Key: $ALIEXPRESS_API_KEY"
+          echo "API Secret: $ALIEXPRESS_API_SECRET"
+    
+
+
 
       - name: Run token generation script
         run: |
