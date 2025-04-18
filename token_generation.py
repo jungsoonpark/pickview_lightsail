@@ -20,6 +20,9 @@ def generate_signature(params, secret_key):
     # sign 파라미터 제외하고 정렬
     params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
     
+    # 디버깅: 실제 `params` 값 출력 (마스킹되지 않은 값 확인)
+    print(f"실제 파라미터들: {params_to_sign}")
+
     # 파라미터를 ASCII 순으로 정렬
     sorted_keys = sorted(params_to_sign.keys())
     
@@ -29,7 +32,7 @@ def generate_signature(params, secret_key):
     # 서명할 문자열 구성: secret_key + 파라미터 문자열 + secret_key
     string_to_sign = f"{secret_key}{param_string}{secret_key}"
 
-    # 디버깅: 서명할 문자열 출력
+    # 디버깅: 서명할 문자열 출력 (실제 secret_key 포함된 값)
     print(f"서명할 문자열: {string_to_sign}")
 
     # MD5 해시로 서명 생성
@@ -39,6 +42,7 @@ def generate_signature(params, secret_key):
     print(f"생성된 서명: {signature}")
 
     return signature
+
 
 
 
