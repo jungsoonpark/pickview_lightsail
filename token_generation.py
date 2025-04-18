@@ -1,91 +1,96 @@
-import os
-import sys
-import json
+import requests
 import time
+import hashlib
 import logging
-from github import Github
-from iop.base import IopClient, IopRequest  # SDK에서 제공하는 클래스 사용
-
-
-# iop 모듈이 위치한 경로를 sys.path에 추가
-sys.path.append('/home/user/pickview_lightsail/aliexpress_sdk/iop')
-
-
-from iop.base import IopClient, IopRequest
-
-
+import os
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(sys.stdout)
+handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-def get_github_secrets():
-    """GitHub Secrets에서 값을 가져옵니다."""
-    api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
-    api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
+def generate_signature(params, secret_key):
+    """서명 생성 함수"""
+    # sign 파라미터 제외하고 정렬
+    params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
 
-    logger.debug(f"API Key: {api_key}")
-    logger.debug(f"API Secret: {api_secret}")
-
-    if api_key is None or api_secret is None:
-        logger.error("API Key or Secret is missing in GitHub Secrets!")
+    # 파라미터를 ASCII 순으로 정렬
+    sorted_keys = sorted(params_to_sign.keys())
     
-    return {
-        "api_key": api_key,
-        "api_secret": api_secret
-    }
+    # 정렬된 파라미터들을 하나의 문자열로 결합
+    param_pairs = []
+    for key in sorted_keys:
+        value = params_to_sign[key]
+        if value:
+            param_pairs.append(f"{key}{value}")
+    
+    # 파라미터 문자열 생성
+    param_string = ''.join(param_pairs)
 
-def request_access_token(secrets, authorization_code):
+    # 서명할 문자열 생성
+    string_to_sign = f"{param_string}{secret_key}"
+
+    # MD5 해시로 서명 생성
+    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
+
+    # 디버깅 정보 출력
+    logger.debug(f"서명할 문자열: {string_to_sign}")
+    logger.debug(f"생성된 서명: {signature}")
+    return signature
+
+def request_access_token(api_key, api_secret, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
     
-    # IopClient 객체 생성 (SDK 방식)
-    client = IopClient(app_key=secrets['api_key'], app_secret=secrets['api_secret'])
-    
-    # IopRequest 객체 생성 (API 요청을 위한 객체)
-    request = IopRequest(api_name="/rest/auth/token/create", client=client)
-    
     # 요청 파라미터 설정
     params = {
+        "app_key": api_key,
         "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
         "sign_method": "md5",
         "code": authorization_code,
         "grant_type": "authorization_code",
     }
-    
-    # 서명 자동 생성 및 요청 전송
-    response = request.send_request(params)
-    
-    # 디버깅: 요청 URL 및 응답 정보 출력
-    logger.debug(f"Request URL: {url}")
-    logger.debug(f"Response Status Code: {response.status_code}")
-    logger.debug(f"Response Body: {response.text}")
 
-    if response.status_code == 200:
-        response_data = response.json()
-        if "error_response" in response_data:
-            logger.error(f"Token request failed: {response_data['error_response']['code']} - {response_data['error_response']['msg']}")
-            return None
+    # 서명 생성
+    params["sign"] = generate_signature(params, api_secret)
+
+    try:
+        # POST 요청 보내기
+        response = requests.post(url, data=params)
+
+        # 디버깅: 요청 URL 및 응답 정보 출력
+        logger.debug(f"Request URL: {url}")
+        logger.debug(f"Response Status Code: {response.status_code}")
+        logger.debug(f"Response Body: {response.text}")
+
+        if response.status_code == 200:
+            response_data = response.json()
+            if "error_response" in response_data:
+                logger.error(f"Token request failed: {response_data['error_response']['code']} - {response_data['error_response']['msg']}")
+                return None
+            else:
+                logger.debug("Token request succeeded!")
+                return response_data.get('access_token')
         else:
-            logger.debug("Token request succeeded!")
-            with open('token_info.json', 'w') as f:
-                json.dump(response_data, f, indent=2)
-            logger.debug("New token information saved to token_info.json")
-            return response_data.get('access_token')
-    else:
-        logger.error(f"API Error: {response.status_code} - {response.text}")
+            logger.error(f"API Error: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        logger.error(f"Error during token request: {str(e)}")
         return None
 
 if __name__ == "__main__":
-    secrets = get_github_secrets()
-
-    # 사용자 인증 후 받은 실제 'authorization_code'를 여기에 입력
-    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
+    # GitHub Secrets에서 API_KEY와 API_SECRET 가져오기
+    API_KEY = os.environ.get('ALIEXPRESS_API_KEY')
+    API_SECRET = os.environ.get('ALIEXPRESS_API_SECRET')
+    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자 인증 후 받은 실제 코드로 교체
 
     # 토큰 요청
-    request_access_token(secrets, authorization_code)
+    token = request_access_token(API_KEY, API_SECRET, authorization_code)
+    if token:
+        print(f"Access Token: {token}")
+    else:
+        print("Failed to obtain access token.")
