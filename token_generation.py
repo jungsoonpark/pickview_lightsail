@@ -14,12 +14,13 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 def generate_signature(params, secret_key):
+    """서명 생성 함수"""
     # sign 파라미터 제외하고 정렬
     params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
     
     # 파라미터를 ASCII 순으로 정렬
     sorted_keys = sorted(params_to_sign.keys())
-
+    
     # 정렬된 파라미터들을 하나의 문자열로 결합
     param_pairs = []
     for key in sorted_keys:
@@ -29,7 +30,7 @@ def generate_signature(params, secret_key):
     
     # 파라미터 문자열 생성
     param_string = ''.join(param_pairs)
-    
+
     # 서명할 문자열 구성
     string_to_sign = f"{secret_key}{param_string}{secret_key}"
 
@@ -38,6 +39,7 @@ def generate_signature(params, secret_key):
 
     return signature
 
+
 def request_access_token(app_key, app_secret, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
@@ -45,8 +47,8 @@ def request_access_token(app_key, app_secret, authorization_code):
     # 요청 파라미터 설정
     params = {
         "app_key": app_key,  # app_key 추가
-        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
-        "sign_method": "md5",
+        "timestamp": str(int(time.time() * 1000)),  # 밀리초 단위 타임스탬프
+        "sign_method": "md5",  # 서명 방법 md5
         "code": authorization_code,
         "grant_type": "authorization_code",
     }
@@ -77,6 +79,7 @@ def request_access_token(app_key, app_secret, authorization_code):
     except Exception as e:
         logger.error(f"Error during token request: {str(e)}")
         return None
+
 
 if __name__ == "__main__":
     # GitHub Secrets에서 정확한 키 값 가져오기
