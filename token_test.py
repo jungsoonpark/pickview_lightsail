@@ -12,28 +12,32 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 def initialize_variables():
-    # 하드코딩된 app_key와 app_secret을 비우고 새로 선언
     app_key = "513774"  # 자신의 app_key
     app_secret = "Uzy0PtFg3oqmIFZtXrrGEN9s0speXaXl"  # 자신의 app_secret
     authorization_code = "3_513774_fJdwqT8Zk7RsicAwXQj9qxGc4347"  # 사용자 인증 후 받은 실제 코드
-
     return app_key, app_secret, authorization_code
 
 def main():
-    # 변수 초기화
     app_key, app_secret, authorization_code = initialize_variables()
-
-    # 타임스탬프 (밀리초 단위로)
     timestamp = str(int(time.time() * 1000))
-
-    # 서명 방법 (기본값: md5)
     sign_method = "md5"
-
-    # grant_type 값
     grant_type = "authorization_code"
 
+    # 요청 파라미터 설정
+    params = {
+        "app_key": app_key,
+        "timestamp": timestamp,
+        "sign_method": sign_method,
+        "code": authorization_code,
+        "grant_type": grant_type
+    }
+
+    # 파라미터 정렬
+    sorted_params = sorted(params.items())
+    param_string = ''.join(f"{k}{v}" for k, v in sorted_params)
+
     # 서명할 문자열 구성 (app_secret 양 끝에 추가)
-    string_to_sign = f"{app_secret}app_key{app_key}code{authorization_code}grant_type{grant_type}sign_method{sign_method}timestamp{timestamp}{app_secret}"
+    string_to_sign = f"{app_secret}{param_string}{app_secret}"
 
     # 디버깅: 서명할 문자열 출력
     logger.debug(f"서명할 문자열: {string_to_sign}")
@@ -44,15 +48,8 @@ def main():
     # 디버깅: 생성된 서명 출력
     logger.debug(f"생성된 서명: {signature}")
 
-    # 요청 파라미터 설정
-    params = {
-        "app_key": app_key,
-        "timestamp": timestamp,
-        "sign_method": sign_method,
-        "code": authorization_code,
-        "grant_type": grant_type,
-        "sign": signature
-    }
+    # 요청 파라미터에 서명 추가
+    params['sign'] = signature
 
     # 디버깅: 요청 파라미터 출력
     logger.debug(f"요청 파라미터: {params}")
