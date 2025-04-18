@@ -23,11 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests pyyaml
+          pip install requests
 
       - name: Run token test
         run: python token_test.py
-        env:
-          APP_KEY: ${{ secrets.APP_KEY }}  # GitHub Secrets에서 App Key 가져오기
-          APP_SECRET: ${{ secrets.APP_SECRET }}  # GitHub Secrets에서 Secret Key 가져오기
-          AUTHORIZATION_CODE: ${{ secrets.AUTHORIZATION_CODE }}  # GitHub Secrets에서 Authorization Code 가져오기
