@@ -7,6 +7,29 @@ import sys
 from github import Github
 from iop.base import IopClient, IopRequest  # iop SDK 사용
 
+
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 상위 경로 추가
+
+
+# iop 모듈 import 시도
+try:
+    from iop.base import IopClient, IopRequest
+    print("iop module imported successfully.")
+except ModuleNotFoundError as e:
+    print(f"Error: {e}")
+ 
+
+# 경로 확인
+print("Updated sys.path:", sys.path)
+ 
+
+
+
+
+
+
 # 로깅 설정
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
