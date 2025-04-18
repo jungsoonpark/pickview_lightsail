@@ -1,7 +1,6 @@
 import requests
 import time
 import hashlib
-import yaml
 
 def generate_signature(params, secret_key):
     # 'sign' 파라미터 제외
@@ -21,18 +20,12 @@ def generate_signature(params, secret_key):
     
     return signature
 
-def load_config(file_path):
-    with open(file_path, 'r') as file:
-        return yaml.safe_load(file)
-
 def main():
-    # YAML 파일에서 설정 로드
-    config = load_config('token_test.yml')
-    
-    app_key = config['app_key']
-    app_secret = config['app_secret']
-    authorization_code = config['authorization_code']
-    
+    # 하드코딩된 API 설정
+    app_key = "513774"  # 실제 App Key
+    app_secret = "L2SMzWXVw58POzLojjQALzHqXRX4Bg2U"  # 실제 Secret Key
+    authorization_code = "3_513774_fZF0biL3vtaoirRHEis6ek4i777"  # 실제 Authorization Code
+
     # API 요청 URL
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
 
