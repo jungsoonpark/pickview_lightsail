@@ -12,15 +12,18 @@ from iop.base import IopClient, IopRequest  # iop SDK 사용
 # 현재 파일의 디렉토리 경로
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-# iop 모듈 경로 확인
+# 'iop' 모듈 경로
 iop_path = os.path.join(current_dir, 'aliexpress_sdk', 'iop')
+
+print(sys.path)
 
 # 경로가 sys.path에 추가되지 않았다면 추가
 if iop_path not in sys.path:
     sys.path.append(iop_path)
 
 # 경로 확인
-print("Updated sys.path:", sys.path)
+logger.debug("\n=== path 정보 ===")
+logger.debug({sys.path})
 
 # iop 모듈 import 시도
 try:
@@ -28,6 +31,8 @@ try:
     print("iop module imported successfully.")
 except ModuleNotFoundError as e:
     print(f"Error: {e}")
+
+
 
 
 
