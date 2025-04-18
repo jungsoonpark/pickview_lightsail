@@ -35,7 +35,7 @@ def main():
         "code": authorization_code,
         "app_key": app_key,
         "sign_method": "md5",
-        "timestamp": str(int(time.time() * 1000)),
+        "timestamp": str(int(time.time() * 1000)),  # 밀리초 단위 타임스탬프
     }
 
     # 서명 생성
