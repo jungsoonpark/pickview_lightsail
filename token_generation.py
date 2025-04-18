@@ -1,6 +1,5 @@
 import requests
 import time
-import hashlib
 import logging
 import os
 
@@ -12,40 +11,6 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-
-
-
-def generate_signature(params, secret_key):
-    """서명 생성 함수"""
-    # sign 파라미터 제외하고 정렬
-    params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
-    
-    # 디버깅: 실제 `params` 값 출력 (마스킹되지 않은 값 확인)
-    print(f"실제 파라미터들: {params_to_sign}")
-
-    # 파라미터를 ASCII 순으로 정렬
-    sorted_keys = sorted(params_to_sign.keys())
-    
-    # 정렬된 파라미터들을 하나의 문자열로 결합
-    param_string = ''.join(f"{key}{params_to_sign[key]}" for key in sorted_keys)
-
-    # 서명할 문자열 구성: secret_key + 파라미터 문자열 + secret_key
-    string_to_sign = f"{secret_key}{param_string}{secret_key}"
-
-    # 디버깅: 서명할 문자열 출력 (실제 secret_key 포함된 값)
-    print(f"서명할 문자열: {string_to_sign}")
-
-    # MD5 해시로 서명 생성
-    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
-
-    # 디버깅: 서명 출력
-    print(f"생성된 서명: {signature}")
-
-    return signature
-
-
-
-
 
 def request_access_token(app_key, app_secret, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
@@ -61,7 +26,7 @@ def request_access_token(app_key, app_secret, authorization_code):
     }
 
     # 디버깅: 파라미터 값 출력
-    print(f"실제 파라미터들: {params}")
+    print(f"실제 파라미터들: {params}")  # params에서 `app_key` 값이 잘 전달되었는지 확인
 
     # 서명 생성
     params["sign"] = generate_signature(params, app_secret)
@@ -90,16 +55,25 @@ def request_access_token(app_key, app_secret, authorization_code):
         print(f"Error during token request: {str(e)}")
         return None
 
+# 서명 생성 함수
+def generate_signature(params, secret_key):
+    """서명 생성 함수"""
+    params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
 
-if __name__ == "__main__":
-    # GitHub Secrets에서 정확한 키 값 가져오기
-    APP_KEY = os.environ.get('ALIEXPRESS_API_KEY')  # GitHub Secrets에서 ALIEXPRESS_API_KEY 가져오기
-    APP_SECRET = os.environ.get('ALIEXPRESS_API_SECRET')  # GitHub Secrets에서 ALIEXPRESS_API_SECRET 가져오기
-    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자 인증 후 받은 실제 코드로 교체
+    # 파라미터를 ASCII 순으로 정렬
+    sorted_keys = sorted(params_to_sign.keys())
+    param_string = ''.join(f"{key}{params_to_sign[key]}" for key in sorted_keys)
 
-    # 토큰 요청
-    token = request_access_token(APP_KEY, APP_SECRET, authorization_code)
-    if token:
-        print(f"Access Token: {token}")
-    else:
-        print("Failed to obtain access token.")
+    # 서명할 문자열 구성: secret_key + 파라미터 문자열 + secret_key
+    string_to_sign = f"{secret_key}{param_string}{secret_key}"
+
+    # 디버깅: 서명할 문자열 출력
+    print(f"서명할 문자열: {string_to_sign}")
+
+    # MD5 해시로 서명 생성
+    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
+
+    # 디버깅: 서명 출력
+    print(f"생성된 서명: {signature}")
+
+    return signature
