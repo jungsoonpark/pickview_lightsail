@@ -63,3 +63,4 @@ if response.status_code == 200:
     logger.info("Access Token:", response.json().get('access_token'))
 else:
     logger.error("Failed to get access token")
+ 
