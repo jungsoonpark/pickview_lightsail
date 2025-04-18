@@ -61,7 +61,7 @@ def request_access_token(app_key, app_secret, authorization_code):
 
     try:
         # POST 요청 보내기
-        response = requests.post(url, data=params)
+        response = requests.post(url, json=params)
 
         # 디버깅: 요청 URL 및 응답 정보 출력
         logger.debug(f"Request URL: {url}")
