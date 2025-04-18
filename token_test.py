@@ -1,6 +1,15 @@
 import requests
 import hashlib
 import time
+import logging
+
+# 로깅 설정
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+formatter = logging.Formatter('%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 # 하드코딩된 app_key와 app_secret
 app_key = "513774"  # 자신의 app_key
@@ -20,17 +29,13 @@ grant_type = "authorization_code"
 string_to_sign = f"{app_secret}app_key{app_key}code{authorization_code}grant_type{grant_type}sign_method{sign_method}timestamp{timestamp}{app_secret}"
 
 # 디버깅: 서명할 문자열 출력
-print(f"서명할 문자열: {string_to_sign}")
-
+logger.debug(f"서명할 문자열: {string_to_sign}")
 
 # MD5 해시로 서명 생성
 signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
 
-
 # 디버깅: 생성된 서명 출력
-print(f"생성된 서명: {signature}")
-
-
+logger.debug(f"생성된 서명: {signature}")
 
 # 요청 파라미터 설정
 params = {
@@ -42,12 +47,19 @@ params = {
     "sign": signature
 }
 
+# 디버깅: 요청 파라미터 출력
+logger.debug(f"요청 파라미터: {params}")
+
 # POST 요청 보내기
 url = "https://api-sg.aliexpress.com/rest/auth/token/create"
 response = requests.post(url, data=params)
 
+# 디버깅: API 응답 출력
+logger.debug(f"Response Status Code: {response.status_code}")
+logger.debug(f"Response Body: {response.text}")
+
 # 응답 처리
 if response.status_code == 200:
-    print("Access Token:", response.json().get('access_token'))
+    logger.info("Access Token:", response.json().get('access_token'))
 else:
-    print("Failed to get access token:", response.text)
+    logger.error("Failed to get access token")
