@@ -1,15 +1,12 @@
-name: Token Test
+name: Token Generation
 
 on:
   push:
     branches:
-      - main  # main 브랜치에 푸시할 때 실행
-  pull_request:
-    branches:
-      - main  # main 브랜치에 PR이 생성될 때 실행
+      - main
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,11 +16,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'  # 사용할 Python 버전
+          python-version: '3.8'
 
       - name: Install dependencies
         run: |
           pip install requests
 
-      - name: Run token test
-        run: python token_test.py
+      - name: Run token generation script
+        run: python token_generation.py
