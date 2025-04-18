@@ -25,6 +25,7 @@ jobs:
 
       - name: Set up iop SDK path
         run: |
+          echo "/home/runner/work/pickview_lightsail/pickview_lightsail" >> $GITHUB_ENV
           echo "/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk/iop" >> $GITHUB_PATH  # iop 경로 설정
 
       - name: Run token generation script
