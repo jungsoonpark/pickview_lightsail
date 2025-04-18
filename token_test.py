@@ -11,10 +11,16 @@ formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-# 하드코딩된 app_key와 app_secret
-app_key = "513774"  # 자신의 app_key
-app_secret = "Uzy0PtFg3oqmIFZtXrrGEN9s0speXaXl"  # 자신의 app_secret
-authorization_code = "3_513774_fJdwqT8Zk7RsicAwXQj9qxGc4347"  # 사용자 인증 후 받은 실제 코드
+# 하드코딩된 app_key와 app_secret을 비우고 새로 선언
+def initialize_variables():
+    global app_key, app_secret, authorization_code
+
+    app_key = "513774"  # 자신의 app_key
+    app_secret = "Uzy0PtFg3oqmIFZtXrrGEN9s0speXaXl"  # 자신의 app_secret
+    authorization_code = "3_513774_fJdwqT8Zk7RsicAwXQj9qxGc4347"  # 사용자 인증 후 받은 실제 코드
+
+# 변수 초기화
+initialize_variables()
 
 # 타임스탬프 (밀리초 단위로)
 timestamp = str(int(time.time() * 1000))
@@ -51,7 +57,7 @@ params = {
 logger.debug(f"요청 파라미터: {params}")
 
 # POST 요청 보내기
-url = "https://api-sg.aliexpress.com/sync?method=/auth/token/create"
+url = "https://api-sg.aliexpress.com/rest/auth/token/create"
 response = requests.post(url, data=params)
 
 # 디버깅: API 응답 출력
@@ -60,7 +66,6 @@ logger.debug(f"Response Body: {response.text}")
 
 # 응답 처리
 if response.status_code == 200:
-    logger.info("Access Token:", response.json().get('access_token'))
+    logger.info("Access Token: %s", response.json().get('access_token'))
 else:
     logger.error("Failed to get access token")
- 
