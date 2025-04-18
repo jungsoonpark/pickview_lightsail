@@ -11,29 +11,32 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+logger.debug("Request URL: %s/rest/auth/token/create", server_url)
+logger.debug("Request Parameters: %s", request._api_params)
+
+
+
 
 def generate_signature(params, secret_key):
-    """서명 생성 함수"""
-    # sign 파라미터 제외하고 정렬
-    params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
+    # 'sign' 파라미터 제외
+    params.pop('sign', None)
     
-    # 파라미터를 ASCII 순으로 정렬
-    sorted_keys = sorted(params_to_sign.keys())
-    param_string = ''.join(f"{key}{params_to_sign[key]}" for key in sorted_keys)
-
-    # 서명할 문자열 구성: secret_key + 파라미터 문자열 + secret_key
+    # 파라미터 정렬
+    sorted_params = sorted(params.items())
+    
+    # 정렬된 파라미터 문자열 생성
+    param_string = ''.join(f"{k}{v}" for k, v in sorted_params)
+    
+    # 서명 문자열 생성 (AppSecret을 앞뒤에 추가)
     string_to_sign = f"{secret_key}{param_string}{secret_key}"
     
-    # 서명할 문자열 출력 (디버깅용)
-    logger.debug(f"서명할 문자열: {string_to_sign}")
-
-    # MD5 해시로 서명 생성
+    # MD5 해시 생성
     signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
     
-    # 서명 값 출력 (디버깅용)
-    logger.debug(f"생성된 서명: {signature}")
-
     return signature
+
+
+
 
 def request_access_token():
     """새로운 액세스 토큰을 발급받습니다."""
