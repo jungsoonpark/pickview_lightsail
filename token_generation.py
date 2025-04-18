@@ -48,7 +48,7 @@ def request_access_token():
     params = {
         "app_key": app_key,  # 하드코딩된 app_key
         "timestamp": str(int(time.time() * 1000)),  # 밀리초로 타임스탬프
-        "sign_method": "md5",  # 서명 방법 md5
+        "sign_method": "MD5",  # 서명 방법 md5
         "code": authorization_code,  # authorization_code
         "grant_type": "authorization_code",  # grant_type
     }
