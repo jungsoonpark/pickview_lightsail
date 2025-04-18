@@ -19,8 +19,18 @@ grant_type = "authorization_code"
 # 서명할 문자열 구성
 string_to_sign = f"{app_secret}app_key{app_key}code{authorization_code}grant_type{grant_type}sign_method{sign_method}timestamp{timestamp}{app_secret}"
 
+# 디버깅: 서명할 문자열 출력
+print(f"서명할 문자열: {string_to_sign}")
+
+
 # MD5 해시로 서명 생성
 signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
+
+
+# 디버깅: 생성된 서명 출력
+print(f"생성된 서명: {signature}")
+
+
 
 # 요청 파라미터 설정
 params = {
