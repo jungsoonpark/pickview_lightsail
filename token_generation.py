@@ -4,40 +4,101 @@ import time
 import logging
 import requests
 import sys
+import hashlib
+import hmac
 from github import Github
-from iop.base import IopClient, IopRequest  # iop SDK 사용
+import urllib.parse
 
-
-
-# 현재 파일 경로
+# 현재 파일의 디렉토리 경로
 current_dir = os.path.dirname(os.path.abspath(__file__))
-iop_path = os.path.join(current_dir, 'aliexpress_sdk', 'iop')
+sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 상위 경로 추가
 
-# 경로가 sys.path에 추가되어 있는지 확인
-if iop_path not in sys.path:
-    sys.path.append(iop_path)
+# iop 모듈 import 시도
+try:
+    from iop.base import IopClient, IopRequest
+    print("iop module imported successfully.")
+except ModuleNotFoundError as e:
+    print(f"Error: {e}")
 
+
+# 경로 추가 여부 확인
 print("Current sys.path:", sys.path)
 
+
+# 경로 확인
+print("Updated sys.path:", sys.path)
+
+# iop 모듈 import 시도
 try:
-    from iop.base import IopClient, IopRequest  # iop SDK 사용
+    from iop import IopClient, IopRequest
     print("iop module imported successfully.")
 except ModuleNotFoundError as e:
     print(f"Error: {e}")
 
 
 
+# 로깅 설정
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 
-# 로깅: API 키 확인
+
+def generate_signature(params, secret_key, api_name):
+    """서명 생성 함수"""
+    # sign 파라미터 제외하고 정렬
+    params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
+
+    # 파라미터를 ASCII 순으로 정렬
+    sorted_keys = sorted(params_to_sign.keys())
+    
+    # 정렬된 파라미터들을 하나의 문자열로 결합
+    param_pairs = []
+    for key in sorted_keys:
+        value = params_to_sign[key]
+        if value:
+            param_pairs.append(f"{key}{value}")
+    
+    # 파라미터 문자열 생성
+    param_string = ''.join(param_pairs)
+
+    # API 경로와 결합
+    string_to_sign = f"{api_name}{param_string}{secret_key}"
+
+    # MD5 해시로 서명 생성
+    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
+
+
+    # 디버깅 정보 출력
+    logger.debug("\n=== 서명 생성 정보 ===")
+    logger.debug(f"파라미터 문자열: {param_string}")
+    logger.debug(f"서명할 문자열: {string_to_sign}")
+    logger.debug(f"생성된 서명: {signature}")
+    logger.debug("===================\n")
+
+
+    
+    return signature
+
+
+
+
+
+
+
+
 def get_github_secrets():
     """GitHub Secrets에서 값을 가져옵니다."""
     api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
     api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
 
-    logger.debug(f"API Key retrieved: {api_key is not None}")  # 실제 값은 로그에서 제외
-    logger.debug(f"API Secret retrieved: {api_secret is not None}")  # 실제 값은 로그에서 제외
+    logger.debug(f"API Key: {api_key}")
+    logger.debug(f"API Secret: {api_secret}")
 
     if api_key is None or api_secret is None:
         logger.error("API Key or Secret is missing in GitHub Secrets!")
@@ -48,64 +109,31 @@ def get_github_secrets():
     }
 
 
-
-
-def generate_signature(params, secret_key, api_name):
-    """요청 파라미터와 비밀 키를 사용하여 서명을 생성합니다."""
-    logger.debug("Generating signature...")
-
-    # sign 파라미터 제외하고 정렬
-    params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
-    sorted_keys = sorted(params_to_sign.keys())
-
-    # 파라미터 문자열 생성
-    param_pairs = []
-    for key in sorted_keys:
-        value = params_to_sign[key]
-        if value is not None and value != "":
-            param_pairs.append(f"{key}{value}")
-    
-    param_string = ''.join(param_pairs)
-
-    logger.debug(f"Sorted params: {sorted_keys}")
-    logger.debug(f"Parameter string: {param_string}")
-
-    # 서명할 문자열
-    string_to_sign = f"{api_name}{param_string}{secret_key}"
-
-    logger.debug(f"String to sign: {string_to_sign}")
-
-    # MD5 해시 생성
-    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
-
-    # 디버깅 정보 출력
-    logger.debug(f"Generated signature: {signature}")
-    return signature
-
 def request_access_token(secrets, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
-    logger.debug(f"Request URL: {url}")
+    
+    # API 이름 정의
+    api_name = "/rest/auth/token/create"
 
     # 요청 파라미터 설정
     params = {
         "app_key": secrets['api_key'],
-        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프 (밀리초)
+        "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
         "sign_method": "md5",
         "code": authorization_code,
         "grant_type": "authorization_code",
     }
 
     # 서명 생성
-    params["sign"] = generate_signature(params, secrets['api_secret'], "/rest/auth/token/create")
-
-    logger.debug(f"Request parameters: {params}")
+    params["sign"] = generate_signature(params, secrets['api_secret'], api_name)
 
     try:
         # POST 요청 보내기
         response = requests.post(url, data=params)
 
-        # 응답 확인
+        # 디버깅: 요청 URL 및 응답 정보 출력
+        logger.debug(f"Request URL: {url}")
         logger.debug(f"Response Status Code: {response.status_code}")
         logger.debug(f"Response Body: {response.text}")
 
@@ -127,14 +155,6 @@ def request_access_token(secrets, authorization_code):
         logger.error(f"Error during token request: {str(e)}")
         return None
 
-if __name__ == "__main__":
-    secrets = get_github_secrets()
-    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
-    request_access_token(secrets, authorization_code)
-
-
-
-
 
 
 
@@ -142,178 +162,7 @@ if __name__ == "__main__":
     secrets = get_github_secrets()
 
     # 사용자 인증 후 받은 실제 'authorization_code'를 여기에 입력
-    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 실제 'authorization_code'를 입력
+    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
 
     # 토큰 요청
     request_access_token(secrets, authorization_code)
-
-
-
-# import os
-# import json
-# import time
-# import logging
-# import requests
-# import sys
-# import hashlib
-# import hmac
-# from github import Github
-# import urllib.parse
-
-# # 현재 파일의 디렉토리 경로
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 상위 경로 추가
-
-# # iop 모듈 import 시도
-# try:
-#     from iop.base import IopClient, IopRequest
-#     print("iop module imported successfully.")
-# except ModuleNotFoundError as e:
-#     print(f"Error: {e}")
-
-
-# # 경로 추가 여부 확인
-# print("Current sys.path:", sys.path)
-
-
-# # 경로 확인
-# print("Updated sys.path:", sys.path)
-
-# # iop 모듈 import 시도
-# try:
-#     from iop import IopClient, IopRequest
-#     print("iop module imported successfully.")
-# except ModuleNotFoundError as e:
-#     print(f"Error: {e}")
-
-
-
-# # 로깅 설정
-# logger = logging.getLogger(__name__)
-# logger.setLevel(logging.DEBUG)
-# handler = logging.StreamHandler(sys.stdout)
-# handler.setLevel(logging.DEBUG)
-# formatter = logging.Formatter('%(message)s')
-# handler.setFormatter(formatter)
-# logger.addHandler(handler)
-
-
-
-
-# def generate_signature(params, secret_key, api_name):
-#     """서명 생성 함수"""
-#     # sign 파라미터 제외하고 정렬
-#     params_to_sign = {k: v for k, v in params.items() if k != 'sign'}
-
-#     # 파라미터를 ASCII 순으로 정렬
-#     sorted_keys = sorted(params_to_sign.keys())
-    
-#     # 정렬된 파라미터들을 하나의 문자열로 결합
-#     param_pairs = []
-#     for key in sorted_keys:
-#         value = params_to_sign[key]
-#         if value:
-#             param_pairs.append(f"{key}{value}")
-    
-#     # 파라미터 문자열 생성
-#     param_string = ''.join(param_pairs)
-
-#     # API 경로와 결합
-#     string_to_sign = f"{api_name}{param_string}{secret_key}"
-
-#     # MD5 해시로 서명 생성
-#     signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
-
-
-#     # 디버깅 정보 출력
-#     logger.debug("\n=== 서명 생성 정보 ===")
-#     logger.debug(f"파라미터 문자열: {param_string}")
-#     logger.debug(f"서명할 문자열: {string_to_sign}")
-#     logger.debug(f"생성된 서명: {signature}")
-#     logger.debug("===================\n")
-
-
-    
-#     return signature
-
-
-
-
-
-
-
-
-# def get_github_secrets():
-#     """GitHub Secrets에서 값을 가져옵니다."""
-#     api_key = os.environ.get('API_KEY')  # GitHub Actions에서 설정한 API_KEY
-#     api_secret = os.environ.get('API_SECRET')  # GitHub Actions에서 설정한 API_SECRET
-
-#     logger.debug(f"API Key: {api_key}")
-#     logger.debug(f"API Secret: {api_secret}")
-
-#     if api_key is None or api_secret is None:
-#         logger.error("API Key or Secret is missing in GitHub Secrets!")
-    
-#     return {
-#         "api_key": api_key,
-#         "api_secret": api_secret
-#     }
-
-
-# def request_access_token(secrets, authorization_code):
-#     """새로운 액세스 토큰을 발급받습니다."""
-#     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
-    
-#     # API 이름 정의
-#     api_name = "/rest/auth/token/create"
-
-#     # 요청 파라미터 설정
-#     params = {
-#         "app_key": secrets['api_key'],
-#         "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
-#         "sign_method": "md5",
-#         "code": authorization_code,
-#         "grant_type": "authorization_code",
-#     }
-
-#     # 서명 생성
-#     params["sign"] = generate_signature(params, secrets['api_secret'], api_name)
-
-#     try:
-#         # POST 요청 보내기
-#         response = requests.post(url, data=params)
-
-#         # 디버깅: 요청 URL 및 응답 정보 출력
-#         logger.debug(f"Request URL: {url}")
-#         logger.debug(f"Response Status Code: {response.status_code}")
-#         logger.debug(f"Response Body: {response.text}")
-
-#         if response.status_code == 200:
-#             response_data = response.json()
-#             if "error_response" in response_data:
-#                 logger.error(f"Token request failed: {response_data['error_response']['code']} - {response_data['error_response']['msg']}")
-#                 return None
-#             else:
-#                 logger.debug("Token request succeeded!")
-#                 with open('token_info.json', 'w') as f:
-#                     json.dump(response_data, f, indent=2)
-#                 logger.debug("New token information saved to token_info.json")
-#                 return response_data.get('access_token')
-#         else:
-#             logger.error(f"API Error: {response.status_code} - {response.text}")
-#             return None
-#     except Exception as e:
-#         logger.error(f"Error during token request: {str(e)}")
-#         return None
-
-
-
-
-# if __name__ == "__main__":
-#     secrets = get_github_secrets()
-
-#     # 사용자 인증 후 받은 실제 'authorization_code'를 여기에 입력
-#     authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자가 인증 후 받은 실제 코드로 교체
-
-#     # 토큰 요청
-#     request_access_token(secrets, authorization_code)
