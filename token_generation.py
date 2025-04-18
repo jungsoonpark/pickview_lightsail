@@ -1,13 +1,19 @@
 import os
+import sys
 import json
 import time
 import logging
 from github import Github
 from iop.base import IopClient, IopRequest  # SDK에서 제공하는 클래스 사용
 
-# 현재 파일의 디렉토리 경로
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_dir, 'aliexpress_sdk'))  # iop 폴더의 상위 경로 추가
+
+# iop 모듈이 위치한 경로를 sys.path에 추가
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'aliexpress_sdk', 'iop'))
+
+
+from iop.base import IopClient, IopRequest
+
+
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
