@@ -23,15 +23,15 @@ def generate_signature(params, secret_key):
 
     # 서명할 문자열 구성: secret_key + 파라미터 문자열 + secret_key
     string_to_sign = f"{secret_key}{param_string}{secret_key}"
-
-    # 디버깅: 서명할 문자열 출력
-    print(f"서명할 문자열: {string_to_sign}")
+    
+    # 서명할 문자열 출력 (디버깅용)
+    logger.debug(f"서명할 문자열: {string_to_sign}")
 
     # MD5 해시로 서명 생성
     signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
-
-    # 디버깅: 서명 출력
-    print(f"생성된 서명: {signature}")
+    
+    # 서명 값 출력 (디버깅용)
+    logger.debug(f"생성된 서명: {signature}")
 
     return signature
 
@@ -39,6 +39,7 @@ def request_access_token():
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
 
+    
     # 하드코딩된 app_key와 app_secret
     app_key = "513774"  # 실제 app_key를 여기에 하드코딩
     app_secret = "L2SMzWXVw58POzLojjQALzHqXRX4Bg2U"  # 실제 app_secret을 여기에 하드코딩
@@ -48,39 +49,42 @@ def request_access_token():
     params = {
         "app_key": app_key,  # 하드코딩된 app_key
         "timestamp": str(int(time.time() * 1000)),  # 밀리초로 타임스탬프
-        "sign_method": "MD5",  # 서명 방법 md5
+        "sign_method": "md5",  # 서명 방법 md5
         "code": authorization_code,  # authorization_code
         "grant_type": "authorization_code",  # grant_type
     }
 
-    # 디버깅: 파라미터 값 출력
-    print(f"실제 파라미터들: {params}")
+    # 디버깅: 파라미터 값 출력 (디버깅용)
+    logger.debug(f"실제 파라미터들: {params}")
 
     # 서명 생성
     params["sign"] = generate_signature(params, app_secret)
+
+    # 디버깅: 서명 파라미터 값 출력 (디버깅용)
+    logger.debug(f"서명 값이 params['sign']에 할당된 값: {params['sign']}")
 
     try:
         # POST 요청 보내기
         response = requests.post(url, data=params)
 
         # 디버깅: 요청 URL 및 응답 정보 출력
-        print(f"Request URL: {url}")
-        print(f"Response Status Code: {response.status_code}")
-        print(f"Response Body: {response.text}")
+        logger.debug(f"Request URL: {url}")
+        logger.debug(f"Response Status Code: {response.status_code}")
+        logger.debug(f"Response Body: {response.text}")
 
         if response.status_code == 200:
             response_data = response.json()
             if "error_response" in response_data:
-                print(f"Token request failed: {response_data['error_response']['code']} - {response_data['error_response']['msg']}")
+                logger.error(f"Token request failed: {response_data['error_response']['code']} - {response_data['error_response']['msg']}")
                 return None
             else:
-                print("Token request succeeded!")
+                logger.debug("Token request succeeded!")
                 return response_data.get('access_token')
         else:
-            print(f"API Error: {response.status_code} - {response.text}")
+            logger.error(f"API Error: {response.status_code} - {response.text}")
             return None
     except Exception as e:
-        print(f"Error during token request: {str(e)}")
+        logger.error(f"Error during token request: {str(e)}")
         return None
 
 # 실제 실행 코드
@@ -88,6 +92,9 @@ if __name__ == "__main__":
     # 토큰 요청
     token = request_access_token()
     if token:
-        print(f"Access Token: {token}")
+        logger.debug(f"Access Token: {token}")
     else:
-        print("Failed to obtain access token.")
+        logger.debug("Failed to obtain access token.")
+
+
+
