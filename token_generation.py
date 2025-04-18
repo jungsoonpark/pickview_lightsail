@@ -43,7 +43,7 @@ def request_access_token():
     # 하드코딩된 app_key와 app_secret
     app_key = "513774"  # 실제 app_key를 여기에 하드코딩
     app_secret = "L2SMzWXVw58POzLojjQALzHqXRX4Bg2U"  # 실제 app_secret을 여기에 하드코딩
-    authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자 인증 후 받은 실제 코드로 교체
+    authorization_code = "3_513774_dkE1yTDaN50JVdrVun12f5lM4217"  # 사용자 인증 후 받은 실제 코드로 교체
 
     # 요청 파라미터 설정
     params = {
