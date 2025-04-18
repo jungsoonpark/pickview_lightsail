@@ -21,22 +21,18 @@ jobs:
         run: |
           pip install requests
           pip install PyGithub
-          git clone https://github.com/jungsoonpark/pickview_lightsail.git  # GitHub 리포지토리 클론
-          cd pickview_lightsail/aliexpress_sdk/iop
-          pip install .  # 로컬에서 설치
-          
+          # GitHub에서 클론한 후, 경로 설정
+          git clone https://github.com/jungsoonpark/pickview_lightsail.git
+          cd pickview_lightsail/aliexpress_sdk/iop  # iop 디렉토리로 이동
 
-      - name: Set up iop SDK path
+      - name: Set up PYTHONPATH for iop SDK
         run: |
           echo "Setting up PYTHONPATH for iop SDK..."
-          echo "PYTHONPATH=/home/runner/work/pickview_lightsail/pickview_lightsail/aliexpress_sdk" >> $GITHUB_ENV  # `iop`가 포함된 상위 경로 추가
- 
+          echo "PYTHONPATH=$(pwd)/pickview_lightsail/aliexpress_sdk/iop" >> $GITHUB_ENV  # iop 경로 추가
+
       - name: Run token generation script
         env:
           API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}  # GitHub Secrets에서 API_KEY 가져오기
           API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}  # GitHub Secrets에서 API_SECRET 가져오기
         run: |
           python token_generation.py  # 파이썬 스크립트 실행
-
-      - name: Print PYTHONPATH
-        run: echo $PYTHONPATH
