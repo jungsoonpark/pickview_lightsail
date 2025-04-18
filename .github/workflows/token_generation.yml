@@ -20,17 +20,16 @@ jobs:
       - name: Install dependencies
         run: |
           pip install requests  # requests 라이브러리 설치
-          pip install PyGithub  # PyGithub 라이브러리 설치 (필요하다면)
 
       - name: Set up environment variables for API keys
         env:
-          API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}  # GitHub Secrets에서 API_KEY 가져오기
-          API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}  # GitHub Secrets에서 API_SECRET 가져오기
+          ALIEXPRESS_API_KEY: ${{ secrets.ALIEXPRESS_API_KEY }}  # GitHub Secrets에서 ALIEXPRESS_API_KEY 가져오기
+          ALIEXPRESS_API_SECRET: ${{ secrets.ALIEXPRESS_API_SECRET }}  # GitHub Secrets에서 ALIEXPRESS_API_SECRET 가져오기
         run: |
           echo "Setting up environment variables"
-          echo "API_KEY=${{ secrets.ALIEXPRESS_API_KEY }}" >> $GITHUB_ENV
-          echo "API_SECRET=${{ secrets.ALIEXPRESS_API_SECRET }}" >> $GITHUB_ENV
+          echo "ALIEXPRESS_API_KEY=${{ secrets.ALIEXPRESS_API_KEY }}" >> $GITHUB_ENV
+          echo "ALIEXPRESS_API_SECRET=${{ secrets.ALIEXPRESS_API_SECRET }}" >> $GITHUB_ENV
 
       - name: Run token generation script
         run: |
-          python token_generation.py  # 새로운 Python 스크립트 실행 (iop 없이)
+          python token_generation.py  # 새로운 Python 스크립트 실행
