@@ -51,7 +51,7 @@ params = {
 logger.debug(f"요청 파라미터: {params}")
 
 # POST 요청 보내기
-url = "https://api-sg.aliexpress.com/rest/auth/token/create"
+url = "https://api-sg.aliexpress.com/sync?method=/auth/token/create"
 response = requests.post(url, data=params)
 
 # 디버깅: API 응답 출력
