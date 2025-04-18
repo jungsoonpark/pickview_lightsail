@@ -8,7 +8,7 @@ from iop.base import IopClient, IopRequest  # SDK에서 제공하는 클래스 �
 
 
 # iop 모듈이 위치한 경로를 sys.path에 추가
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'aliexpress_sdk', 'iop'))
+sys.path.append('/home/user/pickview_lightsail/aliexpress_sdk/iop')
 
 
 from iop.base import IopClient, IopRequest
