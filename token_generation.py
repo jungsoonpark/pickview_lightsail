@@ -42,13 +42,13 @@ def generate_signature(params, secret_key):
     logger.debug(f"생성된 서명: {signature}")
     return signature
 
-def request_access_token(api_key, api_secret, authorization_code):
+def request_access_token(app_key, app_secret, authorization_code):
     """새로운 액세스 토큰을 발급받습니다."""
     url = "https://api-sg.aliexpress.com/rest/auth/token/create"
     
     # 요청 파라미터 설정
     params = {
-        "app_key": api_key,
+        "app_key": app_key,  # app_key 추가
         "timestamp": str(int(time.time() * 1000)),  # UTC 타임스탬프
         "sign_method": "md5",
         "code": authorization_code,
@@ -56,7 +56,7 @@ def request_access_token(api_key, api_secret, authorization_code):
     }
 
     # 서명 생성
-    params["sign"] = generate_signature(params, api_secret)
+    params["sign"] = generate_signature(params, app_secret)
 
     try:
         # POST 요청 보내기
@@ -83,13 +83,13 @@ def request_access_token(api_key, api_secret, authorization_code):
         return None
 
 if __name__ == "__main__":
-    # GitHub Secrets에서 API_KEY와 API_SECRET 가져오기
-    API_KEY = os.environ.get('ALIEXPRESS_API_KEY')
-    API_SECRET = os.environ.get('ALIEXPRESS_API_SECRET')
+    # GitHub Secrets에서 정확한 키 값 가져오기
+    APP_KEY = os.environ.get('ALIEXPRESS_API_KEY')  # GitHub Secrets에서 ALIEXPRESS_API_KEY 가져오기
+    APP_SECRET = os.environ.get('ALIEXPRESS_API_SECRET')  # GitHub Secrets에서 ALIEXPRESS_API_SECRET 가져오기
     authorization_code = "3_513774_ghfazA1uInhLE24BaB0Op2fg3694"  # 사용자 인증 후 받은 실제 코드로 교체
 
     # 토큰 요청
-    token = request_access_token(API_KEY, API_SECRET, authorization_code)
+    token = request_access_token(APP_KEY, APP_SECRET, authorization_code)
     if token:
         print(f"Access Token: {token}")
     else:
