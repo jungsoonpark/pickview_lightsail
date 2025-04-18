@@ -22,6 +22,11 @@ jobs:
           pip install requests
           pip install PyGithub
           pip install iop-sdk  # iop SDK 직접 설치
+          
+      - name: Install iop SDK from GitHub
+        run: |
+          pip install git+https://github.com/jungsoonpark/pickview_lightsail.git#egg=iop-sdk&subdirectory=aliexpress_sdk/iop
+  
 
       - name: Set up iop SDK path
         run: |
