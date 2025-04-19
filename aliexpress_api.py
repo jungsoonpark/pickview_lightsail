@@ -10,6 +10,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import openai
 
+
 # 구글 시트 설정
 SHEET_ID = os.getenv("SHEET_ID")
 READ_SHEET_NAME = os.getenv("READ_SHEET_NAME", "list")
