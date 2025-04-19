@@ -13,25 +13,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.x
-          
-      - name: Install openai package
+
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install openai  # Install openai directly
-          pip install requests
-          pip install gspread
+          pip install openai requests gspread google-auth google-auth-oauthlib google-auth-httplib2
 
-          
       - name: Decode Google JSON Key
         run: |
           echo ${{ secrets.GOOGLE_JSON_KEY_BASE64 }} | base64 --decode > /tmp/google-key.json
-          
+
       - name: Run script
         run: |
           export GOOGLE_JSON_KEY_PATH="/tmp/google-key.json"
-          python aliexpress_api.py
+          python your_script.py
