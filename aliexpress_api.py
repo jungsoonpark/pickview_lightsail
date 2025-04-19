@@ -10,25 +10,28 @@ import gspread
 from google.oauth2.service_account import Credentials
 import openai
 
-# GitHub Secrets에서 API 키 가져오기
-openai.api_key = os.getenv("OPENAI_API_KEY")
-ALIEXPRESS_ACCESS_TOKEN = os.getenv("ALIEXPRESS_ACCESS_TOKEN")
-ALIEXPRESS_API_KEY = os.getenv("ALIEXPRESS_API_KEY")
-ALIEXPRESS_API_SECRET = os.getenv("ALIEXPRESS_API_SECRET")
+# 구글 시트 설정
 SHEET_ID = os.getenv("SHEET_ID")
 READ_SHEET_NAME = os.getenv("READ_SHEET_NAME", "list")
 RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
-GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key (GitHub 시크릿에서 가져오기)
+
+# Google JSON Key 경로
+GOOGLE_JSON_KEY_PATH = os.getenv("GOOGLE_JSON_KEY_PATH")  # GitHub Actions에서 설정한 경로
 
 # Google Credentials 설정
 def get_google_creds():
     try:
         scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        google_key_content = GOOGLE_JSON_KEY  # 환경 변수에서 JSON 키 가져오기
-        if not google_key_content:
-            raise ValueError("GOOGLE_JSON_KEY 환경 변수가 설정되어 있지 않습니다.")
-        info = json.loads(google_key_content)  # JSON 키를 파싱
-        creds = Credentials.from_service_account_info(info, scopes=scopes)
+        if not GOOGLE_JSON_KEY_PATH or not os.path.exists(GOOGLE_JSON_KEY_PATH):
+            raise ValueError("GOOGLE_JSON_KEY_PATH 환경 변수가 설정되어 있지 않거나 파일이 존재하지 않습니다.")
+        
+        with open(GOOGLE_JSON_KEY_PATH, 'r') as f:
+            google_key_content = f.read()
+        
+        creds = Credentials.from_service_account_info(
+            json.loads(google_key_content),  # 시크릿에서 로드한 JSON 문자열을 파싱
+            scopes=scopes
+        )
         return creds
     except Exception as e:
         logging.error(f"Google Credentials 생성 실패: {e}")
@@ -39,6 +42,7 @@ def connect_to_google_sheet(sheet_name):
     logging.info("Google Sheet 연결 시도...")
     try:
         creds = get_google_creds()
+        import gspread
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).worksheet(sheet_name)
         logging.info(f'Google Sheet "{sheet_name}" 연결 성공')
@@ -48,31 +52,7 @@ def connect_to_google_sheet(sheet_name):
         traceback.print_exc()
         raise
 
-def get_product_rows_from_sheet():
-    """RESULT 시트에서 오늘 날짜의 모든 행(상품 ID 포함)을 가져옵니다."""
-    try:
-        sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
-        records = sheet.get_all_records()
-        today = datetime.today().strftime('%Y-%m-%d')
-        rows = [record for record in records if str(record.get("date", "")) == today and record.get("product_id")]
-        logging.info(f"오늘 날짜({today}) 구글 시트에서 {len(rows)}행의 상품 데이터 읽어옴")
-        return rows
-    except Exception as e:
-        logging.error(f"구글 시트 데이터 가져오기 실패: {e}")
-        traceback.print_exc()
-        return []
 
-def save_results_to_sheet(results):
-    try:
-        sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
-        sheet.clear()
-        sheet.append_row(['date', 'keyword', 'product_id', 'product_info'])
-        for row in results:
-            sheet.append_row(row)
-        logging.info(f"구글 시트에 결과 저장 완료: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
-    except Exception as e:
-        logging.error(f"결과 저장 실패: {e}")
-        traceback.print_exc()
 
 # AliExpress API 함수
 def generate_signature(params, app_secret):
