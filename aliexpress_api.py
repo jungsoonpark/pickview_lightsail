@@ -9,6 +9,9 @@ from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 import openai
+import base64
+
+
 
 # GitHub Secrets에서 API 키 가져오기
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -21,14 +24,18 @@ RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
 GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
 
 def get_google_creds():
+    # Base64로 인코딩된 Google JSON Key를 가져옵니다.
+    google_key_base64 = os.getenv("GOOGLE_JSON_KEY_BASE64")
+    if not google_key_base64:
+        logging.error("GOOGLE_JSON_KEY_BASE64 환경 변수가 설정되어 있지 않습니다.")
+        raise ValueError("GOOGLE_JSON_KEY_BASE64 환경 변수가 설정되어 있지 않습니다.")
+    
+    # Base64 디코딩
+    google_key_content = base64.b64decode(google_key_base64).decode('utf-8')
+    
     try:
-        # Google JSON Key를 환경 변수에서 가져오기
-        google_key_content = os.getenv("GOOGLE_JSON_KEY")
-        if not google_key_content:
-            raise ValueError("GOOGLE_JSON_KEY 환경 변수가 설정되어 있지 않습니다.")
-        
         creds = Credentials.from_service_account_info(
-            json.loads(google_key_content),  # JSON 키를 파싱
+            json.loads(google_key_content),
             scopes=["https://www.googleapis.com/auth/spreadsheets"]
         )
         return creds
