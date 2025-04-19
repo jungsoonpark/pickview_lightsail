@@ -24,7 +24,7 @@ RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
 GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
 
 def get_google_creds():
-    # Base64로 인코딩된 Google JSON Key를 가져옵니다.
+    # 환경 변수에서 Base64 인코딩된 Google JSON Key 가져오기
     google_key_base64 = os.getenv("GOOGLE_JSON_KEY_BASE64")
     if not google_key_base64:
         logging.error("GOOGLE_JSON_KEY_BASE64 환경 변수가 설정되어 있지 않습니다.")
