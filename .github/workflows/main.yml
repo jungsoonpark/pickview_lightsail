@@ -21,6 +21,7 @@ jobs:
         run: |
           pip install requests google-auth google-auth-oauthlib google-auth-httplib2 gspread
           pip install openai
+          pip install credentials
 
       - name: Decode Google JSON Key
         env:
