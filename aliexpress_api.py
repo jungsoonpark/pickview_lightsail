@@ -35,7 +35,15 @@ def get_google_creds():
     
     # Google Credentials 생성
     creds = Credentials.from_service_account_file(json.loads(google_key_content), scopes=["https://www.googleapis.com/auth/spreadsheets"])
-    
+
+    access_token = creds.token
+
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+    }
+
+    response = requests.get('https://sheets.googleapis.com/v4/spreadsheets/1Ew7u6N72VP3nVvgNiLKZDyIpHg4xXz-prkyV4SW7EkI', headers=headers)
+    print(response.json())
     
     return creds
 
