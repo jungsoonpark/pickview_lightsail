@@ -1,93 +1,55 @@
-import requests
 import hashlib
 import time
-import logging
+import requests
 
-# 로깅 설정
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler()
-formatter = logging.Formatter('%(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+# App key, secret, and authorization code (hardcoded for now)
+app_key = "513774"  # 실제 app_key
+app_secret = "Uzy0PtFg3oqmIFZtXrrGEN9s0speXaXl"  # 실제 app_secret
+authorization_code = "3_513774_b38kGp17gUB9Kq1mFDYfL60v3668"  # 사용자 인증 후 받은 실제 코드
 
-def initialize_variables():
-    app_key = "513774"  # 자신의 app_key
-    app_secret = "Uzy0PtFg3oqmIFZtXrrGEN9s0speXaXl"  # 자신의 app_secret
-    authorization_code = "3_513774_fJdwqT8Zk7RsicAwXQj9qxGc4347"  # 사용자 인증 후 받은 실제 코드
-    return app_key, app_secret, authorization_code
+# Generate timestamp
+timestamp = str(int(time.time() * 1000))  # Millisecond timestamp
 
-def generate_signature(app_key, app_secret, authorization_code, timestamp, sign_method):
-    # 파라미터 정렬
-    params = {
-        "app_key": app_key,
-        "timestamp": timestamp,
-        "sign_method": sign_method,
-        "code": authorization_code,
-        "grant_type": "authorization_code"
-    }
+# Define sign method
+sign_method = "sha256"
 
-    # 디버깅: 정렬된 파라미터 출력
-    logger.debug(f"정렬된 파라미터: {params}")
+# Parameters to send in the request
+params = {
+    "code": authorization_code,
+    "app_key": app_key,
+    "sign_method": sign_method,
+    "timestamp": timestamp
+}
 
-    # 파라미터 정렬
-    sorted_params = sorted(params.items())
-    param_string = ''.join(f"{k}{v}" for k, v in sorted_params)
+# Sort parameters alphabetically (ASCII order)
+sorted_params = sorted(params.items())
 
-    # 서명할 문자열 구성 (app_secret 양 끝에 추가)
-    string_to_sign = f"{app_secret}{param_string}{app_secret}"
+# Concatenate the sorted parameters into a string
+param_string = ''.join(f"{key}{value}" for key, value in sorted_params)
 
-    # 디버깅: 서명할 문자열 출력
-    logger.debug(f"서명할 문자열: {string_to_sign}")
+# Construct the string to sign (append API path and app_secret on both ends)
+api_path = "/rest/auth/token/create"
+string_to_sign = f"{api_path}{param_string}{app_secret}"
 
-    # MD5 해시로 서명 생성
-    signature = hashlib.md5(string_to_sign.encode('utf-8')).hexdigest().upper()
+# Create signature using md5 or sha256
+signature = hashlib.sha256(string_to_sign.encode('utf-8')).hexdigest().upper()
 
-    # 디버깅: 생성된 서명 출력
-    logger.debug(f"생성된 서명: {signature}")
+# Add the signature to the parameters
+params['sign'] = signature
 
-    return signature
+# Build the final request URL (ensure all parameters are joined by &)
+url = f"https://api-sg.aliexpress.com{api_path}?{'&'.join([f'{key}={value}' for key, value in params.items()])}"
 
-def get_access_token():
-    app_key, app_secret, authorization_code = initialize_variables()
+# Send the POST request
+response = requests.post(url, data=params)
 
-    # 타임스탬프 생성
-    timestamp = str(int(time.time() * 1000))
-    sign_method = "md5"
+# Print the response status and content
+print(f"Response Status Code: {response.status_code}")
+print(f"Response Body: {response.text}")
 
-    # 서명 생성
-    signature = generate_signature(app_key, app_secret, authorization_code, timestamp, sign_method)
-
-    # 요청 파라미터 설정
-    params = {
-        "app_key": app_key,
-        "timestamp": timestamp,
-        "sign_method": sign_method,
-        "code": authorization_code,
-        "grant_type": "authorization_code",
-        "sign": signature
-    }
-
-    # 디버깅: 요청 파라미터 출력
-    logger.debug(f"요청 파라미터: {params}")
-
-    # API 요청 URL
-    url = "https://api-sg.aliexpress.com/rest/auth/token/create"
-
-    # POST 요청 보내기
-    response = requests.post(url, data=params)
-
-    # 디버깅: 응답 출력
-    logger.debug(f"Response Status Code: {response.status_code}")
-    logger.debug(f"Response Body: {response.text}")
-
-    # 응답 처리
-    if response.status_code == 200:
-        logger.info("Access Token: %s", response.json().get('access_token'))
-        return response.json().get('access_token')
-    else:
-        logger.error("Failed to get access token")
-        return None
-
-if __name__ == "__main__":
-    get_access_token()
+# Check if the access token was received
+if response.status_code == 200:
+    access_token = response.json().get('access_token')
+    print(f"Access Token: {access_token}")
+else:
+    print("Failed to obtain access token")
