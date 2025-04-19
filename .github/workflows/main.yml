@@ -36,3 +36,8 @@ jobs:
           
           # Python 스크립트 실행
           python aliexpress_api.py
+
+      - name: Debugging the decoded Google JSON Key
+        run: |
+          echo ${{ secrets.GOOGLE_JSON_KEY }} | base64 --decode > /tmp/google-key.json
+          cat /tmp/google-key.json  # 디코딩된 JSON 내용 출력
