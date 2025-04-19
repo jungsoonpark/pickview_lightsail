@@ -29,4 +29,5 @@ jobs:
           # Google JSON Key는 시크릿에서 바로 사용할 수 있도록 환경 변수에 설정
           export GOOGLE_JSON_KEY="${{ secrets.GOOGLE_JSON_KEY }}"
           
-          python aliexpress_api.py
+          # 스크립트 실행
+          python your_script.py
