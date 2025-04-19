@@ -20,15 +20,12 @@ READ_SHEET_NAME = os.getenv("READ_SHEET_NAME", "list")
 RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
 GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
 
-# Google Credentials 설정
 def get_google_creds():
     try:
-        google_json_key_path = os.getenv("GOOGLE_JSON_KEY_PATH")  # 환경 변수에서 경로 가져오기
-        if not google_json_key_path or not os.path.exists(google_json_key_path):
-            raise ValueError("GOOGLE_JSON_KEY_PATH 환경 변수가 설정되어 있지 않거나 파일이 존재하지 않습니다.")
-        
-        with open(google_json_key_path, 'r') as f:
-            google_key_content = f.read()
+        # Google JSON Key를 환경 변수에서 가져오기
+        google_key_content = os.getenv("GOOGLE_JSON_KEY")
+        if not google_key_content:
+            raise ValueError("GOOGLE_JSON_KEY 환경 변수가 설정되어 있지 않습니다.")
         
         creds = Credentials.from_service_account_info(
             json.loads(google_key_content),  # JSON 키를 파싱
