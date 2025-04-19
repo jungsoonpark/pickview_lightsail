@@ -23,19 +23,20 @@ GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
 # Google Credentials 설정
 def get_google_creds():
     try:
-        google_key_content = os.getenv("GOOGLE_JSON_KEY")
-        if not google_key_content:
-            raise ValueError("GOOGLE_JSON_KEY 환경 변수가 설정되어 있지 않습니다.")
+        google_json_key_path = os.getenv("GOOGLE_JSON_KEY_PATH")
+        if not google_json_key_path or not os.path.exists(google_json_key_path):
+            raise ValueError("GOOGLE_JSON_KEY_PATH 환경 변수가 설정되어 있지 않거나 파일이 존재하지 않습니다.")
         
-        # 제대로 로드된 내용 출력 (디버깅 용도)
-        logging.info(f"GOOGLE_JSON_KEY 로드 성공: {google_key_content[:50]}...")  # 처음 50자만 출력
+        with open(google_json_key_path, 'r') as f:
+            google_key_content = f.read()
         
-        info = json.loads(google_key_content)  # JSON 키를 파싱
-        creds = Credentials.from_service_account_info(info, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+        creds = Credentials.from_service_account_info(
+            json.loads(google_key_content),  # JSON 키를 파싱
+            scopes=["https://www.googleapis.com/auth/spreadsheets"]
+        )
         return creds
     except Exception as e:
         logging.error(f"Google Credentials 생성 실패: {e}")
-        traceback.print_exc()
         raise
 
 def connect_to_google_sheet(sheet_name):
