@@ -36,23 +36,21 @@ def get_google_creds():
     )
     return creds
 
-def connect_to_google_sheet(sheet_id):
-    creds = get_google_creds()  # 여기서 호출
+def connect_to_google_sheet(sheet_name):
+    # Google JSON Key 파일 경로
+    json_keyfile_path = '/tmp/google-key.json'
+    
+    # Google Credentials 생성
+    creds = Credentials.from_service_account_file(json_keyfile_path)
+    
+    # gspread 클라이언트 생성
     client = gspread.authorize(creds)
-    logging.info(f"시도 중인 시트 이름: {sheet_name} (SHEET_ID: {SHEET_ID})")
-    try:
-        creds = get_google_creds()
-        client = gspread.authorize(creds)
-        # 시트 정보를 확인하기 위해 시트 목록 출력
-        spreadsheet = client.open_by_key(SHEET_ID)
-        logging.info(f"현재 스프레드시트 이름: {spreadsheet.title}")
-        sheet = spreadsheet.worksheet(sheet_name)
-        logging.info(f'Google Sheet "{sheet_name}" 연결 성공')
-        return sheet
-    except Exception as e:
-        logging.error(f"구글 시트 연결 실패: {e}")
-        traceback.print_exc()
-        raise
+    
+    # 스프레드시트 열기
+    sheet = client.open(sheet_name).sheet1  # 첫 번째 시트 열기
+    return sheet
+
+
 
 def get_product_rows_from_sheet():
     """RESULT 시트에서 오늘 날짜의 모든 행(상품 ID 포함)을 가져옵니다."""
