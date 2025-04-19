@@ -17,9 +17,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.x
-      - name: Install dependencies
+      - name: Install openai package
         run: |
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
+          pip install openai  # Install openai directly
       - name: Decode Google JSON Key
         run: |
           echo ${{ secrets.GOOGLE_JSON_KEY_BASE64 }} | base64 --decode > /tmp/google-key.json
