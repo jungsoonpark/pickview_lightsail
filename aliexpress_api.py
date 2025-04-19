@@ -36,11 +36,14 @@ def get_google_creds():
         raise
 
 def connect_to_google_sheet(sheet_name):
-    logging.info("Google Sheet 연결 시도...")
+    logging.info(f"시도 중인 시트 이름: {sheet_name} (SHEET_ID: {SHEET_ID})")
     try:
         creds = get_google_creds()
         client = gspread.authorize(creds)
-        sheet = client.open_by_key(SHEET_ID).worksheet(sheet_name)
+        # 시트 정보를 확인하기 위해 시트 목록 출력
+        spreadsheet = client.open_by_key(SHEET_ID)
+        logging.info(f"현재 스프레드시트 이름: {spreadsheet.title}")
+        sheet = spreadsheet.worksheet(sheet_name)
         logging.info(f'Google Sheet "{sheet_name}" 연결 성공')
         return sheet
     except Exception as e:
