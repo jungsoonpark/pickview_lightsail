@@ -12,7 +12,7 @@ authorization_code = "3_513774_fZF0biL3vtaoirRHEis6ek4i777"
 timestamp = str(int(time.time() * 1000))
 
 # 서명 방법 (기본값: md5)
-sign_method = "md5"
+sign_method = 'sha256'
 
 # grant_type 값
 grant_type = "authorization_code"
