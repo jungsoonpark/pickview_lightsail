@@ -16,8 +16,8 @@ jobs:
     - name: Set up PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '7.4'  # You can change to the PHP version you prefer
+        php-version: '7.4'  # PHP 버전 설정 (원하는 버전으로 변경 가능)
 
     - name: Run PHP script
       run: |
-        php test_test.php  # This runs the PHP script
+        php test_test.php  # PHP 파일 실행
