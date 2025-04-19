@@ -31,8 +31,13 @@ def get_google_creds():
         raise ValueError("GOOGLE_JSON_KEY_BASE64 환경 변수가 설정되어 있지 않습니다.")
     
     # Base64 디코딩
-    google_key_content = base64.b64decode(google_key_base64).decode('utf-8')
-    
+    try:
+        google_key_content = base64.b64decode(google_key_base64).decode('utf-8')
+    except Exception as e:
+        logging.error(f"Base64 디코딩 실패: {e}")
+        raise
+
+    # Google Credentials 생성
     try:
         creds = Credentials.from_service_account_info(
             json.loads(google_key_content),
@@ -43,7 +48,9 @@ def get_google_creds():
         logging.error(f"Google Credentials 생성 실패: {e}")
         raise
 
+
 def connect_to_google_sheet(sheet_name):
+    creds = get_google_creds()
     logging.info(f"시도 중인 시트 이름: {sheet_name} (SHEET_ID: {SHEET_ID})")
     try:
         creds = get_google_creds()
@@ -170,5 +177,8 @@ def main():
         logging.warning("최종 업데이트할 결과가 없습니다.")
     logging.info("[END] 프로그램 종료")
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    try:
+        connect_to_google_sheet("Your Sheet Name")
+    except Exception as e:
+        logging.error(f"구글 시트 연결 실패: {e}")
