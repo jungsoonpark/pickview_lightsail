@@ -24,11 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install openai requests gspread google-auth google-auth-oauthlib google-auth-httplib2
 
-      - name: Decode Google JSON Key
-        run: |
-          echo ${{ secrets.GOOGLE_JSON_KEY_BASE64 }} | base64 --decode > /tmp/google-key.json
-
       - name: Run script
         run: |
-          export GOOGLE_JSON_KEY_PATH="/tmp/google-key.json"
+          # Google JSON Key는 시크릿에서 바로 사용할 수 있도록 환경 변수에 설정
+          export GOOGLE_JSON_KEY="${{ secrets.GOOGLE_JSON_KEY }}"
+          
           python aliexpress_api.py
