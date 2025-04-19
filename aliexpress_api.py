@@ -18,40 +18,16 @@ ALIEXPRESS_API_SECRET = os.getenv("ALIEXPRESS_API_SECRET")
 SHEET_ID = os.getenv("SHEET_ID")
 READ_SHEET_NAME = os.getenv("READ_SHEET_NAME", "list")
 RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
-GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
+GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key (GitHub 시크릿에서 가져오기)
 
 # Google Credentials 설정
-creds = Credentials.from_service_account_info(
-    json.loads(GOOGLE_JSON_KEY),
-    scopes=["https://www.googleapis.com/auth/spreadsheets"]
-)
-
-# 로깅 설정
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(levelname)s] %(asctime)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-
-# 서명 생성 함수
-def generate_signature(params, app_secret):
-    sorted_params = sorted(params.items())
-    canonicalized_query_string = ''.join(f"{k}{v}" for k, v in sorted_params)
-    sign = hmac.new(
-        app_secret.encode('utf-8'),
-        canonicalized_query_string.encode('utf-8'),
-        hashlib.sha256
-    ).hexdigest().upper()
-    return sign
-
-# Google Sheet 관련 함수
 def get_google_creds():
     try:
         scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        google_key_content = os.getenv("GOOGLE_JSON_KEY")
+        google_key_content = GOOGLE_JSON_KEY  # 환경 변수에서 JSON 키 가져오기
         if not google_key_content:
             raise ValueError("GOOGLE_JSON_KEY 환경 변수가 설정되어 있지 않습니다.")
-        info = json.loads(google_key_content)
+        info = json.loads(google_key_content)  # JSON 키를 파싱
         creds = Credentials.from_service_account_info(info, scopes=scopes)
         return creds
     except Exception as e:
@@ -99,6 +75,16 @@ def save_results_to_sheet(results):
         traceback.print_exc()
 
 # AliExpress API 함수
+def generate_signature(params, app_secret):
+    sorted_params = sorted(params.items())
+    canonicalized_query_string = ''.join(f"{k}{v}" for k, v in sorted_params)
+    sign = hmac.new(
+        app_secret.encode('utf-8'),
+        canonicalized_query_string.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest().upper()
+    return sign
+
 def get_product_detail(product_id):
     params = {
         "access_token": ALIEXPRESS_ACCESS_TOKEN,
