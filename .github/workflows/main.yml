@@ -8,27 +8,22 @@ on:
     - cron: '0 10 * * *'  # 매일 새벽 3시에 실행
 
 jobs:
-  run:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
-
+          python-version: 3.x
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install pandas requests gspread google-auth google-auth-oauthlib google-auth-httplib2
-          pip install openai
-
+          pip install -r requirements.txt
+      - name: Decode Google JSON Key
+        run: |
+          echo ${{ secrets.GOOGLE_JSON_KEY_BASE64 }} | base64 --decode > /tmp/google-key.json
       - name: Run script
         run: |
-          export GOOGLE_JSON_KEY="${{ secrets.GOOGLE_JSON_KEY }}"
+          export GOOGLE_JSON_KEY_PATH="/tmp/google-key.json"
           python your_script.py
-
-      - name: Run affiliate_api
-        run: python3 affiliate_api.py 
