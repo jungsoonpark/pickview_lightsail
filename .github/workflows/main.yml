@@ -19,9 +19,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests google-auth google-auth-oauthlib google-auth-httplib2 gspread
+          pip install gspread google-auth
           pip install openai
-          pip install credentials
 
       - name: Decode Google JSON Key
         env:
@@ -36,7 +35,5 @@ jobs:
           echo "Google JSON Key decoded successfully."
 
       - name: Run Python script
-        env:
-          GOOGLE_JSON_KEY_BASE64: ${{ secrets.GOOGLE_JSON_KEY_BASE64 }}  # 환경 변수 재설정
         run: |
           python aliexpress_api.py
