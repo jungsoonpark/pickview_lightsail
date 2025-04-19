@@ -34,10 +34,9 @@ def get_google_creds():
     google_key_content = base64.b64decode(google_key_base64).decode('utf-8')
     
     # Google Credentials 생성
-    creds = Credentials.from_service_account_info(
-        json.loads(google_key_content),
-        scopes=["https://www.googleapis.com/auth/spreadsheets"]  # 필요한 범위 설정
-    )
+    creds = Credentials.from_service_account_file(json.loads(google_key_content), scopes=["https://www.googleapis.com/auth/spreadsheets"])
+    
+    
     return creds
 
 
