@@ -38,6 +38,7 @@ def get_google_creds():
         json.loads(google_key_content),
         scopes=["https://www.googleapis.com/auth/spreadsheets"]
     )
+    logging.info(f"GOOGLE_JSON_KEY_BASE64 is set: {google_key_base64[:10]}...")  # 첫 10자만 출력
     return creds
 
 def connect_to_google_sheet(sheet_name):
