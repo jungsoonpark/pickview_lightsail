@@ -25,9 +25,11 @@ jobs:
           pip install openai requests gspread google-auth google-auth-oauthlib google-auth-httplib2
 
       - name: Decode Google JSON Key
+        env:
+          GOOGLE_JSON_KEY_BASE64: ${{ secrets.GOOGLE_JSON_KEY_BASE64 }}
         run: |
           # Base64로 인코딩된 Google JSON Key를 디코딩하여 /tmp/google-key.json 파일로 저장
-          echo "${{ secrets.GOOGLE_JSON_KEY_BASE64 }}" | base64 --decode > /tmp/google-key.json
+          echo "$GOOGLE_JSON_KEY_BASE64" | base64 --decode > /tmp/google-key.json
 
       - name: Run script
         run: |
