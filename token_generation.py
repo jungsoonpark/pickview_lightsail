@@ -34,7 +34,7 @@ sorted_params = sorted(params.items())
 param_string = ''.join(f"{k}{v}" for k, v in sorted_params)
 
 # 서명할 문자열 구성 (app_secret 양 끝에 추가)
-string_to_sign = f"{app_secret}{api_path}{param_string}{app_secret}"
+string_to_sign = f"{api_path}{param_string}"
 
 # 디버깅: 서명할 문자열 출력
 print(f"서명할 문자열: {string_to_sign}")
