@@ -8,6 +8,7 @@ import traceback
 from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
+from credentials import get_google_creds
 import openai
 import base64
 
