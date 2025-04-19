@@ -23,6 +23,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install pandas requests gspread google-auth google-auth-oauthlib google-auth-httplib2
+          pip install openai
 
       - name: Create JSON key file from secret
         run: echo "${{ secrets.GOOGLE_JSON_KEY }}" > key.json
