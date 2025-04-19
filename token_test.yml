@@ -1,4 +1,4 @@
-name: Token Generation
+name: Run PHP Token Generation Script
 
 on:
   push:
@@ -10,17 +10,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '7.4'
 
-      - name: Install dependencies
-        run: |
-          pip install requests
+    - name: Install dependencies
+      run: |
+        sudo apt-get install php-curl
+        composer install # If you have a composer.json file for dependencies
 
-      - name: Run token generation script
-        run: python token_generation.py
+    - name: Run PHP script
+      run: |
+        php token_generation.php
+      env:
+        APP_KEY: ${{ secrets.APP_KEY }}
+        APP_SECRET: ${{ secrets.APP_SECRET }}
+        AUTH_CODE: ${{ secrets.AUTH_CODE }}
