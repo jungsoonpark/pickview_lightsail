@@ -1,12 +1,14 @@
-name: Run Affiliate API Pipeline
+name: Google Sheets Access
 
 on:
   push:
     branches:
       - main
-  schedule:
-    - cron: '0 10 * * *'  # 매일 새벽 3시에 실행  
 
+jobs:
+  access_google_sheets:
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
