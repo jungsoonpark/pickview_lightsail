@@ -28,4 +28,4 @@ jobs:
         run: echo "${{ secrets.GOOGLE_JSON_KEY }}" > key.json
 
       - name: Run affiliate_api
-        run: python3 affiliate_api.py
+        run: python3 affiliate_api.py 
