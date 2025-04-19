@@ -24,19 +24,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install openai requests gspread google-auth google-auth-oauthlib google-auth-httplib2
 
-      - name: Debug Google JSON Key
-        run: |
-          echo "GOOGLE_JSON_KEY_BASE64: ${{ secrets.GOOGLE_JSON_KEY_BASE64 }}"
-
       - name: Decode Google JSON Key
         run: |
-          if [ -z "${{ secrets.GOOGLE_JSON_KEY_BASE64 }}" ]; then
-            echo "GOOGLE_JSON_KEY_BASE64 is empty"
-            exit 1
-          fi
-          echo ${{ secrets.GOOGLE_JSON_KEY_BASE64 }} | base64 --decode > /tmp/google-key.json
+          # Base64로 인코딩된 Google JSON Key를 디코딩하여 /tmp/google-key.json 파일로 저장
+          echo "${{ secrets.GOOGLE_JSON_KEY_BASE64 }}" | base64 --decode > /tmp/google-key.json
 
       - name: Run script
         run: |
+          # 환경 변수로 Google JSON Key 경로 설정
           export GOOGLE_JSON_KEY_PATH="/tmp/google-key.json"
+          
+          # Python 스크립트 실행
           python aliexpress_api.py
