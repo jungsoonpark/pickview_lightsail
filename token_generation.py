@@ -1,5 +1,5 @@
 import time
-import hashlib
+import hashlib  # 여기서 hashlib 모듈을 임포트
 import requests
 import logging
 from urllib.parse import urlencode
