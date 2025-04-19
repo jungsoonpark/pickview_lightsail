@@ -12,6 +12,9 @@ formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+
+
+
 def initialize_variables():
     app_key = "513774"  # 자신의 app_key
     app_secret = "Uzy0PtFg3oqmIFZtXrrGEN9s0speXaXl"  # 자신의 app_secret
@@ -19,33 +22,25 @@ def initialize_variables():
     return app_key, app_secret, authorization_code
 
 def generate_signature(app_key, app_secret, authorization_code, timestamp, sign_method):
-    # 1. 파라미터 준비
-    params = {
-        "app_key": app_key,
-        "timestamp": timestamp,
-        "sign_method": sign_method,
-        "code": authorization_code,
-        "grant_type": "authorization_code"
-    }
+    # 필요한 파라미터를 하나로 합침
+    param_string = f"app_key{app_key}code{authorization_code}grant_typeauthorization_codesign_method{sign_method}timestamp{timestamp}"
 
-    # 2. 파라미터 정렬
-    sorted_params = sorted(params.items())  # ASCII 순으로 정렬
-    param_string = ''.join(f"{k}{v}" for k, v in sorted_params)
+    # 서명할 문자열 구성 (app_secret 양 끝에 추가)
+    string_to_sign = f"{app_secret}{param_string}{app_secret}"
 
-    # 3. 서명할 문자열 구성
-    api_path = "/rest/auth/token/create"  # 시스템 API 경로
-    string_to_sign = f"{api_path}{param_string}"
+    # 디버깅: 서명할 문자열 출력
+    print(f"서명할 문자열: {string_to_sign}")
 
-    # 4. 서명 생성 (MD5 또는 HMAC_SHA256)
-    if sign_method.lower() == "md5":
-        signature = hashlib.md5(f"{app_secret}{string_to_sign}{app_secret}".encode('utf-8')).hexdigest().upper()
-    else:
-        # HMAC-SHA256 처리
-        import hmac
-        import hashlib
-        signature = hmac.new(app_secret.encode('utf-8'), string_to_sign.encode('utf-8'), hashlib.sha256).hexdigest().upper()
+    # MD5 해시로 서명 생성
+    signature = hashlib.md5(f"{app_secret}{string_to_sign}{app_secret}".encode('utf-8')).hexdigest().upper()
+
+    # 디버깅: 생성된 서명 출력
+    print(f"생성된 서명: {signature}")
 
     return signature
+
+
+
 
 def get_access_token():
     app_key, app_secret, authorization_code = initialize_variables()
