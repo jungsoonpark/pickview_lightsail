@@ -41,7 +41,7 @@ def generate_signature(app_key, app_secret, authorization_code, timestamp, sign_
     sorted_params = sorted(params.items())
     param_string = ''.join(f"{k}{v}" for k, v in sorted_params)
 
-    # 서명할 문자열 구성 (app_secret을 한 번만 양 끝에 추가)
+    # 서명할 문자열 구성 (app_secret을 양 끝에 추가)
     string_to_sign = f"{app_secret}{param_string}{app_secret}"
 
     # 디버깅: 서명할 문자열 출력
@@ -54,6 +54,9 @@ def generate_signature(app_key, app_secret, authorization_code, timestamp, sign_
     logger.debug(f"생성된 서명: {signature}")
 
     return signature
+
+
+
 
 def get_access_token():
     app_key, app_secret, authorization_code = initialize_variables()
@@ -91,6 +94,7 @@ def get_access_token():
     else:
         logger.error("Failed to get access token, Error: %s", response.text)
         return None
+        
 
 if __name__ == "__main__":
     access_token = get_access_token()
