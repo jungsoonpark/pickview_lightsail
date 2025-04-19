@@ -25,11 +25,15 @@ RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
 GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
 
 def get_google_creds():
+    # 환경 변수에서 Base64 인코딩된 Google JSON Key 가져오기
     google_key_base64 = os.getenv("GOOGLE_JSON_KEY_BASE64")
     if not google_key_base64:
         raise ValueError("GOOGLE_JSON_KEY_BASE64 환경 변수가 설정되어 있지 않습니다.")
     
+    # Base64 디코딩
     google_key_content = base64.b64decode(google_key_base64).decode('utf-8')
+    
+    # Google Credentials 생성
     creds = Credentials.from_service_account_info(
         json.loads(google_key_content),
         scopes=["https://www.googleapis.com/auth/spreadsheets"]
@@ -37,19 +41,10 @@ def get_google_creds():
     return creds
 
 def connect_to_google_sheet(sheet_name):
-    # Google JSON Key 파일 경로
-    json_keyfile_path = '/tmp/google-key.json'
-    
-    # Google Credentials 생성
-    creds = Credentials.from_service_account_file(json_keyfile_path)
-    
-    # gspread 클라이언트 생성
-    client = gspread.authorize(creds)
-    
-    # 스프레드시트 열기
+    creds = get_google_creds()  # Google Credentials 가져오기
+    client = gspread.authorize(creds)  # gspread 클라이언트 생성
     sheet = client.open(sheet_name).sheet1  # 첫 번째 시트 열기
     return sheet
-
 
 
 def get_product_rows_from_sheet():
