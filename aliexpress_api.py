@@ -23,12 +23,15 @@ GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
 # Google Credentials 설정
 def get_google_creds():
     try:
-        scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        google_key_content = GOOGLE_JSON_KEY  # 환경 변수에서 JSON 키 가져오기
+        google_key_content = os.getenv("GOOGLE_JSON_KEY")
         if not google_key_content:
             raise ValueError("GOOGLE_JSON_KEY 환경 변수가 설정되어 있지 않습니다.")
+        
+        # 제대로 로드된 내용 출력 (디버깅 용도)
+        logging.info(f"GOOGLE_JSON_KEY 로드 성공: {google_key_content[:50]}...")  # 처음 50자만 출력
+        
         info = json.loads(google_key_content)  # JSON 키를 파싱
-        creds = Credentials.from_service_account_info(info, scopes=scopes)
+        creds = Credentials.from_service_account_info(info, scopes=["https://www.googleapis.com/auth/spreadsheets"])
         return creds
     except Exception as e:
         logging.error(f"Google Credentials 생성 실패: {e}")
