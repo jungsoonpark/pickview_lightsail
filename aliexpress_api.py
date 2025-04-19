@@ -28,10 +28,8 @@ def get_google_creds():
         with open(GOOGLE_JSON_KEY_PATH, 'r') as f:
             google_key_content = f.read()
         
-        creds = Credentials.from_service_account_info(
-            json.loads(google_key_content),  # 시크릿에서 로드한 JSON 문자열을 파싱
-            scopes=scopes
-        )
+        # 파일을 읽어 구글 인증
+        creds = Credentials.from_service_account_file(GOOGLE_JSON_KEY_PATH, scopes=["https://www.googleapis.com/auth/spreadsheets"])
         return creds
     except Exception as e:
         logging.error(f"Google Credentials 생성 실패: {e}")
