@@ -6,31 +6,25 @@ import json
 import logging
 import traceback
 from datetime import datetime
-
 import gspread
 from google.oauth2.service_account import Credentials
-
 import openai
-openai.api_key = os.getenv("OPENAI_API_KEY")  # GitHub Secrets에서 주입
 
-# GitHub Secrets로부터 환경 변수 설정
+# GitHub Secrets에서 API 키 가져오기
+openai.api_key = os.getenv("OPENAI_API_KEY")
 ALIEXPRESS_ACCESS_TOKEN = os.getenv("ALIEXPRESS_ACCESS_TOKEN")
 ALIEXPRESS_API_KEY = os.getenv("ALIEXPRESS_API_KEY")
 ALIEXPRESS_API_SECRET = os.getenv("ALIEXPRESS_API_SECRET")
 SHEET_ID = os.getenv("SHEET_ID")
 READ_SHEET_NAME = os.getenv("READ_SHEET_NAME", "list")
 RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
-# GOOGLE_JSON_KEY에 서비스 계정 JSON 문자열을 직접 넣어두었음
-# GitHub 시크릿에서 JSON 키 가져오기
-GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')
+GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
 
-# 시크릿을 메모리에 로드
+# Google Credentials 설정
 creds = Credentials.from_service_account_info(
     json.loads(GOOGLE_JSON_KEY),
     scopes=["https://www.googleapis.com/auth/spreadsheets"]
 )
-
-
 
 # 로깅 설정
 logging.basicConfig(
@@ -39,9 +33,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
-# -----------------------------------------
-# Utility: 서명 생성 함수
-# -----------------------------------------
+# 서명 생성 함수
 def generate_signature(params, app_secret):
     sorted_params = sorted(params.items())
     canonicalized_query_string = ''.join(f"{k}{v}" for k, v in sorted_params)
@@ -52,9 +44,7 @@ def generate_signature(params, app_secret):
     ).hexdigest().upper()
     return sign
 
-# -----------------------------------------
-# Google Sheet 관련 함수 (GOOGLE_JSON_KEY 직접 사용)
-# -----------------------------------------
+# Google Sheet 관련 함수
 def get_google_creds():
     try:
         scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -100,7 +90,6 @@ def save_results_to_sheet(results):
     try:
         sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
         sheet.clear()
-        # 헤더 설정
         sheet.append_row(['date', 'keyword', 'product_id', 'product_info'])
         for row in results:
             sheet.append_row(row)
@@ -109,9 +98,7 @@ def save_results_to_sheet(results):
         logging.error(f"결과 저장 실패: {e}")
         traceback.print_exc()
 
-# -----------------------------------------
-# AliExpress Affiliate API 함수
-# -----------------------------------------
+# AliExpress API 함수
 def get_product_detail(product_id):
     params = {
         "access_token": ALIEXPRESS_ACCESS_TOKEN,
@@ -126,13 +113,10 @@ def get_product_detail(product_id):
         "sign_method": "hmac-sha256"
     }
     params["sign"] = generate_signature(params, ALIEXPRESS_API_SECRET)
-    logging.info(f"[{product_id}] productdetail 요청 파라미터: {json.dumps(params, indent=2, ensure_ascii=False)}")
     response = requests.get("https://api-sg.aliexpress.com/sync", params=params)
-    logging.info(f"[{product_id}] productdetail 응답 코드: {response.status_code}")
     response.raise_for_status()
     data = response.json()
     detail = data.get("aliexpress_affiliate_productdetail_get_response", {}).get("result", {})
-    logging.info(f"[{product_id}] 제품 상세 데이터: {json.dumps(detail, indent=2, ensure_ascii=False)}")
     return detail
 
 def generate_affiliate_link(product_id):
@@ -146,18 +130,13 @@ def generate_affiliate_link(product_id):
         "sign_method": "hmac-sha256"
     }
     params["sign"] = generate_signature(params, ALIEXPRESS_API_SECRET)
-    logging.info(f"[{product_id}] link.generate 요청 파라미터: {json.dumps(params, indent=2, ensure_ascii=False)}")
     response = requests.get("https://api-sg.aliexpress.com/sync", params=params)
-    logging.info(f"[{product_id}] link.generate 응답 코드: {response.status_code}")
     response.raise_for_status()
     data = response.json()
     link_result = data.get("aliexpress_affiliate_link_generate_response", {}).get("result", {})
-    logging.info(f"[{product_id}] 제휴 링크 데이터: {json.dumps(link_result, indent=2, ensure_ascii=False)}")
     return link_result
 
-# -----------------------------------------
 # Main orchestration
-# -----------------------------------------
 def main():
     logging.info("[START] 프로그램 시작")
     rows = get_product_rows_from_sheet()
