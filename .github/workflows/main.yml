@@ -28,7 +28,7 @@ jobs:
         env:
           GOOGLE_JSON_KEY_BASE64: ${{ secrets.GOOGLE_JSON_KEY_BASE64 }}
         run: |
-          # Base64로 인코딩된 Google JSON Key를 디코딩하여 /tmp/google-key.json 파일로 저장
+          # Base64로 인코딩된 Google JSON Key를 디코딩하여 /tmp/google-key.json 파일로 저장하기
           echo "$GOOGLE_JSON_KEY_BASE64" | base64 --decode > /tmp/google-key.json
   
       - name: Check GOOGLE_JSON_KEY_BASE64
