@@ -23,29 +23,18 @@ READ_SHEET_NAME = os.getenv("READ_SHEET_NAME", "list")
 RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
 GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
 
-def get_google_creds():
-    # 환경 변수에서 Base64 인코딩된 Google JSON Key 가져오기
-    google_key_base64 = os.getenv("GOOGLE_JSON_KEY_BASE64")
-    if not google_key_base64:
-        logging.error("GOOGLE_JSON_KEY_BASE64 환경 변수가 설정되어 있지 않습니다.")
-        raise ValueError("GOOGLE_JSON_KEY_BASE64 환경 변수가 설정되어 있지 않습니다.")
-    
-    # Base64 디코딩
+def connect_to_google_sheet(sheet_id):
+    creds = get_google_creds()
+    client = gspread.authorize(creds)  # gspread 클라이언트 생성
+    print(f"Attempting to open spreadsheet with ID: {sheet_id}")
     try:
-        google_key_content = base64.b64decode(google_key_base64).decode('utf-8')
-    except Exception as e:
-        logging.error(f"Base64 디코딩 실패: {e}")
+        spreadsheet = client.open_by_key(sheet_id)  # 시트 열기
+        return spreadsheet
+    except gspread.SpreadsheetNotFound:
+        logging.error(f"스프레드시트를 찾을 수 없습니다: {sheet_id}")
         raise
-
-    # Google Credentials 생성
-    try:
-        creds = Credentials.from_service_account_info(
-            json.loads(google_key_content),
-            scopes=["https://www.googleapis.com/auth/spreadsheets"]
-        )
-        return creds
     except Exception as e:
-        logging.error(f"Google Credentials 생성 실패: {e}")
+        logging.error(f"구글 시트 연결 실패: {e}")
         raise
 
 
