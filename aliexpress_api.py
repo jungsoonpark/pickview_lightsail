@@ -36,9 +36,11 @@ def get_google_creds():
     # Google Credentials 생성
     creds = Credentials.from_service_account_info(
         json.loads(google_key_content),
-        scopes=["https://www.googleapis.com/auth/spreadsheets"]
+        scopes=["https://www.googleapis.com/auth/spreadsheets"]  # 필요한 범위 설정
     )
     return creds
+
+
 
 def connect_to_google_sheet(sheet_name):
     creds = get_google_creds()  # Google Credentials 가져오기
@@ -160,6 +162,8 @@ def main():
 
 if __name__ == "__main__":
     try:
-        connect_to_google_sheet("Your Sheet Name")
+        sheet = connect_to_google_sheet("result")  # 시트 이름을 입력하세요
+        data = sheet.get_all_records()  # 모든 데이터 가져오기
+        print(data)  # 데이터 출력
     except Exception as e:
         logging.error(f"구글 시트 연결 실패: {e}")
