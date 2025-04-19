@@ -25,8 +25,10 @@ jobs:
           pip install pandas requests gspread google-auth google-auth-oauthlib google-auth-httplib2
           pip install openai
 
-      - name: Create JSON key file from secret
-        run: echo "${{ secrets.GOOGLE_JSON_KEY }}" > key.json
+      - name: Run script
+        run: |
+          export GOOGLE_JSON_KEY="${{ secrets.GOOGLE_JSON_KEY }}"
+          python your_script.py
 
       - name: Run affiliate_api
         run: python3 affiliate_api.py 
