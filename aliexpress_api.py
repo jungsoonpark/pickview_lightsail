@@ -23,7 +23,7 @@ GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
 # Google Credentials 설정
 def get_google_creds():
     try:
-        google_json_key_path = os.getenv("GOOGLE_JSON_KEY_PATH")
+        google_json_key_path = os.getenv("GOOGLE_JSON_KEY_PATH")  # 환경 변수에서 경로 가져오기
         if not google_json_key_path or not os.path.exists(google_json_key_path):
             raise ValueError("GOOGLE_JSON_KEY_PATH 환경 변수가 설정되어 있지 않거나 파일이 존재하지 않습니다.")
         
