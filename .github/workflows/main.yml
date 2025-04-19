@@ -17,6 +17,11 @@ jobs:
         with:
           python-version: '3.8'
 
+      - name: Install dependencies
+        run: |
+          pip install requests google-auth google-auth-oauthlib google-auth-httplib2
+
+
       - name: Decode Google JSON Key
         env:
           GOOGLE_JSON_KEY_BASE64: ${{ secrets.GOOGLE_JSON_KEY_BASE64 }}
