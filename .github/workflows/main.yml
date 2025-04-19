@@ -26,4 +26,4 @@ jobs:
       - name: Run script
         run: |
           export GOOGLE_JSON_KEY_PATH="/tmp/google-key.json"
-          python your_script.py
+          python aliexpress_api.py
