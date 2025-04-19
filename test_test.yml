@@ -1,4 +1,4 @@
-name: Run PHP Token Generation Script
+name: Run PHP Script
 
 on:
   push:
@@ -16,17 +16,8 @@ jobs:
     - name: Set up PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '7.4'
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get install php-curl
-        composer install # If you have a composer.json file for dependencies
+        php-version: '7.4'  # You can change to the PHP version you prefer
 
     - name: Run PHP script
       run: |
-        php token_generation.php
-      env:
-        APP_KEY: ${{ secrets.APP_KEY }}
-        APP_SECRET: ${{ secrets.APP_SECRET }}
-        AUTH_CODE: ${{ secrets.AUTH_CODE }}
+        php test_test.php  # This runs the PHP script
