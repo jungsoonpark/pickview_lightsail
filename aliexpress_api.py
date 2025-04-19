@@ -21,6 +21,16 @@ SHEET_ID = os.getenv("SHEET_ID")
 READ_SHEET_NAME = os.getenv("READ_SHEET_NAME", "list")
 RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
 # GOOGLE_JSON_KEY에 서비스 계정 JSON 문자열을 직접 넣어두었음
+# GitHub 시크릿에서 JSON 키 가져오기
+GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')
+
+# 시크릿을 메모리에 로드
+creds = Credentials.from_service_account_info(
+    json.loads(GOOGLE_JSON_KEY),
+    scopes=["https://www.googleapis.com/auth/spreadsheets"]
+)
+
+
 
 # 로깅 설정
 logging.basicConfig(
