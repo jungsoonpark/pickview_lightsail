@@ -50,7 +50,20 @@ def connect_to_google_sheet(sheet_name):
         traceback.print_exc()
         raise
 
-
+def get_product_rows_from_sheet():
+    """RESULT 시트에서 오늘 날짜의 모든 행(상품 ID 포함)을 가져옵니다."""
+    try:
+        sheet = connect_to_google_sheet(RESULT_SHEET_NAME)
+        records = sheet.get_all_records()
+        today = datetime.today().strftime('%Y-%m-%d')
+        rows = [record for record in records if str(record.get("date", "")) == today and record.get("product_id")]
+        logging.info(f"오늘 날짜({today}) 구글 시트에서 {len(rows)}행의 상품 데이터 읽어옴")
+        return rows
+    except Exception as e:
+        logging.error(f"구글 시트 데이터 가져오기 실패: {e}")
+        traceback.print_exc()
+        return []
+        
 
 # AliExpress API 함수
 def generate_signature(params, app_secret):
