@@ -26,6 +26,7 @@ jobs:
 
       - name: Decode Google JSON Key
         run: |
+          # Base64 디코딩하여 JSON 파일로 저장
           echo ${{ secrets.GOOGLE_JSON_KEY }} | base64 --decode > /tmp/google-key.json
 
       - name: Run script
@@ -33,7 +34,7 @@ jobs:
           # 환경 변수로 Google JSON Key 경로 설정
           export GOOGLE_JSON_KEY_PATH="/tmp/google-key.json"
           
-          # 스크립트 실행
+          # Python 스크립트 실행
           python aliexpress_api.py
 
 
