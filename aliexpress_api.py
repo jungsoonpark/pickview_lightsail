@@ -20,9 +20,9 @@ ALIEXPRESS_ACCESS_TOKEN = os.getenv("ALIEXPRESS_ACCESS_TOKEN")
 ALIEXPRESS_API_KEY = os.getenv("ALIEXPRESS_API_KEY")
 ALIEXPRESS_API_SECRET = os.getenv("ALIEXPRESS_API_SECRET")
 SHEET_ID = os.getenv("SHEET_ID")
-READ_SHEET_NAME = os.getenv("READ_SHEET_NAME", "list")
+
 RESULT_SHEET_NAME = os.getenv("RESULT_SHEET_NAME", "result")
-GOOGLE_JSON_KEY = os.getenv('GOOGLE_JSON_KEY')  # Google JSON Key
+
 
 def get_google_creds():
     # 환경 변수에서 Base64 인코딩된 Google JSON Key 가져오기
@@ -38,13 +38,12 @@ def get_google_creds():
         json.loads(google_key_content),
         scopes=["https://www.googleapis.com/auth/spreadsheets"]
     )
-    logging.info(f"GOOGLE_JSON_KEY_BASE64 is set: {google_key_base64[:10]}...")  # 첫 10자만 출력
     return creds
 
 def connect_to_google_sheet(sheet_name):
     creds = get_google_creds()  # Google Credentials 가져오기
     client = gspread.authorize(creds)  # gspread 클라이언트 생성
-    sheet = client.open(sheet_name).sheet1  # 첫 번째 시트 열기
+    sheet = client.open(sheet_name)  # 첫 번째 시트 열기
     return sheet
 
 
