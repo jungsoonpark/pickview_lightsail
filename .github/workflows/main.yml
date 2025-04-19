@@ -24,6 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install openai  # Install openai directly
           pip install requests
+          pip install gspread
 
           
       - name: Decode Google JSON Key
