@@ -30,7 +30,12 @@ jobs:
         run: |
           # Base64로 인코딩된 Google JSON Key를 디코딩하여 /tmp/google-key.json 파일로 저장
           echo "$GOOGLE_JSON_KEY_BASE64" | base64 --decode > /tmp/google-key.json
+  
+      - name: Check GOOGLE_JSON_KEY_BASE64
+        run: |
+          echo "GOOGLE_JSON_KEY_BASE64 is set: ${GOOGLE_JSON_KEY_BASE64:+true}"
 
+    
       - name: Run script
         run: |
           # 환경 변수로 Google JSON Key 경로 설정
